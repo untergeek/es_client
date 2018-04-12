@@ -32,6 +32,7 @@ Contents
    helpers
    exceptions
    defaults
+   Changelog
 
 Example Usage
 -------------

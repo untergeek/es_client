@@ -4,12 +4,12 @@ es_client
 =========
 
 You may wonder why this even exists, as at first glance it doesn't seem to make
-anything any easier than just using :class:`elasticsearch.Elasticsearch` to
+anything any easier than just using ``elasticsearch.Elasticsearch()`` to
 build a client connection.  I needed to be able to reuse the more complex
 schema validation bits I was employing, namely:
 
 * ``master_only`` detection
-* AWS IAM credential collection via :class:`boto3.session.Session`
+* AWS IAM credential collection via ``boto3.session.Session``
 * Elasticsearch version checking and validation, and the option to skip this.
 * Configuration value validation, including file paths for SSL certificates,
   meaning:
