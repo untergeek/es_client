@@ -23,7 +23,9 @@ Builder Attribute Errata
 
 Class Instantiation Flow
 ------------------------
-#. Run :func:`~es_client.helpers.utils.process_config` on ``raw_config``
+#. Check to see if `elasticsearch` key is in the supplied ``raw_config``
+   dictionary.  Log a warning about using defaults if it is not.
+#. Run :func:`~es_client.Builder._check_config` on ``raw_config``
 #. Set instance attributes ``version_max`` and ``version_min`` with the
    provided values.
 #. Set instance attribute ``master_only`` to the value from ``raw_config``
