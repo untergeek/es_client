@@ -16,7 +16,7 @@ class Builder():
     :attr client: :class:`Elasticsearch Client <elasticsearch.Elasticsearch>`
       object
 
-    :attr master_only: Inherited from ``raw_config``.
+    :attr master_only: Check if node is elected master.
 
     :attr is_master: Connected to elected master?
 
@@ -24,9 +24,7 @@ class Builder():
     """
     def __init__(self, raw_config, autoconnect=True, version_min=version_min(), version_max=version_max()):
         self.logger = logging.getLogger(__name__)
-        if not 'elasticsearch' in raw_config:
-            self.logger.warn('No "elasticsearch" setting in supplied configuration.  Using defaults.')
-        config = self._check_config(raw_config)['elasticsearch']
+        config = self._check_config(raw_config)
         self.logger.debug('CONFIG = {}'.format(config))
         self.version_max = version_max
         self.version_min = version_min
@@ -58,7 +56,10 @@ class Builder():
         and ``client`` are in ``config`` before passing it to 
         :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
         """
-        if 'elasticsearch' not in config:
+        if not isinstance(config, dict):
+            raise ConfigurationError('Must supply dictionary.  You supplied: "{0}" which is "{1}"'.format(config, type(config)))
+        if not 'elasticsearch' in config:
+            self.logger.warn('No "elasticsearch" setting in supplied configuration.  Using defaults.')
             config['elasticsearch'] = {}
         else:
             config = prune_nones(config)
@@ -67,8 +68,8 @@ class Builder():
                 config['elasticsearch'][key] = {}
             else:
                 config['elasticsearch'][key] = prune_nones(config['elasticsearch'][key])
-        return SchemaCheck(config, config_schema(),
-            'Client Configuration', 'full configuration dictionary').result()        
+        return SchemaCheck(config['elasticsearch'], config_schema(),
+            'Elasticsearch Configuration', 'elasticsearch').result()        
 
     def _fix_url_prefix(self):
         """Convert ``url_prefix`` to an empty string if `None`"""
