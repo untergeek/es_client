@@ -3,6 +3,16 @@
 Changelog
 =========
 
+1.1.1 (19 April 2018)
+---------------------
+
+**Changes**
+
+  * Disregard root-level keys other than ``elasticsearch`` in the supplied
+    configuration dictionary.  This makes it much easier to pass in a complete
+    configuration and only extract the `elasticsearch` part.
+  * Validate that a dictionary was passed, as opposed to other types.
+
 1.1.0 (19 April 2018)
 ---------------------
 
