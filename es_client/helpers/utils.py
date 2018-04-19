@@ -1,4 +1,7 @@
 import logging
+import os
+import yaml
+import re
 from es_client.defaults import config_schema
 from es_client.exceptions import ConfigurationError
 from es_client.helpers.schemacheck import SchemaCheck
@@ -62,33 +65,32 @@ def verify_ssl_paths(args):
     if 'client_key' in args and args['client_key'] is not None:
         read_file(args['client_key'])
 
-def check_config(config):
+def get_yaml(path):
     """
-    Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``aws``
-    and ``client`` are in ``config`` before passing it to 
-    :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
+    Read the file identified by `path` and import its YAML contents.
+
+    :arg path: The path to a YAML configuration file.
+    :rtype: dict
     """
-    if 'elasticsearch' not in config:
-        config['elasticsearch'] = {}
-    else:
-        config = prune_nones(config)
-    for key in ['client', 'aws']:
-        if key not in config['elasticsearch']:
-            config['elasticsearch'][key] = {}
+    # Set the stage here to parse single scalar value environment vars from
+    # the YAML file being read
+    single = re.compile( r'^\$\{(.*)\}$' )
+    yaml.add_implicit_resolver ( "!single", single )
+    def single_constructor(loader,node):
+        value = loader.construct_scalar(node)
+        proto = single.match(value).group(1)
+        default = None
+        if len(proto.split(':')) > 1:
+            envvar, default = proto.split(':')
         else:
-            config['elasticsearch'][key] = prune_nones(config['elasticsearch'][key])
-    return SchemaCheck(config, config_schema(),
-        'Client Configuration', 'full configuration dictionary').result()
+            envvar = proto
+        return os.environ[envvar] if envvar in os.environ else default
+    yaml.add_constructor('!single', single_constructor)
 
-def process_config(config_dict):
-    """
-    Handles the schema checking function call and the ssl file path function
-    call before returning a fully vetted configuration dictionary.
-
-    :arg config_dict: The ``raw_dict`` from :class:`~es_client.Builder`.
-    :type config_dict: dict
-    :rtype dict:
-    """
-    config = check_config(config_dict)['elasticsearch']
-    verify_ssl_paths(config['client'])
-    return config
+    raw = read_file(path)
+    try:
+        cfg = yaml.load(raw)
+    except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
+        raise ConfigurationError(
+            'Unable to parse YAML file. Error: {0}'.format(e))
+    return cfg

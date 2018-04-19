@@ -1,7 +1,8 @@
+import os, random, string
 from unittest import TestCase
 from . import FileTestCase
 from es_client.exceptions import ConfigurationError
-from es_client.helpers.utils import check_config, ensure_list, process_config, prune_nones, read_file, verify_ssl_paths
+from es_client.helpers.utils import ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths
 
 DEFAULT = {
     'elasticsearch': {
@@ -21,6 +22,21 @@ DEFAULT = {
         'skip_version_test': False
     }
 }
+
+YAML = (
+"""
+elasticsearch:
+  client:
+    hosts: {0}
+"""
+)
+
+def random_envvar(size):
+    return ''.join(
+        random.SystemRandom().choice(
+            string.ascii_uppercase + string.digits
+        ) for _ in range(size)
+    )
 
 class TestEnsureList(TestCase):
     def test_ensure_list_returns_lists(self):
@@ -59,23 +75,33 @@ class TestReadCerts(FileTestCase):
         }
         self.assertIsNone(verify_ssl_paths(config))
 
-class TestCheckConfig(TestCase):
-    def test_empty_defaults(self):
-        self.assertEqual(DEFAULT, check_config({}))
-    def test_somewhat_populated(self):
-        config = {
-            'elasticsearch': {
-                'client': {
-                    'hosts': '127.0.0.1'
-                },
-                'aws': {
-                    'sign_requests': False
-                }
-            }
-        }
-        self.assertEqual(DEFAULT, check_config(config))
-
-
-class TestProcessConfig(TestCase):
-    def test_empty_defaults(self):
-        self.assertEqual(DEFAULT['elasticsearch'], process_config({}))
+class TestEnvVars(FileTestCase):
+    def test_present(self):
+        evar = random_envvar(8)
+        os.environ[evar] = "1234"
+        dollar = '${' + evar + '}'
+        self.write_config(self.args['configfile'], YAML.format(dollar))
+        cfg = get_yaml(self.args['configfile'])
+        self.assertEqual(cfg['elasticsearch']['client']['hosts'], os.environ.get(evar))
+        del os.environ[evar]
+    def test_not_present(self):
+        evar = random_envvar(8)
+        dollar = '${' + evar + '}'
+        self.write_config(self.args['configfile'], YAML.format(dollar))
+        cfg = get_yaml(self.args['configfile'])
+        self.assertIsNone(cfg['elasticsearch']['client']['hosts'])
+    def test_not_present_with_default(self):
+        evar = random_envvar(8)
+        default = random_envvar(8)
+        dollar = '${' + evar + ':' + default + '}'
+        self.write_config(self.args['configfile'], YAML.format(dollar))
+        cfg = get_yaml(self.args['configfile'])
+        self.assertEqual(cfg['elasticsearch']['client']['hosts'], default)
+    def test_raises_exception(self):
+        self.write_config(self.args['configfile'], 
+        """
+        [weird brackets go here]
+        I'm not a yaml file!!!=I have no keys
+        I have lots of spaces
+        """)
+        self.assertRaises(ConfigurationError, get_yaml, self.args['configfile'])

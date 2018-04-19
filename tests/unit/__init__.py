@@ -5,6 +5,13 @@ import string
 import tempfile
 from unittest import TestCase
 
+def random_directory():
+    dirname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+    directory = tempfile.mkdtemp(suffix=dirname)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    return directory
+
 class FileTestCase(TestCase):
     def setUp(self):
         super(FileTestCase, self).setUp()
@@ -20,6 +27,8 @@ class FileTestCase(TestCase):
         self.args['tmpdir'] = tempfile.mkdtemp(suffix=dirname)
         if not os.path.exists(self.args['tmpdir']):
             os.makedirs(self.args['tmpdir'])
+        self.args['configdir'] = random_directory()
+        self.args['configfile'] = os.path.join(self.args['configdir'], 'es_client.yml')
         self.args['filename'] = os.path.join(self.args['tmpdir'], filename)
         self.args['no_file_here'] = os.path.join(self.args['tmpdir'], 'not_created')
         with open(self.args['filename'], 'w') as f:
@@ -28,3 +37,7 @@ class FileTestCase(TestCase):
     def tearDown(self):
         if os.path.exists(self.args['tmpdir']):
             shutil.rmtree(self.args['tmpdir'])
+
+    def write_config(self, fname, data):
+        with open(fname, 'w') as f:
+            f.write(data)

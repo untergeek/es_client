@@ -42,4 +42,35 @@ Example Usage
         }
     }
 
-    client = Builder(config).client
+    try:
+        client = Builder(config).client
+    except:
+        # Do exception handling here...
+
+Additionally, you can read from a YAML configuration file:
+
+::
+
+    ---
+    elasticsearch:
+      master_only: true
+      client:
+        hosts: 10.0.0.123
+        use_ssl: true
+        ca_certs: /etc/elasticsearch/certs/ca.crt
+        username: joe_user
+        password: password
+        timeout: 60
+
+::
+
+    from es_client import Builder
+    from es_client.exceptions import ConfigurationError
+    from es_client.helpers.utils import get_yaml
+
+    try:
+        client = Builder(get_yaml('/path/to/es_client.yml').client
+    except:
+        # Do exception handling here...
+
+The same schema validations apply here as well.

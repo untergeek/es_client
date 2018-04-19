@@ -1,11 +1,10 @@
 import elasticsearch
 import logging
 import os
+from es_client.defaults import config_schema, version_min, version_max
 from es_client.exceptions import ConfigurationError, ESClientException, MissingArgument, NotMaster
-from es_client.helpers.utils import ensure_list, process_config
-
-VERSION_MIN=(5,0,0)
-VERSION_MAX=(6,99,99)
+from es_client.helpers.schemacheck import SchemaCheck
+from es_client.helpers.utils import ensure_list, prune_nones, verify_ssl_paths
 
 class Builder():
     """
@@ -13,8 +12,6 @@ class Builder():
     :type raw_config: dict
     :arg autoconnect: Connect to client automatically
     :type autoconnect: bool
-    :arg version_min: Defaults to ``(5,0,0)``
-    :arg version_max: Defaults to ``(6,99,99)``
 
     :attr client: :class:`Elasticsearch Client <elasticsearch.Elasticsearch>`
       object
@@ -25,9 +22,12 @@ class Builder():
 
     :attr client_args: Shows what settings were used to connect to Elasticsearch.
     """
-    def __init__(self, raw_config, autoconnect=True, version_min=VERSION_MIN, version_max=VERSION_MAX):
+    def __init__(self, raw_config, autoconnect=True, version_min=version_min(), version_max=version_max()):
         self.logger = logging.getLogger(__name__)
-        config = process_config(raw_config)
+        if not 'elasticsearch' in raw_config:
+            self.logger.warn('No "elasticsearch" setting in supplied configuration.  Using defaults.')
+        config = self._check_config(raw_config)['elasticsearch']
+        self.logger.debug('CONFIG = {}'.format(config))
         self.version_max = version_max
         self.version_min = version_min
         self.master_only = config['master_only']
@@ -51,6 +51,24 @@ class Builder():
             # Post checks
             self._check_version()
             self._check_master()
+
+    def _check_config(self, config):
+        """
+        Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``aws``
+        and ``client`` are in ``config`` before passing it to 
+        :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
+        """
+        if 'elasticsearch' not in config:
+            config['elasticsearch'] = {}
+        else:
+            config = prune_nones(config)
+        for key in ['client', 'aws']:
+            if key not in config['elasticsearch']:
+                config['elasticsearch'][key] = {}
+            else:
+                config['elasticsearch'][key] = prune_nones(config['elasticsearch'][key])
+        return SchemaCheck(config, config_schema(),
+            'Client Configuration', 'full configuration dictionary').result()        
 
     def _fix_url_prefix(self):
         """Convert ``url_prefix`` to an empty string if `None`"""
@@ -79,6 +97,7 @@ class Builder():
         Use `certifi <https://github.com/certifi/python-certifi>`_ if using ssl
         and ``ca_certs`` has not been specified.
         """
+        verify_ssl_paths(self.client_args)
         if self.client_args['use_ssl'] and not self.use_aws:
             if 'ca_certs' not in self.client_args or not self.client_args['ca_certs']:
                 # Use certifi certificates via certifi.where():
