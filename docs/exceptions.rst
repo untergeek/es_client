@@ -1,7 +1,7 @@
 .. _exceptions:
 
 Exceptions
-==========
+----------
 
 .. autoexception:: es_client.exceptions.ESClientException
    :members:

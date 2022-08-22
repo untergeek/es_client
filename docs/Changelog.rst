@@ -3,6 +3,21 @@
 Changelog
 =========
 
+8.0.0 (22 August 2022)
+----------------------
+
+**New Features**
+
+  * Use ``elasticsearch8==8.3.3`` library with this release.
+  * Updated all APIs to reflect updated library usage patterns as many APIs
+    have changed.
+  * Native support for API keys
+  * Native support for Cloud ID URL types
+  * Updated tests for better coverage
+  * Removed all AWS authentication as the ``elasticsearch8`` library no longer
+    connects to AWS ES instances.
+
+
 1.1.1 (19 April 2018)
 ---------------------
 

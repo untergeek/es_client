@@ -39,7 +39,7 @@ sys.path.insert(0, abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'es_client'
-copyright = '2018, Aaron Mildenstein'
+copyright = '2022, Aaron Mildenstein'
 author = 'Aaron Mildenstein'
 
 # The full version, including alpha/beta/rc tags.
@@ -70,7 +70,10 @@ templates_path = ['_templates']
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 # The master toctree document.
 master_doc = 'index'
@@ -80,7 +83,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -118,6 +121,10 @@ html_static_path = ['_static']
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
+html_sidebars = {
+   '**': ['globaltoc.html', 'sourcelink.html', 'searchbox.html'],
+   'using/windows': ['windowssidebar.html', 'searchbox.html'],
+}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
@@ -184,10 +191,9 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 # intersphinx_mapping = {'https://docs.python.org/': None}
 intersphinx_mapping = {
-	'python': ('https://docs.python.org/3.6', None),
-	'elasticsearch': ('http://elasticsearch-py.readthedocs.io/en/6.2.0', None),
+    'python': ('https://docs.python.org/3.9', None),
+    'elasticsearch': ('http://elasticsearch-py.readthedocs.io/en/v8.3.3', None),
     'voluptuous': ('https://alecthomas.github.io/voluptuous/docs/_build/html/', None),
-    'boto3': ('https://boto3.readthedocs.io/en/latest/', None),
 }
 
 # -- Options for todo extension ----------------------------------------------

@@ -74,9 +74,9 @@ def get_yaml(path):
     """
     # Set the stage here to parse single scalar value environment vars from
     # the YAML file being read
-    single = re.compile( r'^\$\{(.*)\}$' )
-    yaml.add_implicit_resolver ( "!single", single )
-    def single_constructor(loader,node):
+    single = re.compile(r'^\$\{(.*)\}$')
+    yaml.add_implicit_resolver("!single", single)
+    def single_constructor(loader, node):
         value = loader.construct_scalar(node)
         proto = single.match(value).group(1)
         default = None
@@ -85,12 +85,14 @@ def get_yaml(path):
         else:
             envvar = proto
         return os.environ[envvar] if envvar in os.environ else default
+
     yaml.add_constructor('!single', single_constructor)
 
-    raw = read_file(path)
     try:
-        cfg = yaml.load(raw)
-    except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
+        return yaml.load(read_file(path), Loader=yaml.FullLoader)
+    # except yaml.scanner.ScannerError as err:
+    #     print('Unable to read/parse YAML file: {0}'.format(path))
+    #     print(err)
+    except (yaml.scanner.ScannerError, yaml.parser.ParserError) as err:
         raise ConfigurationError(
-            'Unable to parse YAML file. Error: {0}'.format(e))
-    return cfg
+            'Unable to parse YAML file. Error: {0}'.format(err))

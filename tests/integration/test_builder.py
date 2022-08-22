@@ -4,22 +4,29 @@ from ..unit import FileTestCase
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
 
-host, port = os.environ.get('TEST_ES_SERVER', 'localhost:9200').split(':')
-port = int(port) if port else 9200
+host = os.environ.get('TEST_ES_SERVER', 'http://127.0.0.1:9200')
 
 config = {
     'elasticsearch': {
+        'other_settings': {},
         'client': {
-            'hosts': host,
-            'port': port,
+            'hosts': host
         }
     }
 }
 
 class TestCheckMaster(TestCase):
     def test_multiple_hosts_raises(self):
-        local_conf = {'elasticsearch':{'client':{'hosts':['127.0.0.1','localhost']}}}
-        local_conf['elasticsearch']['master_only'] = True
+        local_conf = {
+            'elasticsearch': {
+                'other_settings': {
+                    'master_only': True
+                },
+                'client': {
+                    'hosts': ['http://127.0.0.1:9200','http://localhost:9200']
+                }
+            }
+        }
         obj = Builder(local_conf, autoconnect=False)
         obj._get_client()
         self.assertRaises(ConfigurationError, obj._check_master)
@@ -46,5 +53,5 @@ class TestConnection(TestCase):
         obj = Builder(config)
         client = obj.client
         expected = client.info()
-        self.assertEqual(expected, obj.test_connection())        
+        self.assertEqual(expected, obj.test_connection())
 

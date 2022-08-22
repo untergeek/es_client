@@ -6,20 +6,16 @@ from es_client.helpers.utils import ensure_list, get_yaml, prune_nones, read_fil
 
 DEFAULT = {
     'elasticsearch': {
-        'aws': {
-            'sign_requests': False
+        'other_settings': {
+            'master_only': False,
+            'skip_version_test': False,
+            'username': None,
+            'password': None
         },
         'client': {
-            'hosts': '127.0.0.1',
-            'password': None,
-            'port': 9200,
-            'timeout': 30,
-            'use_ssl': False,
-            'username': None,
-            'verify_certs': False
-        },
-        'master_only': False,
-        'skip_version_test': False
+            'hosts': 'http://127.0.0.1:9200',
+            'request_timeout': 30,
+        }
     }
 }
 
@@ -98,7 +94,7 @@ class TestEnvVars(FileTestCase):
         cfg = get_yaml(self.args['configfile'])
         self.assertEqual(cfg['elasticsearch']['client']['hosts'], default)
     def test_raises_exception(self):
-        self.write_config(self.args['configfile'], 
+        self.write_config(self.args['configfile'],
         """
         [weird brackets go here]
         I'm not a yaml file!!!=I have no keys

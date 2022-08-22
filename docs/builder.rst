@@ -32,26 +32,20 @@ Class Instantiation Flow
 #. Initialize instance attribute ``is_master`` with a `None`
 #. Set instance attribute ``skip_version_test`` to the value from
    ``raw_config``
-#. Set instance attribute ``aws`` to the value of
-   ``raw_config['elasticsearch']['aws']`` if ``sign_requests`` is `True`,
-
-     #. Set instance attribute ``use_aws`` to `True` if ``sign_requests`` is
-        `True` otherwise set it to `False`.
-
 #. Set instance attribute ``client_args`` to the value of
    ``raw_config['elasticsearch']['client']``
-#. Execute :meth:`~es_client.Builder._fix_url_prefix`
-#. Ensure that ``client_args['hosts']`` is a :class:`list`
-#. Execute :meth:`~es_client.Builder._check_http_auth` to build the
-   ``http_auth`` tuple, if ``username`` and ``password`` are not `None`.
+#. Execute :meth:`~es_client.Builder._check_basic_auth` to build the
+   ``basic_auth`` tuple, if ``username`` and ``password`` are not `None`.
+#. Execute :meth:`~es_client.Builder._check_api_key` to build the
+   ``api_key`` tuple, if the ``id`` and ``api_key`` sub-keys are not `None`.
+#. Execute :meth:`~es_client.Builder._check_cloud_id` to ensure the client
+   connects to the defined ``cloud_id`` rather than anything in ``hosts``.
 #. Execute :meth:`~es_client.Builder._check_ssl` to ensure we have at least the
    `certifi <https://github.com/certifi/python-certifi>`_ signing certificates.
-#. Execute :meth:`~es_client.Builder._parse_aws` to extract AWS credentials if
-   such has been specified.
 #. If ``autoconnect`` is `True`:
 
     #. Execute :meth:`~es_client.Builder._get_client` to finally build the
-       :class:`Elasticsearch Client <elasticsearch.Elasticsearch>` client
+       :class:`Elasticsearch Client <elasticsearch8.Elasticsearch>` client
        object.
     #. Execute :meth:`~es_client.Builder._check_version` and
        :meth:`~es_client.Builder._check_master` as post-checks.  Nothing will
