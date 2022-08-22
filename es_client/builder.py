@@ -1,4 +1,4 @@
-import elasticsearch
+import elasticsearch8
 import logging
 import os
 from es_client.defaults import config_schema, version_min, version_max
@@ -13,8 +13,7 @@ class Builder():
     :arg autoconnect: Connect to client automatically
     :type autoconnect: bool
 
-    :attr client: :class:`Elasticsearch Client <elasticsearch.Elasticsearch>`
-      object
+    :attr client: :class:`Elasticsearch Client <elasticsearch8.Elasticsearch>` object
 
     :attr master_only: Check if node is elected master.
 
@@ -28,21 +27,20 @@ class Builder():
         self.logger.debug('CONFIG = {}'.format(config))
         self.version_max = version_max
         self.version_min = version_min
-        self.master_only = config['master_only']
+        self.other_args = config['other_settings']
+        self.master_only = self.other_args['master_only']
         self.is_master = None # Preset, until we populate this later
-        self.skip_version_test = config['skip_version_test']
-        if 'aws' in config and len(config['aws']) > 0:
-            self.aws = config['aws']
-            self.use_aws = config['aws']['sign_requests']
-        else:
-            self.use_aws = False
+        self.skip_version_test = self.other_args['skip_version_test']
         self.client_args = config['client']
+
         # Configuration pre-checks
-        self._fix_url_prefix()
         self.client_args['hosts'] = ensure_list(self.client_args['hosts'])
-        self._check_http_auth()
+        self._check_basic_auth()
+        self._check_api_key()
+        self._check_cloud_id()
         self._check_ssl()
-        self._parse_aws()
+        # Eliminate any remaining "None" entries from the client arguments before building
+        self.client_args = prune_nones(self.client_args)
         if autoconnect:
             # Get the client
             self._get_client()
@@ -52,8 +50,8 @@ class Builder():
 
     def _check_config(self, config):
         """
-        Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``aws``
-        and ``client`` are in ``config`` before passing it to 
+        Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``other_settings`` and
+        ``client`` are in ``config`` before passing it to
         :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
         """
         if not isinstance(config, dict):
@@ -63,35 +61,47 @@ class Builder():
             config['elasticsearch'] = {}
         else:
             config = prune_nones(config)
-        for key in ['client', 'aws']:
+        for key in ['client', 'other_settings']:
             if key not in config['elasticsearch']:
                 config['elasticsearch'][key] = {}
             else:
                 config['elasticsearch'][key] = prune_nones(config['elasticsearch'][key])
         return SchemaCheck(config['elasticsearch'], config_schema(),
-            'Elasticsearch Configuration', 'elasticsearch').result()        
+            'Elasticsearch Configuration', 'elasticsearch').result()
 
-    def _fix_url_prefix(self):
-        """Convert ``url_prefix`` to an empty string if `None`"""
-        if 'url_prefix' in self.client_args:
-            if (
-                    type(self.client_args['url_prefix']) == type(None) or
-                    self.client_args['url_prefix'] == "None"
-                ):
-                self.client_args['url_prefix'] = ''
-
-    def _check_http_auth(self):
-        """Create ``http_auth`` tuple from username and password"""
-        if 'username' in self.client_args or 'password' in self.client_args:
-            u = self.client_args.pop('username') if 'username' in self.client_args else None
-            p = self.client_args.pop('password') if 'password' in self.client_args else None
-            if u is None and p is None:
+    def _check_basic_auth(self):
+        """Create ``basic_auth`` tuple from username and password"""
+        if 'username' in self.other_args or 'password' in self.other_args:
+            usr = self.other_args['username'] if 'username' in self.other_args else None
+            pwd = self.other_args['password'] if 'password' in self.other_args else None
+            if usr is None and pwd is None:
                 pass
-            elif u is None or p is None:
+            elif usr is None or pwd is None:
                 raise ConfigurationError('Must populate both username and password, or leave both empty')
             else:
-                self.client_args['http_auth'] = (u, p)
+                self.client_args['basic_auth'] = (usr, pwd)
 
+    def _check_api_key(self):
+        """Create ``api_key`` tuple from self.other_args['api_key'] subkeys id and api_key """
+        if 'api_key' in self.other_args:
+            if 'id' or 'api_key' in self.other_args['api_key']:
+                id = self.other_args['api_key']['id'] if 'id' in self.other_args['api_key'] else None
+                api_key = self.other_args['api_key']['api_key'] if 'api_key' in self.other_args['api_key'] else None
+                if id is None and api_key is None:
+                    pass
+                elif id is None or api_key is None:
+                    raise ConfigurationError('Must populate both id and api_key, or leave both empty')
+                else:
+                    self.client_args['api_key'] = (id, api_key)
+
+    def _check_cloud_id(self):
+        """Remove ``hosts`` key if cloud_id provided"""
+        if 'cloud_id' in self.client_args and self.client_args['cloud_id'] is not None:
+            # We can remove the default if that's all there is
+            if self.client_args['hosts'] == ['http://127.0.0.1:9200'] and len(self.client_args['hosts']) == 1:
+                self.client_args.pop('hosts')
+            else:
+                raise ConfigurationError('Cannot populate both "hosts" and "cloud_id"')
 
     def _check_ssl(self):
         """
@@ -99,11 +109,14 @@ class Builder():
         and ``ca_certs`` has not been specified.
         """
         verify_ssl_paths(self.client_args)
-        if self.client_args['use_ssl'] and not self.use_aws:
+        if 'cloud_id' in self.client_args and self.client_args['cloud_id'] is not None:
+            scheme = 'https'
+        else:
+            scheme = self.client_args['hosts'][0].split(':')[0].lower()
+        if scheme == 'https':
             if 'ca_certs' not in self.client_args or not self.client_args['ca_certs']:
                 # Use certifi certificates via certifi.where():
                 import certifi
-                self.client_args['verify_certs'] = True
                 self.client_args['ca_certs'] = certifi.where()
                 # This part is only for use with a compiled Curator.  It can still go there.
                     # # Try to use bundled certifi certificates
@@ -113,43 +126,10 @@ class Builder():
                     #     self.client_args['verify_certs'] = True
                     #     self.client_args['ca_certs'] = os.path.join(datadir, 'cacert.pem')
 
-    def _parse_aws(self):
-        """
-        Parse the AWS args and attempt to obtain credentials using
-        :class:`boto3.session.Session`, which follows the AWS documentation at
-        http://amzn.to/2fRCGCt
-        """
-        self.logger.debug('self.aws = {}'.format(self.aws))
-        self.logger.debug('self.client_args = {}'.format(self.client_args))
-        if self.use_aws:
-            if not 'aws_region' in self.aws or self.aws['aws_region'] is None:
-                raise MissingArgument('Missing "aws_region".')
-            from boto3 import session
-            from botocore.exceptions import NoCredentialsError
-            from requests_aws4auth import AWS4Auth
-            try:
-                session = session.Session()
-                credentials = session.get_credentials()
-                self.aws['aws_key'] = credentials.access_key
-                self.aws['aws_secret_key'] = credentials.secret_key
-                self.aws['aws_token'] = credentials.token
-            # If an attribute doesn't exist, we were not able to retrieve credentials as expected so we can't continue
-            except AttributeError:
-                self.logger.debug('Unable to locate AWS credentials')
-                raise NoCredentialsError
-            # Override these self.client_args
-            self.client_args['use_ssl'] = True
-            self.client_args['verify_certs'] = True
-            self.client_args['connection_class'] = elasticsearch.RequestsHttpConnection
-            self.client_args['http_auth'] = (
-                AWS4Auth(
-                    self.aws['aws_key'], self.aws['aws_secret_key'],
-                    self.aws['aws_region'], 'es', session_token=self.aws['aws_token'])
-            )
 
     def _find_master(self):
         """Find out if we are connected to the elected master node"""
-        my_node_id = list(self.client.nodes.info('_local')['nodes'])[0]
+        my_node_id = list(self.client.nodes.info(node_id='_local')['nodes'])[0]
         master_node_id = self.client.cluster.state(metric='master_node')['master_node']
         self.is_master = my_node_id == master_node_id
 
@@ -189,15 +169,15 @@ class Builder():
                 msg = 'Elasticsearch version {0} not supported'.format('.'.join(map(str,v)))
                 self.logger.error(msg)
                 raise ESClientException(msg)
-        
+
     def _get_client(self):
         """
-        Instantiate the 
-        :class:`Elasticsearch Client <elasticsearch.Elasticsearch>` object
+        Instantiate the
+        :class:`Elasticsearch Client <elasticsearch8.Elasticsearch>` object
         and populate :py:attr:`~es_client.Builder.client`
         """
         self.logger.debug('CLIENT ARGS = {}'.format(self.client_args))
-        self.client = elasticsearch.Elasticsearch(**self.client_args)
+        self.client = elasticsearch8.Elasticsearch(**self.client_args)
 
     def get_version(self):
         """Get the Elasticsearch version of the connected node"""
@@ -212,6 +192,5 @@ class Builder():
         return tuple(map(int, version))
 
     def test_connection(self):
-        """Connect and execute :meth:`elasticsearch.Elasticsearch.info`"""
+        """Connect and execute :meth:`elasticsearch8.Elasticsearch.info`"""
         return self.client.info()
-        

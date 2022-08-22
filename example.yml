@@ -1,0 +1,7 @@
+---
+elasticsearch:
+  client:
+    hosts: "http://127.0.0.1:9200"
+  other_settings:
+    username: joe_user
+    password: password

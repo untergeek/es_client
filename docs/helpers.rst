@@ -1,7 +1,7 @@
 .. _helpers:
 
-Helper Methods and Classes
-==========================
+Helper Methods
+--------------
 
 .. automodule:: es_client.helpers.utils
    :members:
