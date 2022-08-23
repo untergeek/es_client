@@ -1,6 +1,5 @@
 import os
 from unittest import TestCase
-from ..unit import FileTestCase
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
 

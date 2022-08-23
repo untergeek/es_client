@@ -57,7 +57,7 @@ class Builder():
         if not isinstance(config, dict):
             raise ConfigurationError('Must supply dictionary.  You supplied: "{0}" which is "{1}"'.format(config, type(config)))
         if not 'elasticsearch' in config:
-            self.logger.warn('No "elasticsearch" setting in supplied configuration.  Using defaults.')
+            self.logger.warning('No "elasticsearch" setting in supplied configuration.  Using defaults.')
             config['elasticsearch'] = {}
         else:
             config = prune_nones(config)
@@ -160,7 +160,7 @@ class Builder():
         """
         v = self.get_version()
         if self.skip_version_test:
-            self.logger.warn('Skipping Elasticsearch version checks')
+            self.logger.warning('Skipping Elasticsearch version checks')
         else:
             self.logger.debug(
                 'Detected version {0}'.format('.'.join(map(str,v)))

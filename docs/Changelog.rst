@@ -3,6 +3,15 @@
 Changelog
 =========
 
+8.0.1 (23 August 2022)
+----------------------
+
+**Changes**
+
+  * Update test platform from ancient ``nose`` and ``UnitTest`` framework to use
+    ``pytest``. This also allows the client to run on Python 3.10.
+  * Update ``README.rst`` so both GitHub and PyPi reflects what's in the documentation.
+
 8.0.0 (22 August 2022)
 ----------------------
 
