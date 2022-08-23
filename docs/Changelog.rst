@@ -3,6 +3,14 @@
 Changelog
 =========
 
+8.0.4 (23 August 2022)
+----------------------
+
+**Changes**
+
+  * Hopefully the last niggling detail. Removed erroneous reference to AWS ES
+    and ``boto3`` compatibility from the description sent to PyPi.
+
 8.0.3 (23 August 2022)
 ----------------------
 
