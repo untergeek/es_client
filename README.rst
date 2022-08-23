@@ -4,7 +4,7 @@ es_client
 =========
 
 You may wonder why this even exists, as at first glance it doesn't seem to make
-anything any easier than just using :class:`elasticsearch8.Elasticsearch` to
+anything any easier than just using the elasticsearch8 Python module to
 build a client connection.  I needed to be able to reuse the more complex
 schema validation bits I was employing, namely:
 
