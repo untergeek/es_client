@@ -3,6 +3,17 @@
 Changelog
 =========
 
+8.0.3 (23 August 2022)
+----------------------
+
+**Changes**
+
+  * Added ``setup_requires`` section to ``setup.cfg``. ``es_client`` doesn't
+    _need_ to have ``setuptools`` to install.
+  * Unpinned from top-level version of ``setuptools`` to allow anything
+    greater than ``setuptools>=59.0.1`` to fit with Curator's need for
+    ``cx_Freeze``, which can't currently use ``setuptools>60.10.0``
+
 8.0.2 (23 August 2022)
 ----------------------
 
