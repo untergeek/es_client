@@ -3,6 +3,13 @@
 Changelog
 =========
 
+8.0.2 (23 August 2022)
+----------------------
+
+**Changes**
+
+  * Several more doc fixes to make things work on ReadTheDocs.io
+
 8.0.1 (23 August 2022)
 ----------------------
 

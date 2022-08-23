@@ -3,6 +3,8 @@
 es_client
 =========
 
+https://es-client.readthedocs.io/
+
 You may wonder why this even exists, as at first glance it doesn't seem to make
 anything any easier than just using the elasticsearch8 Python module to
 build a client connection.  I needed to be able to reuse the more complex
