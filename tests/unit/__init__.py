@@ -3,6 +3,7 @@ import random
 import shutil
 import string
 import tempfile
+import pytest
 from unittest import TestCase
 
 def random_directory():
@@ -12,9 +13,8 @@ def random_directory():
         os.makedirs(directory)
     return directory
 
-class FileTestCase(TestCase):
-    def setUp(self):
-        super(FileTestCase, self).setUp()
+class FileTestObj(object):
+    def __init__(self):
         self.args = {}
         dirname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
         filename = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
@@ -34,9 +34,11 @@ class FileTestCase(TestCase):
         with open(self.args['filename'], 'w') as f:
             f.write(self.written_value)
 
-    def tearDown(self):
+    def teardown(self):
         if os.path.exists(self.args['tmpdir']):
             shutil.rmtree(self.args['tmpdir'])
+        if os.path.exists(self.args['configdir']):
+            shutil.rmtree(self.args['configdir'])
 
     def write_config(self, fname, data):
         with open(fname, 'w') as f:
