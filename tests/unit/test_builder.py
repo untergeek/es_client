@@ -1,6 +1,5 @@
 import certifi
 from unittest import TestCase
-from . import FileTestCase
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError, MissingArgument
 from mock import Mock, patch

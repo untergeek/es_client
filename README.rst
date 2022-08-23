@@ -4,19 +4,18 @@ es_client
 =========
 
 You may wonder why this even exists, as at first glance it doesn't seem to make
-anything any easier than just using ``elasticsearch.Elasticsearch()`` to
+anything any easier than just using :class:`elasticsearch8.Elasticsearch` to
 build a client connection.  I needed to be able to reuse the more complex
 schema validation bits I was employing, namely:
 
 * ``master_only`` detection
-* AWS IAM credential collection via ``boto3.session.Session``
 * Elasticsearch version checking and validation, and the option to skip this.
 * Configuration value validation, including file paths for SSL certificates,
   meaning:
 
   * No unknown keys or unacceptable parameter values are accepted
-  * Acceptable values and ranges are established--and easy to amend, if
-    necessary.
+  * Acceptable values and ranges are established (where known)--and easy to
+    amend, if necessary.
 
 So, if you don't need these, then this library probably isn't what you're
 looking for.  If you want these features, then you've come to the right place.
@@ -30,14 +29,15 @@ Example Usage
 
     config = {
         'elasticsearch': {
-            'master_only': True,
             'client': {
-                'hosts': '10.0.0.123',
-                'use_ssl': True,
+                'hosts': 'https://10.0.0.123:9200',
                 'ca_certs': '/etc/elasticsearch/certs/ca.crt',
+                'request_timeout': 60,
+            },
+            'other_settings': {
+                'master_only': True,
                 'username': 'joe_user',
                 'password': 'password',
-                'timeout': 60,
             }
         }
     }
@@ -53,14 +53,14 @@ Additionally, you can read from a YAML configuration file:
 
     ---
     elasticsearch:
-      master_only: true
       client:
-        hosts: 10.0.0.123
-        use_ssl: true
+        hosts: https://10.0.0.123:9200
         ca_certs: /etc/elasticsearch/certs/ca.crt
+        request_timeout: 60
+      other_settings:
+        master_only: true
         username: joe_user
         password: password
-        timeout: 60
 
 ::
 
