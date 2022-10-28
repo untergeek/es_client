@@ -3,6 +3,15 @@
 Changelog
 =========
 
+8.0.5 (28 October 2022)
+-----------------------
+
+**Changes**
+
+  * Version bumped `elasticsearch8` module to 8.4.3
+  * Version bumped `certifi` module to 2022.9.24
+  * Added Docker tests for Elasticsearch 8.4.3
+
 8.0.4 (23 August 2022)
 ----------------------
 
