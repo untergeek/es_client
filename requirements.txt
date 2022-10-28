@@ -1,5 +1,5 @@
-elasticsearch8==8.3.3
+elasticsearch8==8.4.3
 pyyaml==6.0.0
-certifi>=2022.6.15
+certifi>=2022.9.24
 voluptuous>=0.13.1
 six>=1.16.0
