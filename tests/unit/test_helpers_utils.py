@@ -3,7 +3,7 @@ import pytest
 from unittest import TestCase
 from . import FileTestObj
 from es_client.exceptions import ConfigurationError
-from es_client.helpers.utils import ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths
+from es_client.helpers.utils import ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths, verify_url_schema
 
 DEFAULT = {
     'elasticsearch': {
@@ -120,3 +120,16 @@ class TestEnvVars:
         with pytest.raises(ConfigurationError):
             get_yaml(obj.args['configfile'])
         obj.teardown()
+
+class TestVerifyURLSchema:
+    def test_full_schema(self):
+        url = 'https://127.0.0.1:9200'
+        assert verify_url_schema(url) == url
+    def test_http_schema_no_port(self):
+        http_port = '80'
+        url = 'http://127.0.0.1'
+        assert verify_url_schema(url) == 'http://127.0.0.1' + ':' + http_port
+    def test_https_schema_no_port(self):
+        https_port = '443'
+        url = 'https://127.0.0.1'
+        assert verify_url_schema(url) == 'https://127.0.0.1' + ':' + https_port
