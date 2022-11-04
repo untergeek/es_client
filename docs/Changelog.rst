@@ -15,6 +15,7 @@ using this so far as I know, so it shouldn't affect anyone in a big way.
     read and verify a YAML `configfile` if provided without needing to do any other steps now.
   * `Builder.client_args` is not a dictionary any more, but a subclass with regular attributes.
     Yes, you can get and set attributes however you like now:
+    
     .. code-block:: python
 
       b = Builder(configdict=mydict, autoconnect=False)
