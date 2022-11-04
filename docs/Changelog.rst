@@ -38,7 +38,7 @@ using this so far as I know, so it shouldn't affect anyone in a big way.
     command-line options, and then export a ``configdict`` based on these objects to ``Builder``, as
     you can see in the new sample script ``cli_example.py`` for overriding a config file with
     command-line settings.
-  * Added _sample_ CLI override capacity using ``click``. This will make Curator and other projects
+  * Added *sample* CLI override capacity using ``click``. This will make Curator and other projects
     easier. It's not even required, but a working example helps show the possibilities. You can
     run whatever you like with ``click``, or stick with config files, or whatever floats your boat.
   * The above change also means pulling in ``click`` as a dependency.
