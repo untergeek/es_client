@@ -11,9 +11,9 @@ Changelog
 Yeah. I know. It's not semver, but I don't care. This is a needed improvement, and I'm the only one
 using this so far as I know, so it shouldn't affect anyone in a big way.
 
-  * `Builder` now will not work unless you provide either a `configdict` or `configfile`. It will
-    read and verify a YAML `configfile` if provided without needing to do any other steps now.
-  * `Builder.client_args` is not a dictionary any more, but a subclass with regular attributes.
+  * ``Builder`` now will not work unless you provide either a ``configdict`` or ``configfile``. It will
+    read and verify a YAML ``configfile`` if provided without needing to do any other steps now.
+  * ``Builder.client_args`` is not a dictionary any more, but a subclass with regular attributes.
     Yes, you can get and set attributes however you like now:
     
     .. code-block:: python
@@ -24,25 +24,25 @@ using this so far as I know, so it shouldn't affect anyone in a big way.
       print('Updated hosts = %s' % b.client_args.hosts)
       b.connect()
 
-    Yes, this will effectively change the entry for `hosts` and connect to it instead of whatever was provided.
-    You can still get a full `dict` of the client args with `Builder.client_args.asdict()`
-  * `Builder.other_args` (reading in `other_settings` from the config) now works the same as
-    `Builder.client_args`. See the above for more info.
+    Yes, this will effectively change the entry for ``hosts`` and connect to it instead of whatever was provided.
+    You can still get a full ``dict`` of the client args with ``Builder.client_args.asdict()``
+  * ``Builder.other_args`` (reading in ``other_settings`` from the config) now works the same as
+    ``Builder.client_args``. See the above for more info.
 
 **Changes**
 
-  * Add new classes `ClientArgs` and `OtherArgs`. Using classes like these make setting defaults,
+  * Add new classes ``ClientArgs`` and ``OtherArgs``. Using classes like these make setting defaults,
     updates, and changes super simple. Now everything is an attribute! And it's still super simple
-    to get a `dict` of settings back using `ClientArgs.asdict()` or `OtherArgs.asdict()`. This
+    to get a ``dict`` of settings back using ``ClientArgs.asdict()`` or ``OtherArgs.asdict()``. This
     change makes it super simple to create this kind of object, override settings from a default or
-    command-line options, and then export a `configdict` based on these objects to `Builder`, as
-    you can see in the new sample script `cli_example.py` for overriding a config file with
+    command-line options, and then export a ``configdict`` based on these objects to ``Builder``, as
+    you can see in the new sample script ``cli_example.py`` for overriding a config file with
     command-line settings.
-  * Added _sample_ CLI override capacity using `click`. This will make Curator and other projects
+  * Added _sample_ CLI override capacity using ``click``. This will make Curator and other projects
     easier. It's not even required, but a working example helps show the possibilities. You can
-    run whatever you like with `click`, or stick with config files, or whatever floats your boat.
-  * The above change also means pulling in `click` as a dependency.
-  * Moved some methods out of `Builder` to be functions in `es_client.helpers.utils` instead.
+    run whatever you like with ``click``, or stick with config files, or whatever floats your boat.
+  * The above change also means pulling in ``click`` as a dependency.
+  * Moved some methods out of ``Builder`` to be functions in ``es_client.helpers.utils`` instead.
   * Updated tests to work with all of these changes, and added new ones for new functions.
 
 8.0.5 (28 October 2022)
