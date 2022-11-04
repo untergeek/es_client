@@ -26,7 +26,7 @@ class TestCheckMaster(TestCase):
                 }
             }
         }
-        obj = Builder(local_conf, autoconnect=False)
+        obj = Builder(configdict=local_conf, autoconnect=False)
         obj._get_client()
         self.assertRaises(ConfigurationError, obj._check_master)
     def test_exit_if_not_master(self):
@@ -38,18 +38,18 @@ class TestCheckMaster(TestCase):
 
 class TestCheckVersion(TestCase):
     def test_skip_version_check(self):
-        obj = Builder(config, autoconnect=False, version_min=(98,98,98), version_max=(99,99,99))
+        obj = Builder(configdict=config, autoconnect=False, version_min=(98,98,98), version_max=(99,99,99))
         obj.skip_version_test = True
         obj._get_client()
         self.assertIsNone(obj._check_version())
     def test_bad_version_raises(self):
-        obj = Builder(config, autoconnect=False, version_min=(98,98,98), version_max=(99,99,99))
+        obj = Builder(configdict=config, autoconnect=False, version_min=(98,98,98), version_max=(99,99,99))
         obj._get_client()
         self.assertRaises(ESClientException, obj._check_version)
 
 class TestConnection(TestCase):
     def test_client_info(self):
-        obj = Builder(config)
+        obj = Builder(configdict=config, autoconnect=True)
         client = obj.client
         expected = client.info()
         self.assertEqual(expected, obj.test_connection())

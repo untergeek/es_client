@@ -3,6 +3,7 @@ from unittest import TestCase
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError, MissingArgument
 from mock import Mock, patch
+from . import FileTestObj
 
 DEFAULT = {
     'elasticsearch': {
@@ -12,22 +13,38 @@ DEFAULT = {
     }
 }
 
+YAMLCONFIG = ('---\n'
+'elasticsearch:\n'
+'  client:\n'
+'    hosts:\n'
+'      - {0}\n')
+
 class TestInit(TestCase):
     def test_non_dict_passed(self):
-        self.assertRaises(ConfigurationError, Builder, 'string', autoconnect=False)
+        self.assertRaises(ConfigurationError, Builder, configdict='string')
+    def test_read_config_file_old(self):
+        es_url = 'http://127.0.0.1:9200'
+        # Build
+        file_obj = FileTestObj()
+        file_obj.write_config(file_obj.args['configfile'], YAMLCONFIG.format(es_url))
+        # Test
+        build_obj = Builder(configfile=file_obj.args['configfile'])
+        assert build_obj.client_args.hosts[0] == es_url
+        # Teardown
+        file_obj.teardown()
     def test_assign_defaults(self):
-        obj = Builder({}, autoconnect=False)
-        self.assertEqual(obj.client_args['hosts'], ['http://127.0.0.1:9200'])
+        obj = Builder(configdict={})
+        self.assertEqual(obj.client_args.hosts, None)
     def test_raises_for_both_hosts_and_cloud_id(self):
         test = {
             'elasticsearch': {
                 'client': {
-                    'hosts': ['http://127.0.0.2:9200'],
+                    'hosts': ['http://10.1.2.3:4567'],
                     'cloud_id': 'foo:bar'
                 }
             }
         }
-        self.assertRaises(ConfigurationError, Builder, test, autoconnect=False)
+        self.assertRaises(ConfigurationError, Builder, configdict=test)
     def test_remove_default_hosts_when_cloud_id(self):
         test = {
             'elasticsearch': {
@@ -37,17 +54,17 @@ class TestInit(TestCase):
                 }
             }
         }
-        obj = Builder(test, autoconnect=False)
-        self.assertRaises(KeyError, lambda: obj.client_args['hosts'])
+        obj = Builder(configdict=test)
+        self.assertEqual(None, obj.client_args.hosts)
 class TestAuth(TestCase):
     def test_user_but_no_pass(self):
-        obj = Builder(DEFAULT, autoconnect=False)
-        obj.other_args['username'] = 'test'
+        obj = Builder(configdict=DEFAULT)
+        obj.other_args.username = 'test'
         self.assertRaises(ConfigurationError, obj._check_basic_auth)
     def test_pass_but_no_user(self):
-        obj = Builder(DEFAULT, autoconnect=False)
-        obj.client_args['hosts'] = ['http://127.0.0.1:9200']
-        obj.other_args['password'] = 'test'
+        obj = Builder(configdict=DEFAULT)
+        obj.client_args.hosts = ['http://127.0.0.1:9200']
+        obj.other_args.password = 'test'
         self.assertRaises(ConfigurationError, obj._check_basic_auth)
     def test_id_but_no_api_key(self):
         test = {
@@ -59,7 +76,7 @@ class TestAuth(TestCase):
                 },
                 'client': {'hosts': ['http://127.0.0.1:9200']}}
         }
-        self.assertRaises(ConfigurationError, Builder, test, autoconnect=False)
+        self.assertRaises(ConfigurationError, Builder, configdict=test)
     def test_api_key_but_no_id(self):
         test = {
             'elasticsearch': {
@@ -70,7 +87,7 @@ class TestAuth(TestCase):
                 },
                 'client': {'hosts': ['http://127.0.0.1:9200']}}
         }
-        self.assertRaises(ConfigurationError, Builder, test, autoconnect=False)
+        self.assertRaises(ConfigurationError, Builder, configdict=test)
     def test_proper_api_key(self):
         id = 'foo'
         api_key = 'bar'
@@ -84,23 +101,23 @@ class TestAuth(TestCase):
                 },
                 'client': {'hosts': ['http://127.0.0.1:9200']}}
         }
-        obj = Builder(test, autoconnect=False)
-        self.assertEqual(obj.client_args['api_key'], (id, api_key))
+        obj = Builder(configdict=test)
+        self.assertEqual(obj.client_args.api_key, (id, api_key))
     def test_basic_auth_tuple(self):
         u = 'username'
         p = 'password'
-        obj = Builder(DEFAULT, autoconnect=False)
-        obj.other_args[u] = u
-        obj.other_args[p] = p
+        obj = Builder(configdict=DEFAULT)
+        obj.other_args.username = u
+        obj.other_args.password = p
         obj._check_basic_auth()
-        self.assertFalse(u in obj.client_args)
-        self.assertFalse(p in obj.client_args)
-        self.assertEqual((u, p), obj.client_args['basic_auth'])
+        self.assertFalse(u in obj.client_args.asdict())
+        self.assertFalse(p in obj.client_args.asdict())
+        self.assertEqual((u, p), obj.client_args.basic_auth)
 
 class TestCheckSSL(TestCase):
     def test_certifi(self):
         https = DEFAULT
         https['elasticsearch']['client']['hosts'] = 'https://127.0.0.1:9200'
-        obj = Builder(https, autoconnect=False)
+        obj = Builder(configdict=https)
         obj._check_ssl()
-        self.assertEqual(certifi.where(), obj.client_args['ca_certs'])
+        self.assertEqual(certifi.where(), obj.client_args.ca_certs)

@@ -45,6 +45,27 @@ def read_file(myfile):
         logger.error(msg)
         raise ConfigurationError(msg)
 
+def check_config(config):
+    """
+    Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``other_settings`` and
+    ``client`` are in ``config`` before passing it to
+    :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
+    """
+    if not isinstance(config, dict):
+        raise ConfigurationError('Must supply dictionary.  You supplied: "{0}" which is "{1}"'.format(config, type(config)))
+    if not 'elasticsearch' in config:
+        logger.warning('No "elasticsearch" setting in supplied configuration.  Using defaults.')
+        config['elasticsearch'] = {}
+    else:
+        config = prune_nones(config)
+    for key in ['client', 'other_settings']:
+        if key not in config['elasticsearch']:
+            config['elasticsearch'][key] = {}
+        else:
+            config['elasticsearch'][key] = prune_nones(config['elasticsearch'][key])
+    return SchemaCheck(config['elasticsearch'], config_schema(),
+        'Elasticsearch Configuration', 'elasticsearch').result()
+
 def verify_ssl_paths(args):
     """
     Verify that the various certificate/key paths are readable.  The
@@ -96,3 +117,16 @@ def get_yaml(path):
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as err:
         raise ConfigurationError(
             'Unable to parse YAML file. Error: {0}'.format(err))
+
+def verify_url_schema(url):
+    """Ensure that a valid URL schema (HTTP[S]://URL:PORT) is used"""
+    parts = url.split(':')
+    if len(parts) < 3:
+        # We do not have a port
+        if parts[0].lower() == 'https':
+            port = '443'
+        else:
+            port = '80'
+    else:
+        port = parts[2]
+    return parts[0] + ':' + parts[1] + ':' + port

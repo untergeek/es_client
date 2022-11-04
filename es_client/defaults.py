@@ -4,6 +4,23 @@ from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 VERSION_MIN=(8,0,0)
 VERSION_MAX=(8,99,99)
 
+CLIENT_SETTINGS = [
+    'hosts', 'cloud_id', 'api_key', 'basic_auth', 'bearer_auth', 'opaque_id', 'headers',
+    'connections_per_node', 'http_compress', 'verify_certs', 'ca_certs', 'client_cert',
+    'client_key', 'ssl_assert_hostname', 'ssl_assert_fingerprint', 'ssl_version',
+    'ssl_context', 'ssl_show_warn', 'transport_class', 'request_timeout', 'node_class',
+    'node_pool_class', 'randomize_nodes_in_pool', 'node_selector_class',
+    'dead_node_backoff_factor', 'max_dead_node_backoff', 'serializer', 'serializers',
+    'default_mimetype', 'max_retries', 'retry_on_status', 'retry_on_timeout',
+    'sniff_on_start', 'sniff_before_requests', 'sniff_on_node_failures', 'sniff_timeout',
+    'min_delay_between_sniffing', 'sniffed_node_callback', 'meta_header',
+    'host_info_callback', '_transport',
+]
+
+OTHER_SETTINGS = [
+    'master_only', 'skip_version_test', 'username', 'password', 'api_key'
+]
+
 # All elasticsearch client options, with a few additional arguments.
 def config_schema():
 
@@ -21,7 +38,7 @@ def config_schema():
                 }
             },
             Optional('client', default={}): {
-                Optional('hosts', default='http://127.0.0.1:9200'): Any(None, list, *string_types),
+                Optional('hosts', default=None): Any(None, list, *string_types),
                 Optional('cloud_id', default=None): Any(None, *string_types),
                 Optional('api_key'): Any(None, tuple),
                 Optional('basic_auth'): Any(None, tuple),
@@ -150,3 +167,9 @@ def version_max():
 
 def version_min():
     return VERSION_MIN
+
+def client_settings():
+    return CLIENT_SETTINGS
+
+def other_settings():
+    return OTHER_SETTINGS
