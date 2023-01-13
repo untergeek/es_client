@@ -191,8 +191,8 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 # intersphinx_mapping = {'https://docs.python.org/': None}
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.9', None),
-    'elasticsearch': ('http://elasticsearch-py.readthedocs.io/en/v8.3.3', None),
+    'python': ('https://docs.python.org/3.10', None),
+    'elasticsearch': ('http://elasticsearch-py.readthedocs.io/en/v8.6.0', None),
     'voluptuous': ('https://alecthomas.github.io/voluptuous/docs/_build/html/', None),
 }
 
