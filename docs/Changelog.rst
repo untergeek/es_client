@@ -3,6 +3,27 @@
 Changelog
 =========
 
+8.6.0 (11 Janary 2023)
+----------------------
+
+**Changes**
+
+  * Version bump ``elasticsearch8==8.6.0``
+  * Add Docker test environment for Elasticsearch 8.6.0
+
+**Fixes**
+
+  * Docker test environment for 8.5.3 was still running Elasticsearch version 8.4.3. This has been corrected.
+
+8.5.0 (11 January 2023)
+-----------------------
+
+**Changes**
+
+  * Version bump ``elasticsearch8==8.5.3``
+  * Version bump ``certifi>=2022.12.7``
+  * Add Docker test env for Elasticsearch 8.5.3
+
 8.1.0 (3 November 2022)
 -----------------------
 
@@ -15,7 +36,7 @@ using this so far as I know, so it shouldn't affect anyone in a big way.
     read and verify a YAML ``configfile`` if provided without needing to do any other steps now.
   * ``Builder.client_args`` is not a dictionary any more, but a subclass with regular attributes.
     Yes, you can get and set attributes however you like now:
-    
+
     .. code-block:: python
 
       b = Builder(configdict=mydict, autoconnect=False)
