@@ -48,6 +48,14 @@ class TestCheckVersion(TestCase):
         self.assertRaises(ESClientException, obj._check_version)
 
 class TestConnection(TestCase):
+    def test_non_dict_passed(self):
+        obj = Builder(configdict='string', autoconnect=True)
+        client = obj.client
+        expected = client.info()
+        self.assertEqual(expected, obj.test_connection())
+    def test_incomplete_dict_passed(self):
+        cfg = {'elasticsearch': {'client': {'hosts': None}}}
+        self.assertRaises(ValueError, Builder, configdict=cfg, autoconnect=True)
     def test_client_info(self):
         obj = Builder(configdict=config, autoconnect=True)
         client = obj.client
