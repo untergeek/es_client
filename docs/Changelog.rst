@@ -3,6 +3,13 @@
 Changelog
 =========
 
+8.6.0.post1 (17 January 2023)
+-----------------------------
+
+**Changes**
+
+  * Python prefers its own version to SemVer, so there are no changes but one of nomenclature.
+
 8.6.0+build.2 (17 January 2023)
 -------------------------------
 
