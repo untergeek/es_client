@@ -3,6 +3,15 @@
 Changelog
 =========
 
+8.6.0+build.2 (17 January 2023)
+-------------------------------
+
+**Changes**
+
+  * Improve the client configuration parsing behavior. If absolutely no config is given, then set
+    ``hosts`` to ``http://127.0.0.1:9200``, which mirrors the ``elasticsearch8`` client default
+    behavior.
+
 8.6.0 (11 Janary 2023)
 ----------------------
 

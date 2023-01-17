@@ -8,6 +8,8 @@ from es_client.helpers.schemacheck import SchemaCheck
 
 logger = logging.getLogger(__name__)
 
+ES_DEFAULT = {'elasticsearch':{'client':{'hosts':'http://127.0.0.1:9200'}}}
+
 def prune_nones(mydict):
     """
     Remove keys from `mydict` whose values are `None`
@@ -48,22 +50,25 @@ def read_file(myfile):
 def check_config(config):
     """
     Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``other_settings`` and
-    ``client`` are in ``config`` before passing it to
+    ``client`` as contained in ``config`` before passing it (or empty defaults) to
     :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
     """
     if not isinstance(config, dict):
-        raise ConfigurationError('Must supply dictionary.  You supplied: "{0}" which is "{1}"'.format(config, type(config)))
-    if not 'elasticsearch' in config:
+        logger.warning('Elasticsearch client configuration must be provided as a dictionary.')
+        logger.warning('You supplied: "%s" which is "%s".', config, type(config))
+        logger.warning('Using default values.')
+        es_settings = ES_DEFAULT
+    elif not 'elasticsearch' in config:
         logger.warning('No "elasticsearch" setting in supplied configuration.  Using defaults.')
-        config['elasticsearch'] = {}
+        es_settings = ES_DEFAULT
     else:
-        config = prune_nones(config)
+        es_settings = config
     for key in ['client', 'other_settings']:
-        if key not in config['elasticsearch']:
-            config['elasticsearch'][key] = {}
+        if key not in es_settings['elasticsearch']:
+            es_settings['elasticsearch'][key] = {}
         else:
-            config['elasticsearch'][key] = prune_nones(config['elasticsearch'][key])
-    return SchemaCheck(config['elasticsearch'], config_schema(),
+            es_settings['elasticsearch'][key] = prune_nones(es_settings['elasticsearch'][key])
+    return SchemaCheck(es_settings['elasticsearch'], config_schema(),
         'Elasticsearch Configuration', 'elasticsearch').result()
 
 def verify_ssl_paths(args):

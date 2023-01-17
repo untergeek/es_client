@@ -20,8 +20,6 @@ YAMLCONFIG = ('---\n'
 '      - {0}\n')
 
 class TestInit(TestCase):
-    def test_non_dict_passed(self):
-        self.assertRaises(ConfigurationError, Builder, configdict='string')
     def test_read_config_file_old(self):
         es_url = 'http://127.0.0.1:9200'
         # Build
@@ -34,7 +32,7 @@ class TestInit(TestCase):
         file_obj.teardown()
     def test_assign_defaults(self):
         obj = Builder(configdict={})
-        self.assertEqual(obj.client_args.hosts, None)
+        self.assertEqual(obj.client_args.hosts, ['http://127.0.0.1:9200'])
     def test_raises_for_both_hosts_and_cloud_id(self):
         test = {
             'elasticsearch': {
