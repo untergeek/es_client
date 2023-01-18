@@ -1,3 +1,5 @@
+"""Sample CLI script that will get a client using both config file and CLI args/options"""
+# pylint: disable=broad-except, no-value-for-parameter, invalid-name, redefined-builtin
 import click
 from es_client.builder import ClientArgs, OtherArgs, Builder
 from es_client.helpers.utils import get_yaml, check_config, prune_nones, verify_url_schema
@@ -71,7 +73,7 @@ def run(
         }
     })
     # Remove `api_key` root key if `id` and `api_key` are both None
-    if id == None and api_key == None:
+    if id is None and api_key is None:
         del cli_other['api_key']
 
     # If hosts are in the config file, but cloud_id is specified at the command-line,

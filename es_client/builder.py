@@ -1,11 +1,12 @@
+"""Builder and associated Classes"""
+# pylint: disable=protected-access, attribute-defined-outside-init, no-member, import-error
+# The import-error here is to avoid false-positives for the local import
 from typing import Dict
-import elasticsearch8
 import logging
-import os
-from es_client.defaults import config_schema, version_min, version_max, client_settings, other_settings
-from es_client.exceptions import ConfigurationError, ESClientException, MissingArgument, NotMaster
-from es_client.helpers.schemacheck import SchemaCheck
-from es_client.helpers.utils import ensure_list, prune_nones, verify_ssl_paths, get_yaml, check_config
+import elasticsearch8
+from es_client.defaults import VERSION_MIN, VERSION_MAX, client_settings, other_settings
+from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
+from es_client.helpers.utils import ensure_list, prune_nones, verify_ssl_paths, get_yaml, check_config, get_version
 
 class ClientArgs(Dict):
     """
@@ -75,7 +76,7 @@ class Builder():
     :attr client_args: Settings used to connect to Elasticsearch.
     :attr other_args: Settings apart from client_args (though some are used to build client_args)
     """
-    def __init__(self, configdict=None, configfile=None, autoconnect=False, version_min=version_min(), version_max=version_max()):
+    def __init__(self, configdict=None, configfile=None, autoconnect=False, version_min=VERSION_MIN, version_max=VERSION_MAX):
         self.logger = logging.getLogger(__name__)
         if configfile:
             self.config = check_config(get_yaml(configfile))
@@ -105,7 +106,7 @@ class Builder():
     def validate(self):
         """Validate that what has been supplied is acceptable to attempt a connection"""
         # Configuration pre-checks
-        if self.client_args.hosts != None:
+        if self.client_args.hosts is not None:
             self.client_args.hosts = ensure_list(self.client_args.hosts)
         self._check_basic_auth()
         self._check_api_key()
@@ -138,14 +139,14 @@ class Builder():
         other_args = self.other_args.asdict()
         if 'api_key' in other_args:
             if 'id' or 'api_key' in other_args['api_key']:
-                id = other_args['api_key']['id'] if 'id' in other_args['api_key'] else None
+                api_id = other_args['api_key']['id'] if 'id' in other_args['api_key'] else None
                 api_key = other_args['api_key']['api_key'] if 'api_key' in other_args['api_key'] else None
-                if id is None and api_key is None:
+                if api_id is None and api_key is None:
                     pass
-                elif id is None or api_key is None:
+                elif api_id is None or api_key is None:
                     raise ConfigurationError('Must populate both id and api_key, or leave both empty')
                 else:
-                    self.client_args.api_key = (id, api_key)
+                    self.client_args.api_key = (api_id, api_key)
 
     def _check_cloud_id(self):
         """Remove ``hosts`` key if cloud_id provided"""
@@ -204,8 +205,8 @@ class Builder():
             if 'hosts' in self.client_args.asdict() and isinstance(self.client_args.hosts, list):
                 if len(self.client_args.hosts) > 1:
                     raise ConfigurationError(
-                        '"master_only" cannot be True if more than one host is '
-                        'specified. Hosts = {0}'.format(self.client_args.hosts)
+                        f'"master_only" cannot be True if more than one host is '
+                        f'specified. Hosts = {self.client_args.hosts}'
                     )
                 if not self.is_master:
                     self.logger.info(msg)
@@ -215,15 +216,13 @@ class Builder():
         """
         Compare the Elasticsearch cluster version to our acceptable versions
         """
-        v = self.get_version()
+        v = get_version(self.client)
         if self.skip_version_test:
             self.logger.warning('Skipping Elasticsearch version checks')
         else:
-            self.logger.debug(
-                'Detected version {0}'.format('.'.join(map(str,v)))
-            )
+            self.logger.debug("Detected version %s", '.'.join(map(str,v)))
             if v >= self.version_max or v < self.version_min:
-                msg = 'Elasticsearch version {0} not supported'.format('.'.join(map(str,v)))
+                msg = f"Elasticsearch version {'.'.join(map(str,v))} not supported"
                 self.logger.error(msg)
                 raise ESClientException(msg)
 
@@ -235,20 +234,8 @@ class Builder():
         """
         # Eliminate any remaining "None" entries from the client arguments before building
         client_args = prune_nones(self.client_args.asdict())
-        self.logger.debug('CLIENT ARGS = {}'.format(client_args))
+        self.logger.debug('CLIENT ARGS = %s', client_args)
         self.client = elasticsearch8.Elasticsearch(**client_args)
-
-    def get_version(self):
-        """Get the Elasticsearch version of the connected node"""
-        version = self.client.info()['version']['number']
-        # Split off any -dev, -beta, or -rc tags
-        version = version.split('-')[0]
-        # Only take SEMVER (drop any fields over 3)
-        if len(version.split('.')) > 3:
-            version = version.split('.')[:-1]
-        else:
-            version = version.split('.')
-        return tuple(map(int, version))
 
     def test_connection(self):
         """Connect and execute :meth:`elasticsearch8.Elasticsearch.info`"""

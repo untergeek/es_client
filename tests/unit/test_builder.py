@@ -1,8 +1,10 @@
-import certifi
+"""Test helpers.schemacheck"""
+# pylint: disable=protected-access, import-error
+# add import-error here ^^^ to avoid false-positives for the local import
 from unittest import TestCase
+import certifi
 from es_client.builder import Builder
-from es_client.exceptions import ConfigurationError, MissingArgument
-from mock import Mock, patch
+from es_client.exceptions import ConfigurationError
 from . import FileTestObj
 
 DEFAULT = {
@@ -20,7 +22,9 @@ YAMLCONFIG = ('---\n'
 '      - {0}\n')
 
 class TestInit(TestCase):
+    """Test initializing a Builder object"""
     def test_read_config_file_old(self):
+        """Ensure that the value of es_url is passed to hosts"""
         es_url = 'http://127.0.0.1:9200'
         # Build
         file_obj = FileTestObj()
@@ -31,9 +35,11 @@ class TestInit(TestCase):
         # Teardown
         file_obj.teardown()
     def test_assign_defaults(self):
+        """Ensure that the default URL is passed to hosts when an empty config dict is passed"""
         obj = Builder(configdict={})
         self.assertEqual(obj.client_args.hosts, ['http://127.0.0.1:9200'])
     def test_raises_for_both_hosts_and_cloud_id(self):
+        """Ensure that ConfigurationError is Raised when both hosts and cloud_id are passed"""
         test = {
             'elasticsearch': {
                 'client': {
@@ -44,6 +50,7 @@ class TestInit(TestCase):
         }
         self.assertRaises(ConfigurationError, Builder, configdict=test)
     def test_remove_default_hosts_when_cloud_id(self):
+        """Ensure that only a default hosts url is removed when cloud_id is also passed"""
         test = {
             'elasticsearch': {
                 'client': {
@@ -55,16 +62,20 @@ class TestInit(TestCase):
         obj = Builder(configdict=test)
         self.assertEqual(None, obj.client_args.hosts)
 class TestAuth(TestCase):
+    """Test authentication methods"""
     def test_user_but_no_pass(self):
+        """Ensure ConfigurationError is Raised when username is provided but no password"""
         obj = Builder(configdict=DEFAULT)
         obj.other_args.username = 'test'
         self.assertRaises(ConfigurationError, obj._check_basic_auth)
     def test_pass_but_no_user(self):
+        """Ensure ConfigurationError is Raised when password is provided but no username"""
         obj = Builder(configdict=DEFAULT)
         obj.client_args.hosts = ['http://127.0.0.1:9200']
         obj.other_args.password = 'test'
         self.assertRaises(ConfigurationError, obj._check_basic_auth)
     def test_id_but_no_api_key(self):
+        """Ensure ConfigurationError is Raised when id is passed but no api_key"""
         test = {
             'elasticsearch': {
                 'other_settings': {
@@ -76,6 +87,7 @@ class TestAuth(TestCase):
         }
         self.assertRaises(ConfigurationError, Builder, configdict=test)
     def test_api_key_but_no_id(self):
+        """Ensure ConfigurationError is Raised when api_key is passed but no id"""
         test = {
             'elasticsearch': {
                 'other_settings': {
@@ -87,33 +99,37 @@ class TestAuth(TestCase):
         }
         self.assertRaises(ConfigurationError, Builder, configdict=test)
     def test_proper_api_key(self):
-        id = 'foo'
+        """Ensure that API key value is assigned to client_args when a properly passed"""
+        api_id = 'foo'
         api_key = 'bar'
         test = {
             'elasticsearch': {
                 'other_settings': {
                     'api_key': {
-                        'id': id,
+                        'id': api_id,
                         'api_key': api_key
                     }
                 },
                 'client': {'hosts': ['http://127.0.0.1:9200']}}
         }
         obj = Builder(configdict=test)
-        self.assertEqual(obj.client_args.api_key, (id, api_key))
+        self.assertEqual(obj.client_args.api_key, (api_id, api_key))
     def test_basic_auth_tuple(self):
-        u = 'username'
-        p = 'password'
+        """Test basic_auth is set properly"""
+        usr = 'username'
+        pwd = 'password'
         obj = Builder(configdict=DEFAULT)
-        obj.other_args.username = u
-        obj.other_args.password = p
+        obj.other_args.username = usr
+        obj.other_args.password = pwd
         obj._check_basic_auth()
-        self.assertFalse(u in obj.client_args.asdict())
-        self.assertFalse(p in obj.client_args.asdict())
-        self.assertEqual((u, p), obj.client_args.basic_auth)
+        self.assertFalse(usr in obj.client_args.asdict())
+        self.assertFalse(pwd in obj.client_args.asdict())
+        self.assertEqual((usr, pwd), obj.client_args.basic_auth)
 
 class TestCheckSSL(TestCase):
+    """Ensure that certifi certificates are picked up"""
     def test_certifi(self):
+        """Ensure that the certifi.where() output matches what was inserted into client_args"""
         https = DEFAULT
         https['elasticsearch']['client']['hosts'] = 'https://127.0.0.1:9200'
         obj = Builder(configdict=https)
