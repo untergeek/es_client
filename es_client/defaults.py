@@ -1,3 +1,4 @@
+"""Define default values"""
 from six import string_types
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 
@@ -23,7 +24,7 @@ OTHER_SETTINGS = [
 
 # All elasticsearch client options, with a few additional arguments.
 def config_schema():
-
+    """Define the Schema for an ES client object"""
     # pylint: disable=no-value-for-parameter
     return Schema(
         {
@@ -163,13 +164,17 @@ def config_schema():
 
 
 def version_max():
+    """Return the max version"""
     return VERSION_MAX
 
 def version_min():
+    """Return the min version"""
     return VERSION_MIN
 
 def client_settings():
+    """Return the client settings"""
     return CLIENT_SETTINGS
 
 def other_settings():
+    """Return the other settings"""
     return OTHER_SETTINGS

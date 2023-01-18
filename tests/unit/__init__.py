@@ -1,12 +1,12 @@
+"""Functions and classes used for tests"""
 import os
 import random
 import shutil
 import string
 import tempfile
-import pytest
-from unittest import TestCase
 
 def random_directory():
+    """Create a random dictionary"""
     dirname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
     directory = tempfile.mkdtemp(suffix=dirname)
     if not os.path.exists(directory):
@@ -14,6 +14,7 @@ def random_directory():
     return directory
 
 class FileTestObj(object):
+    """All file tests will use this object"""
     def __init__(self):
         self.args = {}
         dirname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
@@ -31,15 +32,17 @@ class FileTestObj(object):
         self.args['configfile'] = os.path.join(self.args['configdir'], 'es_client.yml')
         self.args['filename'] = os.path.join(self.args['tmpdir'], filename)
         self.args['no_file_here'] = os.path.join(self.args['tmpdir'], 'not_created')
-        with open(self.args['filename'], 'w') as f:
+        with open(self.args['filename'], 'w', encoding='utf-8') as f:
             f.write(self.written_value)
 
     def teardown(self):
+        """Default teardown"""
         if os.path.exists(self.args['tmpdir']):
             shutil.rmtree(self.args['tmpdir'])
         if os.path.exists(self.args['configdir']):
             shutil.rmtree(self.args['configdir'])
 
     def write_config(self, fname, data):
-        with open(fname, 'w') as f:
+        """Write config to named file"""
+        with open(fname, 'w', encoding='utf-8') as f:
             f.write(data)

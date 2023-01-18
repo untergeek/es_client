@@ -1,6 +1,8 @@
+"""SchemaCheck class and associated functions"""
+# pylint: disable=protected-access, broad-except
 import logging
-from es_client.exceptions import ConfigurationError
 from re import sub
+from es_client.exceptions import ConfigurationError
 
 class SchemaCheck(object):
     """
@@ -23,12 +25,14 @@ class SchemaCheck(object):
 
         self.logger = logging.getLogger(__name__)
         # Set the Schema for validation...
-        self.logger.debug('Schema: {0}'.format(schema))
-        self.logger.debug('"{0}" config: {1}'.format(test_what, config))
+        self.logger.debug('Schema: %s', schema)
+        self.logger.debug('"%s" config: %s', test_what, config)
         self.config = config
         self.schema = schema
         self.test_what = test_what
         self.location = location
+        self.badvalue = 'no bad value yet'
+        self.error = 'No error yet'
 
     def __parse_error(self):
         """
@@ -49,26 +53,27 @@ class SchemaCheck(object):
             return value
         try:
             self.badvalue = get_badvalue(str(self.error).split()[-1], self.config)
-        except:
+        except Exception as exc:
+            self.logger.error('Unable to extract value: %s', exc)
             self.badvalue = '(could not determine)'
 
     def result(self):
         """
-        Return the result of the Schema test, if successful.  
+        Return the result of the Schema test, if successful.
         Otherwise, raise a :class:`ConfigurationError <es_client.exceptions.ConfigurationError>`
         """
         try:
             return self.schema(self.config)
-        except Exception as e:
+        except Exception as exc:
             try:
                 # pylint: disable=E1101
-                self.error = e.errors[0]
-            except:
-                self.error = '{0}'.format(e)
+                self.error = exc.errors[0]
+            except Exception as err:
+                self.logger.error('Could not parse exception: %s', err)
+                self.error = f'{exc}'
             self.__parse_error()
-            self.logger.error('Schema error: {0}'.format(self.error))
+            self.logger.error('Schema error: %s', self.error)
             raise ConfigurationError(
-                'Configuration: {0}: Location: {1}: Bad Value: "{2}", {3}. '
-                'Check configuration file.'.format(
-                    self.test_what, self.location, self.badvalue, self.error)
-            )
+                f'Configuration: {self.test_what}: Location: {self.location}: '
+                f'Bad Value: "{self.badvalue}", {self.error}. Check configuration file.'
+            ) from exc

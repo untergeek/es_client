@@ -3,6 +3,14 @@
 Changelog
 =========
 
+8.6.0.post2 (18 January 2023)
+-----------------------------
+
+**Changes**
+
+  * Move the ``get_version`` method to its own function so other programs can also use it.
+  * Pylint cleanup of most files
+
 8.6.0.post1 (17 January 2023)
 -----------------------------
 
