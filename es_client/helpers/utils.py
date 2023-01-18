@@ -1,12 +1,13 @@
+"""Helper Utility Functions"""
 import logging
 import os
-import yaml
 import re
+import yaml
 from es_client.defaults import config_schema
 from es_client.exceptions import ConfigurationError
 from es_client.helpers.schemacheck import SchemaCheck
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 ES_DEFAULT = {'elasticsearch':{'client':{'hosts':'http://127.0.0.1:9200'}}}
 
@@ -18,7 +19,7 @@ def prune_nones(mydict):
     :rtype: dict
     """
     # Test for `None` instead of existence or zero values will be caught
-    return dict([(k,v) for k, v in mydict.items() if v != None and v != 'None'])
+    return dict([(k,v) for k, v in mydict.items() if v is not None and v != 'None'])
 
 def ensure_list(data):
     """
@@ -39,13 +40,13 @@ def read_file(myfile):
     :rtype: str
     """
     try:
-        with open(myfile, 'r') as f:
+        with open(myfile, 'r', encoding='utf-8') as f:
             data = f.read()
         return data
-    except IOError as e:
-        msg = 'Unable to read file {0}. Exception: {1}'.format(myfile, e)
-        logger.error(msg)
-        raise ConfigurationError(msg)
+    except IOError as exc:
+        msg = f'Unable to read file {myfile}. Exception: {exc}'
+        LOGGER.error(msg)
+        raise ConfigurationError(msg) from exc
 
 def check_config(config):
     """
@@ -54,12 +55,12 @@ def check_config(config):
     :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
     """
     if not isinstance(config, dict):
-        logger.warning('Elasticsearch client configuration must be provided as a dictionary.')
-        logger.warning('You supplied: "%s" which is "%s".', config, type(config))
-        logger.warning('Using default values.')
+        LOGGER.warning('Elasticsearch client configuration must be provided as a dictionary.')
+        LOGGER.warning('You supplied: "%s" which is "%s".', config, type(config))
+        LOGGER.warning('Using default values.')
         es_settings = ES_DEFAULT
     elif not 'elasticsearch' in config:
-        logger.warning('No "elasticsearch" setting in supplied configuration.  Using defaults.')
+        LOGGER.warning('No "elasticsearch" setting in supplied configuration.  Using defaults.')
         es_settings = ES_DEFAULT
     else:
         es_settings = config
@@ -116,12 +117,8 @@ def get_yaml(path):
 
     try:
         return yaml.load(read_file(path), Loader=yaml.FullLoader)
-    # except yaml.scanner.ScannerError as err:
-    #     print('Unable to read/parse YAML file: {0}'.format(path))
-    #     print(err)
-    except (yaml.scanner.ScannerError, yaml.parser.ParserError) as err:
-        raise ConfigurationError(
-            'Unable to parse YAML file. Error: {0}'.format(err))
+    except (yaml.scanner.ScannerError, yaml.parser.ParserError) as exc:
+        raise ConfigurationError(f'Unable to parse YAML file. Error: {exc}') from exc
 
 def verify_url_schema(url):
     """Ensure that a valid URL schema (HTTP[S]://URL:PORT) is used"""
@@ -135,3 +132,15 @@ def verify_url_schema(url):
     else:
         port = parts[2]
     return parts[0] + ':' + parts[1] + ':' + port
+
+def get_version(client):
+    """Get the Elasticsearch version of the connected node"""
+    version = client.info()['version']['number']
+    # Split off any -dev, -beta, or -rc tags
+    version = version.split('-')[0]
+    # Only take SEMVER (drop any fields over 3)
+    if len(version.split('.')) > 3:
+        version = version.split('.')[:-1]
+    else:
+        version = version.split('.')
+    return tuple(map(int, version))
