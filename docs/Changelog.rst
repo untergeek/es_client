@@ -3,6 +3,15 @@
 Changelog
 =========
 
+8.6.0.post3 (19 January 2023)
+-----------------------------
+
+**Changes**
+
+  * Improve ``helpers.utils`` function ``verify_url_schema`` ability to catch malformed
+    URLs. Added tests to verify functionality.
+
+
 8.6.0.post2 (18 January 2023)
 -----------------------------
 

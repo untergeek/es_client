@@ -159,6 +159,21 @@ class TestVerifyURLSchema:
         https_port = '443'
         url = 'https://127.0.0.1'
         assert verify_url_schema(url) == 'https://127.0.0.1' + ':' + https_port
+    def test_bad_schema_no_port(self):
+        """A URL starting with other than http or https raises an exception w/o port"""
+        url = 'abcd://127.0.0.1'
+        with pytest.raises(ConfigurationError):
+            verify_url_schema(url)
+    def test_bad_schema_with_port(self):
+        """A URL starting with other than http or https raises an exception w/port"""
+        url = 'abcd://127.0.0.1:1234'
+        with pytest.raises(ConfigurationError):
+            verify_url_schema(url)
+    def test_bad_schema_too_many_colons(self):
+        """An invalid URL with too many colons raises an exception"""
+        url = 'http://127.0.0.1:1234:5678'
+        with pytest.raises(ConfigurationError):
+            verify_url_schema(url)
 
 class TestGetVersion:
     """Test the get_version function"""
