@@ -10,6 +10,12 @@ Changelog
 
   * Improve ``helpers.utils`` function ``verify_url_schema`` ability to catch malformed
     URLs. Added tests to verify functionality.
+  * Improve Docker test scripts. Now there's only one set of scripts in
+    ``docker_test/scripts``. ``create.sh`` requires a semver version of Elasticsearch
+    at the command-line, and it will build and launch a docker image based on that
+    version. For example, ``./create.sh 8.6.0`` will create a test image. Likewise,
+    ``destroy.sh`` will clean it up afterwards, and also remove the ``Dockerfile``
+    which is created from the ``Dockerfile.tmpl`` template.
 
 
 8.6.0.post2 (18 January 2023)
