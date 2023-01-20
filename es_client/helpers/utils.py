@@ -122,15 +122,22 @@ def get_yaml(path):
 
 def verify_url_schema(url):
     """Ensure that a valid URL schema (HTTP[S]://URL:PORT) is used"""
-    parts = url.split(':')
+    parts = url.lower().split(':')
+    errmsg = f'URL Schema invalid for {url}'
     if len(parts) < 3:
         # We do not have a port
-        if parts[0].lower() == 'https':
+        if parts[0] == 'https':
             port = '443'
-        else:
+        elif parts[0] == 'http':
             port = '80'
-    else:
+        else:
+            raise ConfigurationError(errmsg)
+    elif len(parts) == 3:
+        if (parts[0] != 'http') and (parts[0] != 'https'):
+            raise ConfigurationError(errmsg)
         port = parts[2]
+    else:
+        raise ConfigurationError(errmsg)
     return parts[0] + ':' + parts[1] + ':' + port
 
 def get_version(client):

@@ -1,9 +1,18 @@
 #!/bin/bash
 
-VERSION=8.4.3
 IMAGE=es_client_test
 RUNNAME=es_client_test8
-URL=http://127.0.0.1:9200
+LOCAL_PORT=9200
+URL=http://127.0.0.1:${LOCAL_PORT}
+
+if [ "x$1" == "x" ]; then
+  echo "Error! No Elasticsearch version provided."
+  echo "VERSION must be in Semver format, e.g. X.Y.Z, 8.6.0"
+  echo "USAGE: $0 VERSION"
+  exit 1
+fi
+
+VERSION=$1
 
 # Save original execution path
 EXECPATH=$(pwd)
@@ -24,12 +33,14 @@ UPONE=$(pwd | awk -F\/ '{print $NF}')
 if [[ "$(docker images -q ${IMAGE}:${VERSION} 2> /dev/null)" == "" ]]; then
   echo "Docker image ${IMAGE}:${VERSION} not found. Building from Dockerfile..."
   cd $SCRIPTPATH
+  # Create a Dockerfile from the template
+  cat Dockerfile.tmpl | sed -e "s/ES_VERSION/${VERSION}/" > Dockerfile
   docker build . -t ${IMAGE}:${VERSION}
 fi
 
 ### Launch the containers (plural, in 8.x)
 echo -en "\rStarting ${RUNNAME} container... "
-docker run -d --name ${RUNNAME} -p 9200:9200 \
+docker run -d --name ${RUNNAME} -p ${LOCAL_PORT}:9200 \
 -e "discovery.type=single-node" \
 -e "cluster.name=local-cluster" \
 -e "node.name=local" \
