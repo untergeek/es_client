@@ -3,6 +3,20 @@
 Changelog
 =========
 
+8.6.0.post6 (26 January 2023)
+-----------------------------
+
+**Announcement**
+
+I'm just cranking these out today! The truth is, I'm catching more things with the increased
+scrutiny of heavy Curator testing. This is good, right?
+
+**Changes**
+
+  * Discovered that passwords were being logged. Added a function to replace any value
+    from a key (from ``KEYS_TO_REDACT`` in ``defaults.py``) with ``REDACTED``. Keys are
+    ``['password', 'basic_auth', 'bearer_auth', 'api_key', 'id', 'opaque_id']``
+
 8.6.0.post5 (26 January 2023)
 -----------------------------
 

@@ -115,6 +115,7 @@ class Builder():
                 try:
                     verify_url_schema(host)
                 except ConfigurationError as exc:
+                    self.logger.critical('Invalid host schema detected: %s -- %s', host, exc)
                     raise ConfigurationError(f'Invalid host schema detected: {host}') from exc
         self._check_basic_auth()
         self._check_api_key()
