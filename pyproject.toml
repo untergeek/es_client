@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "es_client"
-version = "8.6.0.post4"
+version = "8.6.0.post5"
 description = "Elasticsearch Client builder, complete with schema validation"
 authors = [{name = "Aaron Mildenstein", email = "aaron@mildensteins.com"}]
 readme = "README.rst"
@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
 # dynamic = ["version", "description"]
 keywords = [
