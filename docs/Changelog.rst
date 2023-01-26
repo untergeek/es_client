@@ -3,6 +3,21 @@
 Changelog
 =========
 
+8.6.0.post4 (26 January 2023)
+-----------------------------
+
+**Changes**
+
+  * Fix an example in ``README.rst`` that showed the old and no longer viable way to
+    get the client. New example reflects the current way.
+  * Purge older setuptools files ``setup.py`` and ``setup.cfg`` in favor of building
+    with ``flit``, using ``pyproject.toml``. Testing and dependencies here should install
+    properly with ``pip install -U '.[test]'``. After this, testing works with ``pytest``,
+    or ``pytest --cov=es_client --cov-report html:cov_html`` (``cov_html`` was added to
+    ``.gitignore``). These changes appear to be necessary to build functional packages
+    for Python 3.11.
+  * Building now works with ``flit``. First ``pip install flit``, then ``flit build``.
+
 8.6.0.post3 (19 January 2023)
 -----------------------------
 
