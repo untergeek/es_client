@@ -8,7 +8,9 @@ from unittest import TestCase
 import pytest
 from mock import Mock
 from es_client.exceptions import ConfigurationError
-from es_client.helpers.utils import ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths, verify_url_schema, get_version
+from es_client.helpers.utils import (
+    ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths, verify_url_schema, get_version
+)
 from . import FileTestObj
 
 DEFAULT = {
