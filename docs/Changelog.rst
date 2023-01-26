@@ -3,6 +3,14 @@
 Changelog
 =========
 
+8.6.0.post5 (? ? ?)
+-------------------
+
+**Changes**
+
+  * Python 3.11 was unofficially supported in 8.6.0.post4. It is now officially listed
+    in ``pyproject.toml`` as a supported version.
+
 8.6.0.post4 (26 January 2023)
 -----------------------------
 
