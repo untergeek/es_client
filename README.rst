@@ -37,17 +37,21 @@ Example Usage
                 'request_timeout': 60,
             },
             'other_settings': {
-                'master_only': True,
+                'master_only': false,
                 'username': 'joe_user',
                 'password': 'password',
             }
         }
     }
 
+    builder = Builder(configdict=config)
+
     try:
-        client = Builder(config).client
+        builder.connect()
     except:
         # Do exception handling here...
+
+    client = builder.client
 
 Additionally, you can read from a YAML configuration file:
 
@@ -60,19 +64,21 @@ Additionally, you can read from a YAML configuration file:
         ca_certs: /etc/elasticsearch/certs/ca.crt
         request_timeout: 60
       other_settings:
-        master_only: true
+        master_only: false
         username: joe_user
         password: password
 
 ::
 
     from es_client import Builder
-    from es_client.exceptions import ConfigurationError
-    from es_client.helpers.utils import get_yaml
+
+    builder = Builder(configfile='/path/to/es_client.yml')
 
     try:
-        client = Builder(get_yaml('/path/to/es_client.yml').client
+        builder.connect()
     except:
         # Do exception handling here...
+
+    client = builder.client
 
 The same schema validations apply here as well.
