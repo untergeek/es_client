@@ -6,7 +6,9 @@ import logging
 import elasticsearch8
 from es_client.defaults import VERSION_MIN, VERSION_MAX, client_settings, other_settings
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
-from es_client.helpers.utils import ensure_list, prune_nones, verify_ssl_paths, get_yaml, check_config, get_version
+from es_client.helpers.utils import (
+    ensure_list, prune_nones, verify_ssl_paths, get_yaml, check_config, get_version
+)
 
 class ClientArgs(Dict):
     """
