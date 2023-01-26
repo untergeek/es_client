@@ -3,6 +3,20 @@
 Changelog
 =========
 
+8.6.0.post7 (26 January 2023)
+-----------------------------
+
+**Announcement**
+
+With all of these changes, I'm going to just keep this in-house and not publish until it all
+works. I'll just do local builds and ``pip`` imports until I work it all out.
+
+**Changes**
+
+  * Circular imports between ``es_client.helpers.utils`` and ``es_client.helpers.schemacheck``
+    broke things. Since ``password_filter`` is not presently being used by anything else,
+    I moved it to ``schemacheck.py``.
+
 8.6.0.post6 (26 January 2023)
 -----------------------------
 

@@ -2,8 +2,22 @@
 # pylint: disable=protected-access, broad-except
 import logging
 from re import sub
-from es_client.helpers.utils import password_filter
+from copy import deepcopy
+from es_client.defaults import KEYS_TO_REDACT
 from es_client.exceptions import ConfigurationError
+
+def password_filter(data):
+    """
+    Return a deepcopy of the dictionary with any password fields hidden
+    """
+    def iterdict(mydict):
+        for key, value in mydict.items():
+            if isinstance(value, dict):
+                iterdict(value)
+            elif key in KEYS_TO_REDACT:
+                mydict.update({key: "REDACTED"})
+        return mydict
+    return iterdict(deepcopy(data))
 
 class SchemaCheck(object):
     """

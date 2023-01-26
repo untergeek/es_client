@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "es_client"
-version = "8.6.0.post6"
+version = "8.6.0.post7"
 description = "Elasticsearch Client builder, complete with schema validation"
 authors = [{name = "Aaron Mildenstein", email = "aaron@mildensteins.com"}]
 readme = "README.rst"
