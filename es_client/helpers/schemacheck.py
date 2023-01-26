@@ -2,6 +2,7 @@
 # pylint: disable=protected-access, broad-except
 import logging
 from re import sub
+from es_client.helpers.utils import password_filter
 from es_client.exceptions import ConfigurationError
 
 class SchemaCheck(object):
@@ -26,7 +27,7 @@ class SchemaCheck(object):
         self.logger = logging.getLogger(__name__)
         # Set the Schema for validation...
         self.logger.debug('Schema: %s', schema)
-        self.logger.debug('"%s" config: %s', test_what, config)
+        self.logger.debug('"%s" config: %s', test_what, password_filter(config))
         self.config = config
         self.schema = schema
         self.test_what = test_what
@@ -47,7 +48,7 @@ class SchemaCheck(object):
                     key = int(k)
                 except ValueError:
                     key = k
-                if value == None:
+                if value is None:
                     value = data[key]
                     # if this fails, it's caught below
             return value

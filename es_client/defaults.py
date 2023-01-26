@@ -2,8 +2,10 @@
 from six import string_types
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 
-VERSION_MIN=(8,0,0)
-VERSION_MAX=(8,99,99)
+VERSION_MIN = (8, 0, 0)
+VERSION_MAX = (8, 99, 99)
+
+KEYS_TO_REDACT = ['password', 'basic_auth', 'bearer_auth', 'api_key', 'id', 'opaque_id']
 
 CLIENT_SETTINGS = [
     'hosts', 'cloud_id', 'api_key', 'basic_auth', 'bearer_auth', 'opaque_id', 'headers',
