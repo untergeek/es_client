@@ -111,11 +111,11 @@ class Builder():
         # Configuration pre-checks
         if self.client_args.hosts is not None:
             self.client_args.hosts = ensure_list(self.client_args.hosts)
-        for host in self.client_args.hosts:
-            try:
-                verify_url_schema(host)
-            except ConfigurationError as exc:
-                raise ConfigurationError(f'Invalid host configuration detected: {host}') from exc
+            for host in self.client_args.hosts:
+                try:
+                    verify_url_schema(host)
+                except ConfigurationError as exc:
+                    raise ConfigurationError(f'Invalid host schema detected: {host}') from exc
         self._check_basic_auth()
         self._check_api_key()
         self._check_cloud_id()
