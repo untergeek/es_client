@@ -3,13 +3,15 @@
 Changelog
 =========
 
-8.6.0.post5 (? ? ?)
--------------------
+8.6.0.post5 (26 January 2023)
+-----------------------------
 
 **Changes**
 
   * Python 3.11 was unofficially supported in 8.6.0.post4. It is now officially listed
     in ``pyproject.toml`` as a supported version.
+  * Discovered that Builder was not validating Elasticsearch host URLs, and not catching
+    those lead to an invisible failure in Curator.
 
 8.6.0.post4 (26 January 2023)
 -----------------------------
