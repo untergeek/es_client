@@ -3,6 +3,19 @@
 Changelog
 =========
 
+8.6.1.post1 (30 January 2023)
+-----------------------------
+
+**Announcement**
+
+Even though I had a test in place for catching and fixing the absence of a port with ``https``,
+it didn't work in the field. Fix included.
+
+**Changes**
+
+  * Fixed unverified URL schema issue.
+  * Found and corrected another place where passwords were being logged inappropriately.
+
 8.6.1 (30 January 2023)
 -----------------------
 
