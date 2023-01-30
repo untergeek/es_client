@@ -61,6 +61,18 @@ class TestInit(TestCase):
         }
         obj = Builder(configdict=test)
         self.assertEqual(None, obj.client_args.hosts)
+    def test_url_schema_validation_fix(self):
+        """Ensure that :443 is appended to a host with https and no port"""
+        test = {
+            'elasticsearch': {
+                'client': {
+                    'hosts': ['https://127.0.0.1']
+                }
+            }
+        }
+        obj = Builder(configdict=test)
+        assert 'https://127.0.0.1:443' == obj.client_args.hosts[0]
+
 class TestAuth(TestCase):
     """Test authentication methods"""
     def test_user_but_no_pass(self):
