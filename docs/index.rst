@@ -1,5 +1,4 @@
-.. es_client documentation master file, created by
-   sphinx-quickstart on Wed Apr 11 15:16:40 2018.
+.. es_client documentation master file
 
 ``es_client`` Documentation
 ===========================
@@ -54,10 +53,14 @@ Example Usage
         }
     }
 
+    builder = Builder(configdict=config)
+
     try:
-        client = Builder(config).client
+        builder.connect()
     except:
         # Do exception handling here...
+
+    client = builder.client
 
 Additionally, you can read from a YAML configuration file:
 
@@ -77,20 +80,22 @@ Additionally, you can read from a YAML configuration file:
 ::
 
     from es_client import Builder
-    from es_client.exceptions import ConfigurationError
-    from es_client.helpers.utils import get_yaml
+
+    builder = Builder(configfile='/path/to/es_client.yml')
 
     try:
-        client = Builder(get_yaml('/path/to/es_client.yml').client
+        builder.connect()
     except:
         # Do exception handling here...
+
+    client = builder.client
 
 The same schema validations apply here as well.
 
 License
 -------
 
-Copyright (c) 2022 Aaron Mildenstein
+Copyright (c) 2023 Aaron Mildenstein
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

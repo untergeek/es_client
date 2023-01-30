@@ -21,7 +21,7 @@ def get_version():
     if result:
         semver = result.group(1)
     else:
-        raise RuntimeError("Unable to find version string in {0}.".format(VERSIONFILE))
+        raise RuntimeError(f"Unable to find version string in {VERSIONFILE}.")
     return semver
 
 # -- Path setup --------------------------------------------------------------
@@ -39,7 +39,7 @@ sys.path.insert(0, abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'es_client'
-copyright = '2022, Aaron Mildenstein'
+copyright = '2023, Aaron Mildenstein'
 author = 'Aaron Mildenstein'
 
 # The full version, including alpha/beta/rc tags.
@@ -191,8 +191,8 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 # intersphinx_mapping = {'https://docs.python.org/': None}
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.10', None),
-    'elasticsearch': ('http://elasticsearch-py.readthedocs.io/en/v8.6.0', None),
+    'python': ('https://docs.python.org/3.11', None),
+    'elasticsearch': ('http://elasticsearch-py.readthedocs.io/en/v8.6.1', None),
     'voluptuous': ('https://alecthomas.github.io/voluptuous/docs/_build/html/', None),
 }
 

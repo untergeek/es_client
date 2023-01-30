@@ -2,9 +2,8 @@
 import logging
 import os
 import re
-from copy import deepcopy
 import yaml
-from es_client.defaults import config_schema, KEYS_TO_REDACT
+from es_client.defaults import config_schema
 from es_client.exceptions import ConfigurationError
 from es_client.helpers.schemacheck import SchemaCheck
 
@@ -152,16 +151,3 @@ def get_version(client):
     else:
         version = version.split('.')
     return tuple(map(int, version))
-
-def password_filter(data):
-    """
-    Return a deepcopy of the dictionary with any password fields hidden
-    """
-    def iterdict(mydict):
-        for key, value in mydict.items():
-            if isinstance(value, dict):
-                iterdict(value)
-            elif key in KEYS_TO_REDACT:
-                mydict.update({key: "REDACTED"})
-        return mydict
-    return iterdict(deepcopy(data))
