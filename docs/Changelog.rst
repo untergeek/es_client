@@ -3,19 +3,26 @@
 Changelog
 =========
 
-8.6.0.post7 (26 January 2023)
+8.6.0.post7 (30 January 2023)
 -----------------------------
 
 **Announcement**
 
-With all of these changes, I'm going to just keep this in-house and not publish until it all
-works. I'll just do local builds and ``pip`` imports until I work it all out.
+With all of these changes, I kept this in-house and did local builds and ``pip`` imports until
+I worked it all out.
 
 **Changes**
 
   * Circular imports between ``es_client.helpers.utils`` and ``es_client.helpers.schemacheck``
     broke things. Since ``password_filter`` is not presently being used by anything else,
     I moved it to ``schemacheck.py``.
+  * Use ``hatch`` and ``hatchling`` for package building instead of ``flit``.
+  * Update ``elasticsearch8`` dependency to ``8.6.1``
+  * Removed the ``requirements.txt`` file as this is now handled by ``pyproject.toml`` and
+    doing ``pip install .`` to grab dependencies and install them. YAY! Only one place to
+    track dependencies now!!!
+  * Removed the ``MANIFEST.in`` file as this is now handled by ``pyproject.toml`` as well.
+  * Update the docs build settings to use Python 3.11 and ``elasticsearch8==8.6.1``
 
 8.6.0.post6 (26 January 2023)
 -----------------------------
