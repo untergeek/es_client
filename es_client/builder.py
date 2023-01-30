@@ -110,13 +110,15 @@ class Builder():
         """Validate that what has been supplied is acceptable to attempt a connection"""
         # Configuration pre-checks
         if self.client_args.hosts is not None:
+            verified_hosts = []
             self.client_args.hosts = ensure_list(self.client_args.hosts)
             for host in self.client_args.hosts:
                 try:
-                    verify_url_schema(host)
+                    verified_hosts.append(verify_url_schema(host))
                 except ConfigurationError as exc:
                     self.logger.critical('Invalid host schema detected: %s -- %s', host, exc)
                     raise ConfigurationError(f'Invalid host schema detected: {host}') from exc
+            self.client_args.hosts = verified_hosts
         self._check_basic_auth()
         self._check_api_key()
         self._check_cloud_id()
@@ -243,7 +245,6 @@ class Builder():
         """
         # Eliminate any remaining "None" entries from the client arguments before building
         client_args = prune_nones(self.client_args.asdict())
-        self.logger.debug('CLIENT ARGS = %s', client_args)
         self.client = elasticsearch8.Elasticsearch(**client_args)
 
     def test_connection(self):
