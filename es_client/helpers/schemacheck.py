@@ -21,19 +21,19 @@ def password_filter(data):
 
 class SchemaCheck(object):
     """
-    Validate ``config`` with the provided :class:`voluptuous.Schema <voluptuous.schema_builder.Schema>`.
+    Validate ``config`` with the provided :py:class:`~.voluptuous.schema_builder.Schema`.
     ``test_what`` and ``location`` are for reporting the results, in case of
     failure.  If validation is successful, the method returns ``config`` as
-    valid through the :func:`~es_client.helpers.schemacheck.SchemaCheck.result` method.
+    valid through the :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.result` method.
 
-    :arg config: A configuration dictionary.
+    :param config: A configuration dictionary.
+    :param schema: A voluptuous schema definition
+    :param test_what: which configuration block is being validated
+    :param location: An string to report which configuration sub-block is being tested.
+
     :type config: dict
-    :arg schema: A voluptuous schema definition
-    :type schema: :class:`voluptuous.schema_builder.Schema`
-    :arg test_what: which configuration block is being validated
+    :type schema: :py:class:`~.voluptuous.schema_builder.Schema`
     :type test_what: str
-    :arg location: An string to report which configuration sub-block is
-        being tested.
     :type location: str
     """
     def __init__(self, config, schema, test_what, location):

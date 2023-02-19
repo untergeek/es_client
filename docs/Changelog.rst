@@ -3,6 +3,20 @@
 Changelog
 =========
 
+8.6.2 (19 February 2023)
+------------------------
+
+**Announcement**
+
+Version sync with released Elasticsearch Python module.
+
+**Changes**
+
+  * Fix ``cloud_id`` and ``hosts`` collision detection and add test to cover this case.
+  * Code readability improvements (primarily for documentation).
+  * Documentation readability improvements, and improved cross-linking.
+  * Add example cli script to docs.
+
 8.6.1.post1 (30 January 2023)
 -----------------------------
 

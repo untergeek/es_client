@@ -4,7 +4,7 @@
 ===========================
 
 You may wonder why this even exists, as at first glance it doesn't seem to make
-anything any easier than just using :class:`elasticsearch8.Elasticsearch` to
+anything any easier than just using :py:class:`~.elasticsearch.Elasticsearch` to
 build a client connection.  I needed to be able to reuse the more complex
 schema validation bits I was employing, namely:
 
@@ -19,17 +19,6 @@ schema validation bits I was employing, namely:
 
 So, if you don't need these, then this library probably isn't what you're
 looking for.  If you want these features, then you've come to the right place.
-
-Contents
---------
-
-.. toctree::
-   builder.rst
-   defaults.rst
-   helpers.rst
-   exceptions.rst
-   Changelog.rst
-   :maxdepth: 2
 
 Example Usage
 -------------
@@ -108,6 +97,18 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+Contents
+--------
+
+.. toctree::
+   api
+   example
+   defaults
+   helpers
+   exceptions
+   Changelog
+   :maxdepth: 2
 
 Indices and tables
 ==================

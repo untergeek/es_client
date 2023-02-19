@@ -3,6 +3,7 @@
 # add import-error here ^^^ to avoid false-positives for the local import
 from unittest import TestCase
 import certifi
+import pytest
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError
 from . import FileTestObj
@@ -72,6 +73,18 @@ class TestInit(TestCase):
         }
         obj = Builder(configdict=test)
         assert 'https://127.0.0.1:443' == obj.client_args.hosts[0]
+    def test_url_schema_validation_raises(self):
+        """Ensure that ConfigurationError is raised with an invalid host URL schema"""
+        test = {
+            'elasticsearch': {
+                'client': {
+                    'hosts': ['127.0.0.1:9200']
+                }
+            }
+        }
+        with pytest.raises(ConfigurationError):
+            _ = Builder(configdict=test)
+
 
 class TestAuth(TestCase):
     """Test authentication methods"""
