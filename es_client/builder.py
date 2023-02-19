@@ -40,7 +40,9 @@ class OtherArgs(Dict):
     Return
     """
     def __init__(self):
-        """Updatable object that will contain 'other' client arguments for connecting to Elasticsearch"""
+        """
+        Updatable object that will contain 'other' client arguments for connecting to Elasticsearch
+        """
 
         for setting in other_settings():
             setattr(self, setting, None)
@@ -57,30 +59,32 @@ class OtherArgs(Dict):
             retval[setting] = getattr(self, setting, None)
         return retval
 
-class Builder():
+class Builder:
     """
-    Build a client out of settings from `configfile` or `configdict`
-    If neither `configfile` nor `configdict` is provided, empty defaults will be used.
-    If both are provided, `configdict` will be used, and `configfile` ignored.
+    Build a client out of settings from ``configfile`` or ``configdict``
+    If neither ``configfile`` nor ``configdict`` is provided, empty defaults will be used.
+    If both are provided, ``configdict`` will be used, and `configfile` ignored.
 
-    :arg configdict: See :doc:`defaults </defaults>` to find acceptable values
+    :param configdict: See :doc:`defaults </defaults>` to find acceptable values
+    :param configfile: See :doc:`defaults </defaults>` to find acceptable values
+    :param autoconnect: Connect to client automatically
     :type configdict: dict
-    :arg configfile: See :doc:`defaults </defaults>` to find acceptable values
     :type configfile: str
-    :arg autoconnect: Connect to client automatically
     :type autoconnect: bool
 
-    :attr client: :class:`Elasticsearch Client <elasticsearch8.Elasticsearch>` object
 
-    :attr master_only: Check if node is elected master.
-
-    :attr is_master: Connected to elected master?
-
-    :attr client_args: Settings used to connect to Elasticsearch.
-    :attr other_args: Settings apart from client_args (though some are used to build client_args)
     """
-    def __init__(self, configdict=None, configfile=None, autoconnect=False, version_min=VERSION_MIN, version_max=VERSION_MAX):
+    def __init__(self, configdict=None, configfile=None, autoconnect=False,
+        version_min=VERSION_MIN, version_max=VERSION_MAX):
         self.logger = logging.getLogger(__name__)
+        #: The :py:class:`~.elasticsearch.Elasticsearch` client connection object
+        self.client = None
+        #: Is node is elected master?
+        self.master_only = None
+        #: Am I connected to the elected master node?
+        self.is_master = False
+        #: The validated configuration, either from file or dict
+        self.config = None
         if configfile:
             self.config = check_config(get_yaml(configfile))
         if configdict:
@@ -88,15 +92,20 @@ class Builder():
         if not configfile and not configdict:
             # Empty/Default config.
             self.config = check_config({'client': {}, 'other_settings': {}})
+        #: The :py:class:`~.es_client.builder.ClientArgs` object
         self.client_args = ClientArgs()
+        #: The :py:class:`~.es_client.builder.OtherArgs` object
         self.other_args = OtherArgs()
+        #: Assigned ``version_max``
         self.version_max = version_max
+        #: Assigned ``version_min``
         self.version_min = version_min
         self.update_config()
         self.validate()
         if autoconnect:
             self.connect()
             self.test_connection()
+
 
     def update_config(self):
         """Update object with values provided"""
@@ -146,7 +155,9 @@ class Builder():
                 self.client_args.basic_auth = (usr, pwd)
 
     def _check_api_key(self):
-        """Create ``api_key`` tuple from self.other_args['api_key'] subkeys id and api_key """
+        """
+        Create ``api_key`` tuple from :py:attr:`other_args` ``['api_key']`` subkeys ``id`` and ``api_key``
+        """
         other_args = self.other_args.asdict()
         if 'api_key' in other_args:
             if 'id' or 'api_key' in other_args['api_key']:
@@ -160,12 +171,12 @@ class Builder():
                     self.client_args.api_key = (api_id, api_key)
 
     def _check_cloud_id(self):
-        """Remove ``hosts`` key if cloud_id provided"""
+        """Remove ``hosts`` key if ``cloud_id`` provided"""
         if 'cloud_id' in self.client_args.asdict() and self.client_args.cloud_id is not None:
             # We can remove the default if that's all there is
             if self.client_args.hosts == ['http://127.0.0.1:9200'] and len(self.client_args.hosts) == 1:
                 self.client_args.hosts = None
-            else:
+            if self.client_args.hosts != None:
                 raise ConfigurationError('Cannot populate both "hosts" and "cloud_id"')
 
     def _check_ssl(self):
@@ -177,13 +188,14 @@ class Builder():
         client_args = self.client_args.asdict()
         if 'cloud_id' in client_args and client_args['cloud_id'] is not None:
             scheme = 'https'
-        elif client_args['hosts'] == None:
+        elif client_args['hosts'] is None:
             scheme = None
         else:
             scheme = client_args['hosts'][0].split(':')[0].lower()
         if scheme == 'https':
             if 'ca_certs' not in client_args or not client_args['ca_certs']:
                 # Use certifi certificates via certifi.where():
+                # pylint: disable=import-outside-toplevel
                 import certifi
                 self.client_args.ca_certs = certifi.where()
                 # This part is only for use with a compiled Curator.  It can still go there.
@@ -203,7 +215,7 @@ class Builder():
 
     def _check_master(self):
         """
-        If ``master_only`` is `True` and we are not connected to the elected
+        If :py:attr:`master_only` is ``True`` and we are not connected to the elected
         master node, raise :py:exc:`~es_client.exceptions.NotMaster`
         """
         if self.is_master is None:
@@ -225,7 +237,8 @@ class Builder():
 
     def _check_version(self):
         """
-        Compare the Elasticsearch cluster version to our acceptable versions
+        Compare the Elasticsearch cluster version to :py:attr:`min_version` and
+        :py:attr:`max_version`
         """
         v = get_version(self.client)
         if self.skip_version_test:
@@ -240,8 +253,8 @@ class Builder():
     def _get_client(self):
         """
         Instantiate the
-        :class:`Elasticsearch Client <elasticsearch8.Elasticsearch>` object
-        and populate :py:attr:`~es_client.Builder.client`
+        :py:class:`~.elasticsearch.Elasticsearch` object and populate
+        :py:attr:`client`
         """
         # Eliminate any remaining "None" entries from the client arguments before building
         client_args = prune_nones(self.client_args.asdict())

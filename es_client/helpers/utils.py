@@ -15,7 +15,7 @@ def prune_nones(mydict):
     """
     Remove keys from `mydict` whose values are `None`
 
-    :arg mydict: The dictionary to act on
+    :param mydict: The dictionary to act on
     :rtype: dict
     """
     # Test for `None` instead of existence or zero values will be caught
@@ -25,7 +25,7 @@ def ensure_list(data):
     """
     Return a list, even if data is a single value
 
-    :arg data: A list or scalar variable to act upon
+    :param data: A list or scalar variable to act upon
     :rtype: list
     """
     if not isinstance(data, list): # in case of a single value passed
@@ -36,7 +36,7 @@ def read_file(myfile):
     """
     Read a file and return the resulting data.
 
-    :arg myfile: A file to read.
+    :param myfile: A file to read.
     :rtype: str
     """
     try:
@@ -53,6 +53,9 @@ def check_config(config):
     Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``other_settings`` and
     ``client`` as contained in ``config`` before passing it (or empty defaults) to
     :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
+
+    :param config: The configuration
+    :type config: dict
     """
     if not isinstance(config, dict):
         LOGGER.warning('Elasticsearch client configuration must be provided as a dictionary.')
@@ -75,11 +78,10 @@ def check_config(config):
 def verify_ssl_paths(args):
     """
     Verify that the various certificate/key paths are readable.  The
-    :func:`~es_client.helpers.utils.read_file` function will raise a
-    :exc:`~es_client.exceptions.ConfigurationError` if a file fails to be read.
+    :py:func:`~.es_client.helpers.utils.read_file` function will raise a
+    :py:exc:`~.es_client.exceptions.ConfigurationError` if a file fails to be read.
 
-
-    :arg args: The ``client`` block of the config dictionary.
+    :param args: The ``client`` block of the config dictionary.
     :type args: dict
     """
     # Test whether certificate is a valid file path
@@ -96,7 +98,10 @@ def get_yaml(path):
     """
     Read the file identified by `path` and import its YAML contents.
 
-    :arg path: The path to a YAML configuration file.
+    :param path: The path to a YAML configuration file.
+    :type path: str
+
+    :returns: The contents of ``path`` translated from YAML to :py:class:`dict`
     :rtype: dict
     """
     # Set the stage here to parse single scalar value environment vars from
@@ -121,7 +126,14 @@ def get_yaml(path):
         raise ConfigurationError(f'Unable to parse YAML file. Error: {exc}') from exc
 
 def verify_url_schema(url):
-    """Ensure that a valid URL schema (HTTP[S]://URL:PORT) is used"""
+    """Ensure that a valid URL schema (HTTP[S]://URL:PORT) is used
+
+    :param url: The url to verify
+    :type url: str
+
+    :returns: Verified URL
+    :rtype: str
+    """
     parts = url.lower().split(':')
     errmsg = f'URL Schema invalid for {url}'
     if len(parts) < 3:
@@ -141,7 +153,14 @@ def verify_url_schema(url):
     return parts[0] + ':' + parts[1] + ':' + port
 
 def get_version(client):
-    """Get the Elasticsearch version of the connected node"""
+    """Get the Elasticsearch version of the connected node
+
+    :param client: An Elasticsearch client object
+    :type client: :py:class:`~.elasticsearch.Elasticsearch`
+
+    :returns: The Elasticsearch version as a 3-part tuple, (major, minor, patch)
+    :rtype: tuple
+    """
     version = client.info()['version']['number']
     # Split off any -dev, -beta, or -rc tags
     version = version.split('-')[0]
