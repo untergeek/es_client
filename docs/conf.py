@@ -19,20 +19,10 @@
 # pylint: disable=redefined-builtin, invalid-name
 import sys
 import os
-# import re
 from datetime import datetime
 from es_client import __version__ as ver
 
-# VERSIONFILE = '../es_client/version.py'
 COPYRIGHT_YEARS = f'2022-{datetime.now().year}'
-
-# verstrline = open(VERSIONFILE, "rt", encoding='utf-8').read()
-# VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
-# mo = re.search(VSRE, verstrline, re.M)
-# if mo:
-#     verstr = mo.group(1)
-# else:
-#     raise RuntimeError(f"Unable to find version string in {VERSIONFILE}.")
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
