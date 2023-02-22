@@ -1,3 +1,4 @@
+"""Sphinx Documentation Configuration"""
 # -*- coding: utf-8 -*-
 #  Licensed to Elasticsearch B.V. under one or more contributor
 #  license agreements. See the NOTICE file distributed with
