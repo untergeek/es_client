@@ -38,6 +38,7 @@ def config_schema():
                 Optional('api_key', default={}): {
                     Optional('id'): Any(None, *string_types),
                     Optional('api_key'): Any(None, *string_types),
+                    Optional('token'): Any(None, *string_types),
                 }
             },
             Optional('client', default={}): {

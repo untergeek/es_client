@@ -8,7 +8,7 @@ from es_client.defaults import VERSION_MIN, VERSION_MAX, client_settings, other_
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
 from es_client.helpers.utils import (
     ensure_list, file_exists, prune_nones, verify_ssl_paths, get_yaml, check_config, get_version,
-    verify_url_schema
+    verify_url_schema, parse_apikey_token
 )
 
 class ClientArgs(Dict):
@@ -157,10 +157,15 @@ class Builder:
     def _check_api_key(self):
         """
         Create ``api_key`` tuple from :py:attr:`other_args` ``['api_key']`` subkeys ``id`` and ``api_key``
+        Or if ``api_key`` subkey ``token`` is present, derive ``id`` and ``api_key`` from ``token``
         """
         other_args = self.other_args.asdict()
         if 'api_key' in other_args:
-            if 'id' or 'api_key' in other_args['api_key']:
+            # If present, token will override any value in 'id' or 'api_key'
+            if 'token' in other_args['api_key']:
+                (other_args['api_key']['id'], other_args['api_key']['api_key']) = \
+                    parse_apikey_token(other_args['api_key']['token'])
+            if 'id' in other_args['api_key'] or 'api_key' in other_args['api_key']:
                 api_id = other_args['api_key']['id'] if 'id' in other_args['api_key'] else None
                 api_key = other_args['api_key']['api_key'] if 'api_key' in other_args['api_key'] else None
                 if api_id is None and api_key is None:
@@ -176,7 +181,7 @@ class Builder:
             # We can remove the default if that's all there is
             if self.client_args.hosts == ['http://127.0.0.1:9200'] and len(self.client_args.hosts) == 1:
                 self.client_args.hosts = None
-            if self.client_args.hosts != None:
+            if self.client_args.hosts is not None:
                 raise ConfigurationError('Cannot populate both "hosts" and "cloud_id"')
 
     def _check_ssl(self):

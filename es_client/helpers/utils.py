@@ -2,6 +2,8 @@
 import logging
 import os
 import re
+import base64
+import binascii
 from pathlib import Path
 import yaml
 from es_client.defaults import config_schema
@@ -182,3 +184,19 @@ def file_exists(file):
     :rtype: bool
     """
     return Path(file).is_file()
+
+def parse_apikey_token(token):
+    """Split a base64 encoded API Key Token into id and api_key
+
+    :param token: The base64 encoded API Key
+    :type token: str
+
+    :returns: A tuple of (id, api_key)
+    :rtype: tuple
+    """
+    try:
+        decoded=base64.b64decode(token).decode('utf-8')
+        split = decoded.split(':')
+    except (binascii.Error, IndexError, UnicodeDecodeError) as exc:
+        raise ConfigurationError(f'Unable to parse base64 API Key Token: {exc}') from exc
+    return (split[0], split[1])

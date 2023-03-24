@@ -33,6 +33,7 @@ like with many keys present (some contradictory, but shown for reference)::
                 'api_key': {
                     'id': ...,
                     'api_key': ...
+                    'token': ...
                 }
             },
         },
@@ -61,10 +62,12 @@ than populated with the default value.
     :password: :py:class:`int`: `(Optional)` If both ``username`` and ``password`` are
       provided, they will be used to create the necessary ``tuple`` for
       ``basic_auth``. An exception will be thrown if only one is provided.
-    :api_key: :py:class:`dict`: `(Optional)` Can only contain the sub-keys ``id`` and
-        ``api_key``, and both must be either empty/``None``, or populated with
-        the appropriate values for the ``hosts`` or ``cloud_id`` being connected
-        to.
+    :api_key: :py:class:`dict`: `(Optional)` Can only contain the sub-keys ``token``, ``id``,
+        and ``api_key``. ``token`` is the base64 encoded representation of ``id:api_key``. As
+        such, if ``token`` is provided, it will override anything provided in ``id``
+        and ``api_key``. If ``token`` is not provided, both ``id`` and ``api_key`` must be either
+        empty/``None``, or populated with the appropriate values for the ``hosts`` or ``cloud_id``
+        being connected to.
 
 The acceptable sub-keys of **client** are described at
 https://elasticsearch-py.readthedocs.io/en/latest/api.html#module-elasticsearch. Anything
@@ -80,10 +83,9 @@ Anything of note regarding other options is mentioned below:
         value of ``hosts`` is used in conjunction with ``cloud_id`` it will result
         in an exception and will not connect.
     :api_key: ``Tuple[str, str]``: `(Optional)` Can be a ``tuple`` or ``None``. If using the
-        ``api_key`` subkeys of ``id`` and ``api_key`` under ``other_settings``,
-        this value will be built for you automatically. Regardless, this must be in
-        tuple form and not Base64 form. The :py:class:`~.elasticsearch.Elasticsearch`
-        will automatically convert from the tuple to what Elasticsearch requires.
+        ``token``, or ``api_key`` subkeys of ``id`` and ``api_key`` under ``other_settings``,
+        this value will be built for you automatically. Regardless, this value must be in
+        ``(id, api_key)`` tuple form and not Base64 form.
     :basic_auth: ``Tuple[str, str]``: `(Optional)` Can be a ``tuple`` or ``None``. If using the
         subkeys ``username`` and ``password`` under ``other_settings``, this value
         will be built for you automatically. Replaces ``http_auth`` in older versions.
