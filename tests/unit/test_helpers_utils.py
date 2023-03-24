@@ -9,7 +9,8 @@ import pytest
 from mock import Mock
 from es_client.exceptions import ConfigurationError
 from es_client.helpers.utils import (
-    ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths, verify_url_schema, get_version
+    ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths, verify_url_schema,
+    get_version, file_exists
 )
 from . import FileTestObj
 
@@ -203,3 +204,27 @@ class TestGetVersion:
         client.info.return_value = {'version': {'number': '9.9.9-dev'} }
         version = get_version(client)
         assert version == (9,9,9)
+
+class TestFileExists:
+    """Test the file_exists function"""
+    def test_positive(self):
+        """Ensure that an existing file returns True"""
+        obj = FileTestObj()
+        obj.write_config(obj.args['configfile'],
+        """
+        [weird brackets go here]
+        I'm not a yaml file!!!=I have no keys
+        I have lots of spaces
+        """)
+        assert file_exists(obj.args['configfile'])
+        obj.teardown()
+    def test_negative(self):
+        """Ensure that a non-existing file returns False"""
+        obj = FileTestObj()
+        obj.write_config(obj.args['configfile'],
+        """
+        This file will be deleted
+        """)
+        obj.teardown()
+        assert not file_exists(obj.args['configfile'])
+

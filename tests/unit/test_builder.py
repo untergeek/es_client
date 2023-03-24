@@ -160,3 +160,22 @@ class TestCheckSSL(TestCase):
         obj = Builder(configdict=https)
         obj._check_ssl()
         self.assertEqual(certifi.where(), obj.client_args.ca_certs)
+    def test_ca_certs_named_but_no_file(self):
+        """Ensure that a ConfigurationError is raised if ca_certs is named but no file found"""
+        tmp = FileTestObj()
+        tmp.write_config(tmp.args['configfile'],
+        """
+        This file will be deleted
+        """)
+        tmp.teardown()
+        https = {
+            'elasticsearch': {
+                'client': {
+                    'hosts': ['http://127.0.0.1:9200'],
+                    'ca_certs': tmp.args['configfile']
+                }
+            }
+        }
+        https['elasticsearch']['client']['hosts'] = 'https://127.0.0.1:9200'
+        with pytest.raises(ConfigurationError):
+            Builder(configdict=https)

@@ -3,6 +3,17 @@
 Changelog
 =========
 
+8.6.2.post1 (? ? ?)
+-------------------
+
+**Announcement**
+
+  Late 8.6.2 post-release.
+
+**Changes**
+
+  * Fix certificate detection. See #33.
+
 8.6.2 (19 February 2023)
 ------------------------
 

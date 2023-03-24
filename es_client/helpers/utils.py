@@ -2,6 +2,7 @@
 import logging
 import os
 import re
+from pathlib import Path
 import yaml
 from es_client.defaults import config_schema
 from es_client.exceptions import ConfigurationError
@@ -170,3 +171,14 @@ def get_version(client):
     else:
         version = version.split('.')
     return tuple(map(int, version))
+
+def file_exists(file):
+    """Verify the file exists
+
+    :param file: The file to test
+    :type file: str
+
+    :returns: Whether the file exists
+    :rtype: bool
+    """
+    return Path(file).is_file()
