@@ -123,8 +123,24 @@ class TestAuth(TestCase):
                 'client': {'hosts': ['http://127.0.0.1:9200']}}
         }
         self.assertRaises(ConfigurationError, Builder, configdict=test)
+    def test_no_api_key_values(self):
+        """Ensure that API keys remain None"""
+        api_id = None
+        api_key = None
+        test = {
+            'elasticsearch': {
+                'other_settings': {
+                    'api_key': {
+                        'id': api_id,
+                        'api_key': api_key
+                    }
+                },
+                'client': {'hosts': ['http://127.0.0.1:9200']}}
+        }
+        obj = Builder(configdict=test)
+        assert None == obj.client_args.api_key
     def test_proper_api_key(self):
-        """Ensure that API key value is assigned to client_args when a properly passed"""
+        """Ensure that API key value is assigned to client_args when properly passed"""
         api_id = 'foo'
         api_key = 'bar'
         test = {
@@ -139,6 +155,38 @@ class TestAuth(TestCase):
         }
         obj = Builder(configdict=test)
         self.assertEqual(obj.client_args.api_key, (api_id, api_key))
+    def test_proper_api_key_token(self):
+        """Ensure that API key value is assigned to client_args when token is good"""
+        api_id = 'foo'
+        api_key = 'bar'
+        # token = base64.b64encode(bytes(f'{api_id}:{api_key}', 'utf-8'))
+        token = 'Zm9vOmJhcg=='
+        test = {
+            'elasticsearch': {
+                'other_settings': {
+                    'api_key': {
+                        'token': token
+                    }
+                },
+                'client': {'hosts': ['http://127.0.0.1:9200']}}
+        }
+        obj = Builder(configdict=test)
+        self.assertEqual(obj.client_args.api_key, (api_id, api_key))
+    def test_invalid_api_key_token(self):
+        """Ensure that ConfigurationError is raise when token is invalid"""
+        token = 'This is an invalid token'
+        test = {
+            'elasticsearch': {
+                'other_settings': {
+                    'api_key': {
+                        'token': token
+                    }
+                },
+                'client': {'hosts': ['http://127.0.0.1:9200']}}
+        }
+        with pytest.raises(ConfigurationError):
+            Builder(configdict=test)
+
     def test_basic_auth_tuple(self):
         """Test basic_auth is set properly"""
         usr = 'username'

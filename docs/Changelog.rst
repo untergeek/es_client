@@ -13,6 +13,7 @@ Changelog
 **Changes**
 
   * Fix certificate detection. See #33.
+  * Add one-line API support (Base64 encoded).
 
 8.6.2 (19 February 2023)
 ------------------------
