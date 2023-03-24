@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Dockerfile built from template
+docker_test/scripts/Dockerfile
+
 # Distribution / packaging
 .Python
 env/

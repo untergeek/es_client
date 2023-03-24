@@ -7,8 +7,8 @@ import elasticsearch8
 from es_client.defaults import VERSION_MIN, VERSION_MAX, client_settings, other_settings
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
 from es_client.helpers.utils import (
-    ensure_list, prune_nones, verify_ssl_paths, get_yaml, check_config, get_version,
-    verify_url_schema
+    ensure_list, file_exists, prune_nones, verify_ssl_paths, get_yaml, check_config, get_version,
+    verify_url_schema, parse_apikey_token
 )
 
 class ClientArgs(Dict):
@@ -157,10 +157,15 @@ class Builder:
     def _check_api_key(self):
         """
         Create ``api_key`` tuple from :py:attr:`other_args` ``['api_key']`` subkeys ``id`` and ``api_key``
+        Or if ``api_key`` subkey ``token`` is present, derive ``id`` and ``api_key`` from ``token``
         """
         other_args = self.other_args.asdict()
         if 'api_key' in other_args:
-            if 'id' or 'api_key' in other_args['api_key']:
+            # If present, token will override any value in 'id' or 'api_key'
+            if 'token' in other_args['api_key']:
+                (other_args['api_key']['id'], other_args['api_key']['api_key']) = \
+                    parse_apikey_token(other_args['api_key']['token'])
+            if 'id' in other_args['api_key'] or 'api_key' in other_args['api_key']:
                 api_id = other_args['api_key']['id'] if 'id' in other_args['api_key'] else None
                 api_key = other_args['api_key']['api_key'] if 'api_key' in other_args['api_key'] else None
                 if api_id is None and api_key is None:
@@ -176,7 +181,7 @@ class Builder:
             # We can remove the default if that's all there is
             if self.client_args.hosts == ['http://127.0.0.1:9200'] and len(self.client_args.hosts) == 1:
                 self.client_args.hosts = None
-            if self.client_args.hosts != None:
+            if self.client_args.hosts is not None:
                 raise ConfigurationError('Cannot populate both "hosts" and "cloud_id"')
 
     def _check_ssl(self):
@@ -194,18 +199,18 @@ class Builder:
             scheme = client_args['hosts'][0].split(':')[0].lower()
         if scheme == 'https':
             if 'ca_certs' not in client_args or not client_args['ca_certs']:
-                # Use certifi certificates via certifi.where():
                 # pylint: disable=import-outside-toplevel
                 import certifi
+                # Use certifi certificates via certifi.where():
                 self.client_args.ca_certs = certifi.where()
-                # This part is only for use with a compiled Curator.  It can still go there.
-                    # # Try to use bundled certifi certificates
-                    # if getattr(sys, 'frozen', False):
-                    #     # The application is frozen (compiled)
-                    #     datadir = os.path.dirname(sys.executable)
-                    #     self.client_args['verify_certs'] = True
-                    #     self.client_args['ca_certs'] = os.path.join(datadir, 'cacert.pem')
-
+            else:
+                keylist = ['ca_certs', 'client_cert', 'client_key']
+                for key in keylist:
+                    if key in client_args and client_args[key]:
+                        if not file_exists(client_args[key]):
+                            msg = f'"{key}: {client_args[key]}" File not found!'
+                            self.logger.critical(msg)
+                            raise ConfigurationError(msg)
 
     def _find_master(self):
         """Find out if we are connected to the elected master node"""

@@ -4,12 +4,14 @@
 import os
 import random
 import string
+import binascii
 from unittest import TestCase
 import pytest
 from mock import Mock
 from es_client.exceptions import ConfigurationError
 from es_client.helpers.utils import (
-    ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths, verify_url_schema, get_version
+    ensure_list, get_yaml, prune_nones, read_file, verify_ssl_paths, verify_url_schema,
+    get_version, file_exists, parse_apikey_token
 )
 from . import FileTestObj
 
@@ -203,3 +205,44 @@ class TestGetVersion:
         client.info.return_value = {'version': {'number': '9.9.9-dev'} }
         version = get_version(client)
         assert version == (9,9,9)
+
+class TestFileExists:
+    """Test the file_exists function"""
+    def test_positive(self):
+        """Ensure that an existing file returns True"""
+        obj = FileTestObj()
+        obj.write_config(obj.args['configfile'],
+        """
+        [weird brackets go here]
+        I'm not a yaml file!!!=I have no keys
+        I have lots of spaces
+        """)
+        assert file_exists(obj.args['configfile'])
+        obj.teardown()
+    def test_negative(self):
+        """Ensure that a non-existing file returns False"""
+        obj = FileTestObj()
+        obj.write_config(obj.args['configfile'],
+        """
+        This file will be deleted
+        """)
+        obj.teardown()
+        assert not file_exists(obj.args['configfile'])
+
+class TestParseAPIKeyToken:
+    """Test the parse_apikey_token function"""
+    def success(self):
+        """Successfully parse a token"""
+        token = 'X1VoN0VZY0JJV0lrUTlrdS1QZ2k6QjNZN1VJMlVRd0NHM1VTdHhuNnRKdw=='
+        expected = ('_Uh7EYcBIWIkQ9ku-Pgi', 'B3Y7UI2UQwCG3UStxn6tJw')
+        assert expected == parse_apikey_token(token)
+    def raises_exception1(self):
+        """Raise a binascii.Error when unable to base64 decode a token"""
+        token = 'Not a valid token'
+        with pytest.raises(binascii.Error):
+            parse_apikey_token(token)
+    def raises_exception2(self):
+        """Raise an IndexError when able to base64 decode a token, not split by colon"""
+        token = 'VGhpcyB0ZXh0IGhhcyBubyBjb2xvbg=='
+        with pytest.raises(IndexError):
+            parse_apikey_token(token)
