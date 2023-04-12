@@ -1,2 +1,2 @@
 """Release version"""
-__version__ = '8.6.2.post1'
+__version__ = '8.7.0'
