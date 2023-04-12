@@ -3,6 +3,19 @@
 Changelog
 =========
 
+8.7.0 (12 April 2023)
+---------------------
+
+**Announcement**
+
+Apologies for the delayed release. I have had some personal matters that had me
+out of office for several weeks.
+
+**Changes**
+
+  * Bring up to date with Elasticsearch 8.7.0 Python client.
+  * Add ``mock`` to the list of modules for testing
+
 8.6.2.post1 (23 March 2023)
 ---------------------------
 
