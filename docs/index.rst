@@ -84,7 +84,7 @@ The same schema validations apply here as well.
 License
 -------
 
-Copyright (c) 2023 Aaron Mildenstein
+Copyright (c) 2022-2023 Aaron Mildenstein
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
