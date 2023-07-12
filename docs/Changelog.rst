@@ -3,6 +3,21 @@
 Changelog
 =========
 
+8.8.2 (12 July 2023)
+--------------------
+
+**Announcement**
+
+Apologies for another delayed release. Weddings and funerals and graduations
+have kept me from releasing anything in the interim.
+
+**Changes**
+
+  * Bring up to date with Elasticsearch 8.8.2 Python client
+  * Other updated Python modules:
+      * ``certifi>=2023.5.7``
+      * ``click==8.1.4``
+
 8.7.0 (12 April 2023)
 ---------------------
 
