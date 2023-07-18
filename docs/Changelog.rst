@@ -3,6 +3,13 @@
 Changelog
 =========
 
+8.8.2.post1 (18 July 2023)
+--------------------------
+
+**Breakfix**
+
+  * PyYAML 6.0.1 was released to address Cython 3 compile issues.
+
 8.8.2 (12 July 2023)
 --------------------
 
