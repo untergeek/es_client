@@ -3,6 +3,17 @@
 Changelog
 =========
 
+8.9.0 (31 July 2023)
+--------------------
+
+**Announcement**
+
+The only changes in this release are dependency version bumps:
+
+  * ``elasticsearch8==8.9.0``
+  * ``click==8.1.6``
+  * ``certifi==2023.7.22``
+
 8.8.2.post1 (18 July 2023)
 --------------------------
 
