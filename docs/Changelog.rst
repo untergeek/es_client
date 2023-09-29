@@ -3,6 +3,16 @@
 Changelog
 =========
 
+8.10.1 (29 September 2023)
+--------------------------
+
+**Announcement**
+
+No change in functionality. Adding some ways to have CLI building via Click
+easier for end users by making the basic arguments part of the ``es_client``
+code. This is shown in the Example in the docs and in the code in 
+file ``example_cli.py``.
+
 8.10.0 (25 September 2023)
 --------------------------
 
