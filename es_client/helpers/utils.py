@@ -6,7 +6,8 @@ import base64
 import binascii
 from pathlib import Path
 import yaml
-from es_client.defaults import config_schema
+import click
+from es_client.defaults import CLICK_OPTIONS, config_schema
 from es_client.exceptions import ConfigurationError
 from es_client.helpers.schemacheck import SchemaCheck
 
@@ -40,6 +41,17 @@ def check_config(config):
             es_settings['elasticsearch'][key] = prune_nones(es_settings['elasticsearch'][key])
     return SchemaCheck(es_settings['elasticsearch'], config_schema(),
         'Elasticsearch Configuration', 'elasticsearch').result()
+
+def cli_opts(value):
+    """
+    In order to make building a Click interface more cleanly, this function returns all Click
+    option settings indicated by ``value``, both forming the lone argument (e.g. ``--option``),
+    and all key word arguments as a dict.
+
+    The single arg is rendered as ``f'--{value}'``. Likewise, ``value`` is the key to extract
+    all keyword args from the supplied dictionary.
+    """
+    return (f'--{value}',), CLICK_OPTIONS[value]
 
 def ensure_list(data):
     """
@@ -115,6 +127,10 @@ def get_yaml(path):
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as exc:
         raise ConfigurationError(f'Unable to parse YAML file. Error: {exc}') from exc
 
+def option_wrapper():
+    """Return the click decorator passthrough function"""
+    return passthrough(click.option)
+
 def parse_apikey_token(token):
     """
     Split a base64 encoded API Key Token into id and api_key
@@ -132,6 +148,10 @@ def parse_apikey_token(token):
         raise ConfigurationError(f'Unable to parse base64 API Key Token: {exc}') from exc
     return (split[0], split[1])
 
+def passthrough(func):
+    """Wrapper to make it easy to store click configuration elsewhere"""
+    return lambda a, k: func(*a, **k)
+
 def prune_nones(mydict):
     """
     Remove keys from `mydict` whose values are `None`
@@ -140,7 +160,7 @@ def prune_nones(mydict):
     :rtype: dict
     """
     # Test for `None` instead of existence or zero values will be caught
-    return dict([(k,v) for k, v in mydict.items() if v is not None and v != 'None'])
+    return dict([(k, v) for k, v in mydict.items() if v is not None and v != 'None'])
 
 def read_file(myfile):
     """

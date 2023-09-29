@@ -2,52 +2,60 @@
 # pylint: disable=broad-except, no-value-for-parameter, invalid-name, redefined-builtin
 import click
 from es_client.builder import ClientArgs, OtherArgs, Builder
-from es_client.helpers.utils import get_yaml, check_config, prune_nones, verify_url_schema
+from es_client.helpers import utils as escl
+
+click_opt_wrap = escl.option_wrapper()
 
 @click.command()
-@click.option('--config_file', help='Configuration settings file', type=click.Path(exists=True))
-@click.option('--hosts', help='Elasticsearch URL to connect to', multiple=True)
-@click.option('--cloud_id', help='Shorthand to connect to Elastic Cloud instance')
-@click.option('--api_token', help='The base64 encoded API Key token', type=str)
-@click.option('--id', help='API Key "id" value', type=str)
-@click.option('--api_key', help='API Key "api_key" value', type=str)
-@click.option('--username', help='Username used to create "basic_auth" tuple')
-@click.option('--password', help='Password used to create "basic_auth" tuple')
-@click.option('--bearer_auth', type=str)
-@click.option('--opaque_id', type=str)
-@click.option('--request_timeout', help='Request timeout in seconds', type=float)
-@click.option('--http_compress', help='Enable HTTP compression', is_flag=True, default=None)
-@click.option('--verify_certs', help='Verify SSL/TLS certificate(s)', is_flag=True, default=None)
-@click.option('--ca_certs', help='Path to CA certificate file or directory')
-@click.option('--client_cert', help='Path to client certificate file')
-@click.option('--client_key', help='Path to client certificate key')
-@click.option('--ssl_assert_hostname', help='Hostname or IP address to verify on the node\'s certificate.', type=str)
-@click.option('--ssl_assert_fingerprint', help='SHA-256 fingerprint of the node\'s certificate. If this value is given then root-of-trust verification isn\'t done and only the node\'s certificate fingerprint is verified.', type=str)
-@click.option('--ssl_version', help='Minimum acceptable TLS/SSL version', type=str)
-@click.option('--master-only', help='Only run if the single host provided is the elected master', is_flag=True, default=None)
-@click.option('--skip_version_test', help='Do not check the host version', is_flag=True, default=None)
-def run(
-    config_file, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
+@click_opt_wrap(*escl.cli_opts('config'))
+@click_opt_wrap(*escl.cli_opts('hosts'))
+@click_opt_wrap(*escl.cli_opts('cloud_id'))
+@click_opt_wrap(*escl.cli_opts('api_token'))
+@click_opt_wrap(*escl.cli_opts('id'))
+@click_opt_wrap(*escl.cli_opts('api_key'))
+@click_opt_wrap(*escl.cli_opts('username'))
+@click_opt_wrap(*escl.cli_opts('password'))
+@click_opt_wrap(*escl.cli_opts('bearer_auth'))
+@click_opt_wrap(*escl.cli_opts('opaque_id'))
+@click_opt_wrap(*escl.cli_opts('request_timeout'))
+@click_opt_wrap(*escl.cli_opts('http_compress'))
+@click_opt_wrap(*escl.cli_opts('verify_certs'))
+@click_opt_wrap(*escl.cli_opts('ca_certs'))
+@click_opt_wrap(*escl.cli_opts('client_cert'))
+@click_opt_wrap(*escl.cli_opts('client_key'))
+@click_opt_wrap(*escl.cli_opts('ssl_assert_hostname'))
+@click_opt_wrap(*escl.cli_opts('ssl_assert_fingerprint'))
+@click_opt_wrap(*escl.cli_opts('ssl_version'))
+@click_opt_wrap(*escl.cli_opts('master-only'))
+@click_opt_wrap(*escl.cli_opts('skip_version_test'))
+def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
     opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
     ssl_assert_hostname, ssl_assert_fingerprint, ssl_version, master_only, skip_version_test
 ):
-    """Collect all client options and 'run'"""
+    """
+    CLI TOOL (anything here will show up in --help)
+    
+    Be sure to add any other options or arguments either before ``config`` or after
+    ``skip_version_test`` for both the decorators and the list of arguments in ``def run()``,
+    preserving their order in both locations.  ``ctx`` needs to be the first arg after
+    ``def run()`` as a special argument for Click, and does not need a decorator function.
+    """
     client_args = ClientArgs()
     other_args = OtherArgs()
-    if config_file:
-        raw_config = check_config(get_yaml(config_file))
-        click.echo(f'raw_config = {raw_config}')
+    if config:
+        from_yaml = escl.get_yaml(config)
+        raw_config = escl.check_config(from_yaml)
         client_args.update_settings(raw_config['client'])
         other_args.update_settings(raw_config['other_settings'])
 
     hostslist = []
     if hosts:
         for host in list(hosts):
-            hostslist.append(verify_url_schema(host))
+            hostslist.append(escl.verify_url_schema(host))
     else:
         hostslist = None
 
-    cli_client = prune_nones({
+    cli_client = escl.prune_nones({
         'hosts': hostslist,
         'cloud_id': cloud_id,
         'bearer_auth': bearer_auth,
@@ -63,7 +71,7 @@ def run(
         'ssl_version': ssl_version
     })
 
-    cli_other = prune_nones({
+    cli_other = escl.prune_nones({
         'master_only': master_only,
         'skip_version_test': skip_version_test,
         'username': username,
@@ -102,8 +110,8 @@ def run(
     # Build a "final_config" that reflects CLI args overriding anything from a config_file
     final_config = {
         'elasticsearch': {
-            'client': prune_nones(client_args.asdict()),
-            'other_settings': prune_nones(other_args.asdict())
+            'client': escl.prune_nones(client_args.asdict()),
+            'other_settings': escl.prune_nones(other_args.asdict())
         }
     }
 
