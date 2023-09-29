@@ -1,4 +1,5 @@
 """Define default values"""
+import click
 from six import string_types
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 
@@ -23,6 +24,48 @@ CLIENT_SETTINGS = [
 OTHER_SETTINGS = [
     'master_only', 'skip_version_test', 'username', 'password', 'api_key'
 ]
+
+CLICK_OPTIONS = {
+    'config': {'help': 'Path to configuration file.', 'type': click.Path(exists=True)},
+    'hosts': {'help': 'Elasticsearch URL to connect to.', 'multiple': True},
+    'cloud_id': {'help': 'Shorthand to connect to Elastic Cloud instance'},
+    'api_token': {'help': 'The base64 encoded API Key token', 'type': str},
+    'id': {'help': 'API Key "id" value', 'type': str},
+    'api_key': {'help': 'API Key "api_key" value', 'type': str},
+    'username': {'help': 'Username used to create "basic_auth" tuple', 'type': str},
+    'password': {'help': 'Password used to create "basic_auth" tuple', 'type': str},
+    'bearer_auth': {'help': 'Bearer authentication token', 'type': str},
+    'opaque_id': {'help': 'X-Opaque-Id HTTP header value', 'type': str},
+    'request_timeout': {'help': 'Request timeout in seconds', 'type': float},
+    'http_compress': {'help': 'Enable HTTP compression', 'default': None, 'is_flag': True},
+    'verify_certs': {'help': 'Verify SSL/TLS certificate(s)', 'default': None, 'is_flag': True},
+    'ca_certs': {'help': 'Path to CA certificate file or directory', 'type': str},
+    'client_cert': {'help': 'Path to client certificate file', 'type': str},
+    'client_key': {'help': 'Path to client key file', 'type': str},
+    'ssl_assert_hostname': {
+        'help': "Hostname or IP address to verify on the node's certificate.", 'type': str},
+    'ssl_assert_fingerprint': {
+        'help': (
+            "SHA-256 fingerprint of the node's certificate. If this value is given then "
+            "root-of-trust verification isn't done and only the node's certificate fingerprint "
+            "is verified."
+            ),
+        'type': str
+    },
+    'ssl_version': {'help': 'Minimum acceptable TLS/SSL version', 'type': str},
+    'master-only': {
+        'help': 'Only run if the single host provided is the elected master',
+        'type': str,
+        "is_flag": True,
+        "default": None,
+    },
+    'skip_version_test': {
+        'help': 'Do not check the host version',
+        'type': str,
+        "is_flag": True,
+        "default": None,
+    },
+}
 
 # All elasticsearch client options, with a few additional arguments.
 def config_schema():
@@ -163,8 +206,6 @@ def config_schema():
             }
         }
     )
-
-
 
 def version_max():
     """Return the max version"""
