@@ -3,10 +3,12 @@
 import click
 from es_client.builder import ClientArgs, OtherArgs, Builder
 from es_client.helpers import utils as escl
+from es_client.version import __version__
 
+ONOFF = {'on': '', 'off': 'no-'}
 click_opt_wrap = escl.option_wrapper()
 
-@click.command()
+@click.group()
 @click_opt_wrap(*escl.cli_opts('config'))
 @click_opt_wrap(*escl.cli_opts('hosts'))
 @click_opt_wrap(*escl.cli_opts('cloud_id'))
@@ -18,16 +20,18 @@ click_opt_wrap = escl.option_wrapper()
 @click_opt_wrap(*escl.cli_opts('bearer_auth'))
 @click_opt_wrap(*escl.cli_opts('opaque_id'))
 @click_opt_wrap(*escl.cli_opts('request_timeout'))
-@click_opt_wrap(*escl.cli_opts('http_compress'))
-@click_opt_wrap(*escl.cli_opts('verify_certs'))
+@click_opt_wrap(*escl.cli_opts('http_compress', onoff=ONOFF))
+@click_opt_wrap(*escl.cli_opts('verify_certs', onoff=ONOFF))
 @click_opt_wrap(*escl.cli_opts('ca_certs'))
 @click_opt_wrap(*escl.cli_opts('client_cert'))
 @click_opt_wrap(*escl.cli_opts('client_key'))
 @click_opt_wrap(*escl.cli_opts('ssl_assert_hostname'))
 @click_opt_wrap(*escl.cli_opts('ssl_assert_fingerprint'))
 @click_opt_wrap(*escl.cli_opts('ssl_version'))
-@click_opt_wrap(*escl.cli_opts('master-only'))
-@click_opt_wrap(*escl.cli_opts('skip_version_test'))
+@click_opt_wrap(*escl.cli_opts('master-only', onoff=ONOFF))
+@click_opt_wrap(*escl.cli_opts('skip_version_test', onoff=ONOFF))
+@click.version_option(version=__version__)
+@click.pass_context
 def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
     opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
     ssl_assert_hostname, ssl_assert_fingerprint, ssl_version, master_only, skip_version_test
@@ -40,6 +44,7 @@ def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password
     preserving their order in both locations.  ``ctx`` needs to be the first arg after
     ``def run()`` as a special argument for Click, and does not need a decorator function.
     """
+    ctx.obj = {}
     client_args = ClientArgs()
     other_args = OtherArgs()
     if config:
@@ -115,8 +120,6 @@ def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password
         }
     }
 
-    # click.echo(f'final_config = {final_config}')
-
     builder = Builder(configdict=final_config)
 
     try:
@@ -127,7 +130,46 @@ def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password
     es_client = builder.client
 
     # If we're here, we'll see the output from GET http(s)://hostname.tld:PORT
-    click.echo(f'Connection result: {es_client.info()}')
+    click.secho('Connection result: ', bold=True, nl=False)
+    click.secho(f'{es_client.info()}')
 
+# Here is the ``show-all-options`` command, which does nothing other than set ``show=True`` for
+# the hidden options in the top-level menu so they are exposed for the --help output.
+@run.command(short_help='Show all configuration options')
+@click_opt_wrap(*escl.cli_opts('config'))
+@click_opt_wrap(*escl.cli_opts('hosts'))
+@click_opt_wrap(*escl.cli_opts('cloud_id'))
+@click_opt_wrap(*escl.cli_opts('api_token'))
+@click_opt_wrap(*escl.cli_opts('id'))
+@click_opt_wrap(*escl.cli_opts('api_key'))
+@click_opt_wrap(*escl.cli_opts('username'))
+@click_opt_wrap(*escl.cli_opts('password'))
+@click_opt_wrap(*escl.cli_opts('bearer_auth'))
+@click_opt_wrap(*escl.cli_opts('opaque_id'))
+@click_opt_wrap(*escl.cli_opts('request_timeout'))
+@click_opt_wrap(*escl.cli_opts('http_compress', onoff=ONOFF, show=True))
+@click_opt_wrap(*escl.cli_opts('verify_certs', onoff=ONOFF))
+@click_opt_wrap(*escl.cli_opts('ca_certs'))
+@click_opt_wrap(*escl.cli_opts('client_cert'))
+@click_opt_wrap(*escl.cli_opts('client_key'))
+@click_opt_wrap(*escl.cli_opts('ssl_assert_hostname', show=True))
+@click_opt_wrap(*escl.cli_opts('ssl_assert_fingerprint', show=True))
+@click_opt_wrap(*escl.cli_opts('ssl_version', show=True))
+@click_opt_wrap(*escl.cli_opts('master-only', onoff=ONOFF, show=True))
+@click_opt_wrap(*escl.cli_opts('skip_version_test', onoff=ONOFF, show=True))
+@click.version_option(version=__version__)
+@click.pass_context
+def show_all_options(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
+    opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
+    ssl_assert_hostname, ssl_assert_fingerprint, ssl_version, master_only, skip_version_test
+):
+    """
+    ALL OPTIONS SHOWN
+    
+    The full list of options available for configuring a connection at the command-line.
+    """
+    click.echo(ctx.get_help())
+    return
+    
 if __name__ == '__main__':
     run()

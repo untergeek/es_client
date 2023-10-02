@@ -3,6 +3,27 @@
 Changelog
 =========
 
+8.10.2 (2 October 2023)
+-----------------------
+
+**Announcement**
+
+Again, no change in functionality. Changing some of the CLI options to be
+hidden by default (but still usable). These options include:
+
+  * ``bearer_auth``
+  * ``opaque_id``
+  * ``http_compress``
+  * ``ssl_assert_hostname``
+  * ``ssl_assert_fingerprint``
+  * ``ssl_version``
+  * ``master-only``
+  * ``skip_version_test``
+
+This will hopefully not surprise anyone too badly. I haven't heard of anyone
+using these options yet. The CLI examle has been configured with a
+``show-all-options`` command that will show all of the hidden options.
+
 8.10.1 (29 September 2023)
 --------------------------
 
