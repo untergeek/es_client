@@ -3,6 +3,14 @@
 Changelog
 =========
 
+8.10.3 (2 October 2023)
+-----------------------
+
+**Fixes**
+
+Missed a few of the hidden options, and found a way to force the help output to
+show for ``show-all-options`` without needing to add ``--help`` afterwards.
+
 8.10.2 (2 October 2023)
 -----------------------
 

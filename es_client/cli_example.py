@@ -144,8 +144,8 @@ def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password
 @click_opt_wrap(*escl.cli_opts('api_key'))
 @click_opt_wrap(*escl.cli_opts('username'))
 @click_opt_wrap(*escl.cli_opts('password'))
-@click_opt_wrap(*escl.cli_opts('bearer_auth'))
-@click_opt_wrap(*escl.cli_opts('opaque_id'))
+@click_opt_wrap(*escl.cli_opts('bearer_auth', show=True))
+@click_opt_wrap(*escl.cli_opts('opaque_id', show=True))
 @click_opt_wrap(*escl.cli_opts('request_timeout'))
 @click_opt_wrap(*escl.cli_opts('http_compress', onoff=ONOFF, show=True))
 @click_opt_wrap(*escl.cli_opts('verify_certs', onoff=ONOFF))
@@ -168,8 +168,9 @@ def show_all_options(ctx, config, hosts, cloud_id, api_token, id, api_key, usern
     
     The full list of options available for configuring a connection at the command-line.
     """
+    ctx = click.get_current_context()
     click.echo(ctx.get_help())
-    return
-    
+    ctx.exit()
+
 if __name__ == '__main__':
     run()
