@@ -7,7 +7,7 @@ import binascii
 from pathlib import Path
 import yaml
 import click
-from es_client.defaults import CLICK_OPTIONS, config_schema
+from es_client.defaults import click_options, config_schema
 from es_client.exceptions import ConfigurationError
 from es_client.helpers.schemacheck import SchemaCheck
 
@@ -42,16 +42,35 @@ def check_config(config):
     return SchemaCheck(es_settings['elasticsearch'], config_schema(),
         'Elasticsearch Configuration', 'elasticsearch').result()
 
-def cli_opts(value):
+def override_hidden(value, show=False):
+    """Override 'hidden' if set in value"""
+    retval = click_options()[value]
+    if 'hidden' in retval:
+        if show:
+            retval['hidden'] = False
+    return retval
+
+def cli_opts(value, onoff=None, show=False):
     """
     In order to make building a Click interface more cleanly, this function returns all Click
     option settings indicated by ``value``, both forming the lone argument (e.g. ``--option``),
     and all key word arguments as a dict.
 
-    The single arg is rendered as ``f'--{value}'``. Likewise, ``value`` is the key to extract
-    all keyword args from the supplied dictionary.
+    The single arg is rendered as ``f'--{value}'`` unless ``onoff`` is configured, which allows the
+    ability to format options like ``--show-value/--hide-value`` if ``onoff`` is 
+    ``{"on": "show-", "off": "hide-"}``, for example.
+    
+    Likewise, ``value`` is the key to extract all keyword args from the supplied dictionary. If a
+    value's dictionary has the option hidden by default, ``show`` can override that to make it
+    visible.
     """
-    return (f'--{value}',), CLICK_OPTIONS[value]
+    argval = f'--{value}'
+    if isinstance(onoff, dict):
+        try:
+            argval = f'--{onoff["on"]}{value}/--{onoff["off"]}{value}'
+        except KeyError as exc:
+            raise ConfigurationError from exc
+    return (argval,), override_hidden(value, show=show)
 
 def ensure_list(data):
     """
