@@ -3,6 +3,16 @@
 Changelog
 =========
 
+8.11.0 (15 November 2023)
+-------------------------
+
+**Changes**
+
+  * Dependency version bumps in this version:
+      * ``elasticsearch8==8.11.0``
+  * Replace ``Mock`` with ``unittest.Mock`` in unit tests.
+  * Add Python 3.12 as a supported version (tested).
+
 8.10.3 (2 October 2023)
 -----------------------
 
