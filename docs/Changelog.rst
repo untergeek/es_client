@@ -3,6 +3,16 @@
 Changelog
 =========
 
+8.12.0 (29 January 2024)
+------------------------
+
+**Changes**
+
+  * Dependency version bumps in this release:
+      * ``elasticsearch8==8.12.0``
+      * ``voluptuous>=0.14.1``
+      * ``certifi>=2023.11.17``
+  
 8.11.0 (15 November 2023)
 -------------------------
 

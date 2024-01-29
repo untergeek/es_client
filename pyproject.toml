@@ -27,11 +27,11 @@ keywords = [
     "command-line"
 ]
 dependencies = [
-    "elasticsearch8==8.11.0",
+    "elasticsearch8==8.12.0",
     "click==8.1.7",
     "pyyaml==6.0.1",
-    "voluptuous>=0.13.1",
-    "certifi>=2023.7.22",
+    "voluptuous>=0.14.1",
+    "certifi>=2023.11.17",
     "six>=1.16.0",
 ]
 
