@@ -6,9 +6,18 @@ from copy import deepcopy
 from es_client.defaults import KEYS_TO_REDACT
 from es_client.exceptions import ConfigurationError
 
-def password_filter(data):
+def password_filter(data: dict) -> dict:
     """
-    Return a deepcopy of the dictionary with any password fields hidden
+    Recursively look through all nested structures of ``data`` for the key ``'password'`` and redact
+    the value.
+
+    :param data: Configuration data
+
+    :type data: dict
+
+    :returns: A :py:class:`~.copy.deepcopy` of ``data`` with the value obscured by ``REDACTED``
+        if the key is ``'password'``.
+    :rtype: dict
     """
     def iterdict(mydict):
         for key, value in mydict.items():

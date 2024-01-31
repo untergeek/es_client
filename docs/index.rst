@@ -39,6 +39,12 @@ Example Usage
                 'username': 'joe_user',
                 'password': 'password',
             }
+        },
+        'logging': {
+            'loglevel': 'INFO',
+            'logfile': '/path/to/file.log',
+            'logformat': 'default',
+            'blacklist': ['elastic_transport', 'urllib3']
         }
     }
 
@@ -65,6 +71,11 @@ Additionally, you can read from a YAML configuration file:
         master_only: true
         username: joe_user
         password: password
+    logging:
+      loglevel: INFO
+      logfile: /path/to/file.log
+      logformat: default
+      blacklist: ['elastic_transport', 'urllib3']
 
 ::
 
@@ -84,7 +95,7 @@ The same schema validations apply here as well.
 License
 -------
 
-Copyright (c) 2022-2023 Aaron Mildenstein
+Copyright (c) 2022-2024 Aaron Mildenstein
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

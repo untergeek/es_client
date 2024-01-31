@@ -28,6 +28,7 @@ keywords = [
 ]
 dependencies = [
     "elasticsearch8==8.12.0",
+    "ecs-logging==2.1.0",
     "click==8.1.7",
     "pyyaml==6.0.1",
     "voluptuous>=0.14.1",
@@ -40,7 +41,6 @@ test = [
     "requests",
     "pytest >=7.2.1",
     "pytest-cov",
-    "unittest",
 ]
 doc = ["sphinx", "sphinx_rtd_theme"]
 

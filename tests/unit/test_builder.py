@@ -138,7 +138,7 @@ class TestAuth(TestCase):
                 'client': {'hosts': ['http://127.0.0.1:9200']}}
         }
         obj = Builder(configdict=test)
-        assert None == obj.client_args.api_key
+        assert None is obj.client_args.api_key
     def test_proper_api_key(self):
         """Ensure that API key value is assigned to client_args when properly passed"""
         api_id = 'foo'
