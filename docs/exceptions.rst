@@ -14,3 +14,6 @@ Exceptions
 
 .. autoexception:: es_client.exceptions.NotMaster
    :members:
+
+.. autoexception:: es_client.exceptions.LoggingException
+   :members:

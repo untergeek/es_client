@@ -8,6 +8,7 @@ ClientArgs Class
 
 .. autoclass:: es_client.builder.ClientArgs
    :members:
+   :inherited-members:
    :undoc-members:
    :private-members:
 
@@ -16,6 +17,7 @@ OtherArgs Class
 
 .. autoclass:: es_client.builder.OtherArgs
    :members:
+   :inherited-members:
    :undoc-members:
    :private-members:
 

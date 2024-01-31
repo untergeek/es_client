@@ -1,5 +1,6 @@
 """Define default values"""
-import click
+# pylint: disable=line-too-long
+from click import Choice, Path
 from six import string_types
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 
@@ -25,8 +26,8 @@ OTHER_SETTINGS = [
     'master_only', 'skip_version_test', 'username', 'password', 'api_key'
 ]
 
-CLICK_OPTIONS = {
-    'config': {'help': 'Path to configuration file.', 'type': click.Path(exists=True)},
+CLICK_SETTINGS = {
+    'config': {'help': 'Path to configuration file.', 'type': Path(exists=True)},
     'hosts': {'help': 'Elasticsearch URL to connect to.', 'multiple': True},
     'cloud_id': {'help': 'Elastic Cloud instance id'},
     'api_token': {'help': 'The base64 encoded API Key token', 'type': str},
@@ -77,9 +78,51 @@ CLICK_OPTIONS = {
     }
 }
 
-def click_options():
-    """Return CLICK_OPTIONS"""
-    return CLICK_OPTIONS
+ES_DEFAULT = {'elasticsearch':{'client':{'hosts':['http://127.0.0.1:9200']}}}
+
+LOGGING_SETTINGS = {
+    'loglevel': {
+        'help': 'Log level',
+        "type": Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+    },
+    'logfile': {'help': 'Log file', 'type': str},
+    'logformat': {
+        'help': 'Log output format',
+        "type": Choice(['default', 'json', 'ecs'])
+    },
+}
+
+SHOW_OPTION = {'hidden': False}
+
+# Logging schema
+def config_logging():
+    """
+    Logging schema with defaults:
+
+    .. code-block:: yaml
+
+        logging:
+          loglevel: INFO
+          logfile: None
+          logformat: default
+          blacklist: ['elastic_transport', 'urllib3']
+
+    :returns: A valid :py:class:`~.voluptuous.schema_builder.Schema` of all acceptable values with
+        the default values set.
+    :rtype: :py:class:`~.voluptuous.schema_builder.Schema`
+    """
+    return Schema(
+        {
+            Optional('loglevel', default='INFO'):
+                Any(None, 'NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL',
+                    All(Coerce(int), Any(0, 10, 20, 30, 40, 50))
+                    ),
+            Optional('logfile', default=None): Any(None, *string_types),
+            Optional('logformat', default='default'):
+                Any(None, All(Any(*string_types), Any('default', 'json', 'ecs'))),
+            Optional('blacklist', default=['elastic_transport', 'urllib3']): Any(None, list),
+        }
+    )
 
 # All elasticsearch client options, with a few additional arguments.
 def config_schema():

@@ -4,9 +4,10 @@ Default Values
 --------------
 
 The :py:class:`~.esclient.Builder` class expects a ``raw_dict`` of
-configuration settings.  This :py:class:`dict` should only contain one top
-level key: ``elasticsearch``.  This is an example of what the structure looks
-like with many keys present (some contradictory, but shown for reference)::
+configuration settings.  This :py:class:`dict` should contain the top level
+key: ``elasticsearch``, thought it can also contain the key ``logging``. This
+is an example of what the structure looks like with many keys present (some
+contradictory, but shown for reference)::
 
     raw_dict = {
         'elasticsearch': {
@@ -36,6 +37,12 @@ like with many keys present (some contradictory, but shown for reference)::
                     'token': ...
                 }
             },
+        },
+        'logging': {
+            'loglevel': 'INFO',
+            'logfile': ...,
+            'logformat': 'default',
+            'blacklist': ['elastic_transport', 'urllib3']
         },
     }
 
