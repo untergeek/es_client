@@ -41,6 +41,11 @@ Example Usage
                 'username': 'joe_user',
                 'password': 'password',
             }
+        },
+        'logging': {
+            'loglevel': 'INFO',
+            'logfile': '/path/to/file.log',
+            'logformat': 'default',
         }
     }
 
@@ -67,6 +72,10 @@ Additionally, you can read from a YAML configuration file:
         master_only: false
         username: joe_user
         password: password
+    logging:
+      loglevel: INFO
+      logfile: /path/to/file.log
+      logformat: default
 
 ::
 

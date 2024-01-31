@@ -3,6 +3,41 @@
 Changelog
 =========
 
+8.12.1 (31 January 2024)
+------------------------
+
+**Announcement**
+
+**TL;DR —** I got sick of coding the same lines over and over again, and
+copy/pasting between projects. I put that code here to make it easier to reuse.
+
+You can now make CLI/Click-related functionality more portable for your apps
+using ``es_client``.
+
+There is not really any change to the base ``Builder`` class, nor the
+``ClientArgs`` or ``OtherArgs`` classes, so this is more a function of support
+tools and tooling for handling the overriding of config file options with those
+supplied at a command-line.
+
+The improvements are visible in ``cli_example.py``.
+
+Some of these changes include:
+
+  * Functions that simplify overriding configuration file options with ones
+    from the command-line. Reduces dozens of lines of code to a single
+    function call: ``get_args(ctx.params, config)``, which overrides the values
+    from ``config`` with the command-line parameters from Click.
+  * Re-usable ``cli_opts`` Click option wrapper function, complete with overrides.
+    This is demonstrated with the hidden options vs. ``show-all-options`` in
+    ``cli_example.py``.
+  * Support basic logging configuration with ``default``, ``json``, and ``ecs``
+  * New modules in ``es_client.helpers``:
+      * ``config``
+      * ``logging``
+  * Lots and lots of tests, both unit and integration.
+  * Updated all documentation for modules, functions, and classes accordingly.
+
+
 8.12.0 (29 January 2024)
 ------------------------
 

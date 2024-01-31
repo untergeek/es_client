@@ -4,60 +4,50 @@
 from typing import Dict
 import logging
 import elasticsearch8
-from es_client.defaults import VERSION_MIN, VERSION_MAX, client_settings, other_settings
+from es_client.defaults import VERSION_MIN, VERSION_MAX, CLIENT_SETTINGS, OTHER_SETTINGS
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
 from es_client.helpers.utils import (
     ensure_list, file_exists, prune_nones, verify_ssl_paths, get_yaml, check_config, get_version,
     verify_url_schema, parse_apikey_token
 )
 
-class ClientArgs(Dict):
+class Args(Dict):
     """
+    Parent class for ClientArgs and OtherArgs
+    
     Initialize with None values for all accepted client settings
-    update_settings and asdict methods
-    """
-    def __init__(self):
-        """Updatable object that will contain client arguments for connecting to Elasticsearch"""
 
-        for setting in client_settings():
+    Contains :py:meth:`update_settings` and :py:meth:`asdict` methods
+    """
+    def __init__(self, settings: dict = None):
+        """Updatable object that will contain arguments for connecting to Elasticsearch"""
+        self.settings = settings
+        for setting in self.settings:
             setattr(self, setting, None)
 
-    def update_settings(self, config):
+    def update_settings(self, config: dict):
         """Update individual settings from provided config dict"""
         for key in list(config.keys()):
             setattr(self, key, config[key])
 
-    def asdict(self):
+    def asdict(self) -> dict:
         """Return as a dictionary """
         retval = {}
-        for setting in client_settings():
+        for setting in self.settings:
             retval[setting] = getattr(self, setting, None)
         return retval
 
-class OtherArgs(Dict):
-    """
-    Initialize with None values for all 'other' client settings
-    Return
-    """
-    def __init__(self):
-        """
-        Updatable object that will contain 'other' client arguments for connecting to Elasticsearch
-        """
+class ClientArgs(Args):
+    """ClientArgs object"""
+    # pylint: disable=dangerous-default-value
+    def __init__(self, settings=CLIENT_SETTINGS):
+        super().__init__(settings=CLIENT_SETTINGS)
 
-        for setting in other_settings():
-            setattr(self, setting, None)
-
-    def update_settings(self, config):
-        """Update individual settings from provided config dict"""
-        for key in list(config.keys()):
-            setattr(self, key, config[key])
-
-    def asdict(self):
-        """Return as a dictionary """
-        retval = {}
-        for setting in other_settings():
-            retval[setting] = getattr(self, setting, None)
-        return retval
+class OtherArgs(Args):
+    """OtherArgs object"""
+    # pylint: disable=dangerous-default-value
+    def __init__(self, settings=OTHER_SETTINGS):
+        super().__init__(settings=OTHER_SETTINGS)
 
 class Builder:
     """
@@ -68,11 +58,10 @@ class Builder:
     :param configdict: See :doc:`defaults </defaults>` to find acceptable values
     :param configfile: See :doc:`defaults </defaults>` to find acceptable values
     :param autoconnect: Connect to client automatically
+
     :type configdict: dict
     :type configfile: str
     :type autoconnect: bool
-
-
     """
     def __init__(self, configdict=None, configfile=None, autoconnect=False,
         version_min=VERSION_MIN, version_max=VERSION_MAX):
@@ -105,7 +94,6 @@ class Builder:
         if autoconnect:
             self.connect()
             self.test_connection()
-
 
     def update_config(self):
         """Update object with values provided"""
@@ -150,13 +138,16 @@ class Builder:
             if usr is None and pwd is None:
                 pass
             elif usr is None or pwd is None:
-                raise ConfigurationError('Must populate both username and password, or leave both empty')
+                msg = 'Must populate both username and password, or leave both empty'
+                raise ConfigurationError(msg)
             else:
                 self.client_args.basic_auth = (usr, pwd)
 
     def _check_api_key(self):
         """
-        Create ``api_key`` tuple from :py:attr:`other_args` ``['api_key']`` subkeys ``id`` and ``api_key``
+        Create ``api_key`` tuple from :py:attr:`other_args` ``['api_key']`` subkeys 
+        ``id`` and ``api_key``
+        
         Or if ``api_key`` subkey ``token`` is present, derive ``id`` and ``api_key`` from ``token``
         """
         other_args = self.other_args.asdict()
@@ -167,11 +158,14 @@ class Builder:
                     parse_apikey_token(other_args['api_key']['token'])
             if 'id' in other_args['api_key'] or 'api_key' in other_args['api_key']:
                 api_id = other_args['api_key']['id'] if 'id' in other_args['api_key'] else None
-                api_key = other_args['api_key']['api_key'] if 'api_key' in other_args['api_key'] else None
+                api_key = (
+                    other_args['api_key']['api_key'] if 'api_key' in other_args['api_key'] else None
+                )
                 if api_id is None and api_key is None:
                     pass
                 elif api_id is None or api_key is None:
-                    raise ConfigurationError('Must populate both id and api_key, or leave both empty')
+                    msg = 'Must populate both id and api_key, or leave both empty'
+                    raise ConfigurationError(msg)
                 else:
                     self.client_args.api_key = (api_id, api_key)
 
@@ -179,7 +173,8 @@ class Builder:
         """Remove ``hosts`` key if ``cloud_id`` provided"""
         if 'cloud_id' in self.client_args.asdict() and self.client_args.cloud_id is not None:
             # We can remove the default if that's all there is
-            if self.client_args.hosts == ['http://127.0.0.1:9200'] and len(self.client_args.hosts) == 1:
+            if (self.client_args.hosts == ['http://127.0.0.1:9200'] and
+                    len(self.client_args.hosts) == 1):
                 self.client_args.hosts = None
             if self.client_args.hosts is not None:
                 raise ConfigurationError('Cannot populate both "hosts" and "cloud_id"')

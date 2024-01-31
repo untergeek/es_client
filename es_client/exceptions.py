@@ -19,3 +19,7 @@ class NotMaster(ESClientException):
     Exception raised when connected node is not the elected master node.
     """
 
+class LoggingException(ESClientException):
+    """
+    Exception raised when logging cannot be configured properly
+    """
