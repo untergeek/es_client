@@ -3,6 +3,16 @@
 Changelog
 =========
 
+8.12.3 (31 January 2024)
+------------------------
+
+**Change**
+
+Since I'm doing Schema validation here now, I think it appropriate to have a
+dedicated exception for SchemaCheck failures.
+
+This will be FailedValidation.
+
 8.12.2 (31 January 2024)
 ------------------------
 
