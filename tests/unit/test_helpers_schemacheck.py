@@ -2,6 +2,7 @@
 # pylint: disable=protected-access, import-error
 # add import-error here ^^^ to avoid false-positives for the local import
 from unittest import TestCase
+from voluptuous import Schema
 from es_client.exceptions import ConfigurationError
 from es_client.helpers.schemacheck import SchemaCheck
 from es_client.defaults import config_schema, VERSION_MIN, version_min, VERSION_MAX, version_max
@@ -40,6 +41,16 @@ class TestSchemaCheck(TestCase):
             'client'
         )
         self.assertRaises(ConfigurationError, schema.result)
+    def test_does_not_password_filter_non_dict(self):
+        """Ensure that if config is not a dictionary that it doesn't choke"""
+        config = None
+        schema = SchemaCheck(
+            config,
+            Schema(config),
+            'arbitrary',
+            'anylocation'
+        )
+        self.assertIsNone(schema.result(), Schema(None))
 
 class TestVersionMinMax(TestCase):
     """Test version min and max functions"""
