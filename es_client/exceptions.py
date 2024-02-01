@@ -23,3 +23,13 @@ class LoggingException(ESClientException):
     """
     Exception raised when logging cannot be configured properly
     """
+
+class SchemaException(ESClientException):
+    """
+    Exception base class for all exceptions related to Schema failure
+    """
+
+class FailedValidation(SchemaException):
+    """
+    Exception raised when SchemaCheck validation fails.
+    """

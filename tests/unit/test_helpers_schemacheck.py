@@ -3,14 +3,14 @@
 # add import-error here ^^^ to avoid false-positives for the local import
 from unittest import TestCase
 from voluptuous import Schema
-from es_client.exceptions import ConfigurationError
+from es_client.exceptions import FailedValidation
 from es_client.helpers.schemacheck import SchemaCheck
 from es_client.defaults import config_schema, VERSION_MIN, version_min, VERSION_MAX, version_max
 
 class TestSchemaCheck(TestCase):
     """Test SchemaCheck class and member functions"""
     def test_bad_port_value(self):
-        """Ensure that a bad port value Raises a ConfigurationError"""
+        """Ensure that a bad port value Raises a FailedValidation"""
         config = {
             'elasticsearch': {
                 'client': {
@@ -24,9 +24,9 @@ class TestSchemaCheck(TestCase):
             'elasticsearch',
             'client'
         )
-        self.assertRaises(ConfigurationError, schema.result)
+        self.assertRaises(FailedValidation, schema.result)
     def test_entirely_wrong_keys(self):
-        """Ensure that unacceptable keys Raises a ConfigurationError"""
+        """Ensure that unacceptable keys Raises a FailedValidation"""
         config = {
             'elasticsearch': {
                 'client_not': {},
@@ -40,7 +40,7 @@ class TestSchemaCheck(TestCase):
             'elasticsearch',
             'client'
         )
-        self.assertRaises(ConfigurationError, schema.result)
+        self.assertRaises(FailedValidation, schema.result)
     def test_does_not_password_filter_non_dict(self):
         """Ensure that if config is not a dictionary that it doesn't choke"""
         config = None

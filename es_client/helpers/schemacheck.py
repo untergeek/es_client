@@ -4,7 +4,7 @@ import logging
 from re import sub
 from copy import deepcopy
 from es_client.defaults import KEYS_TO_REDACT
-from es_client.exceptions import ConfigurationError
+from es_client.exceptions import FailedValidation
 
 def password_filter(data: dict) -> dict:
     """
@@ -87,7 +87,7 @@ class SchemaCheck(object):
     def result(self):
         """
         Return the result of the Schema test, if successful.
-        Otherwise, raise a :class:`ConfigurationError <es_client.exceptions.ConfigurationError>`
+        Otherwise, raise a :class:`FailedValidation <es_client.exceptions.FailedValidation>`
         """
         try:
             return self.schema(self.config)
@@ -100,7 +100,7 @@ class SchemaCheck(object):
                 self.error = f'{exc}'
             self.__parse_error()
             self.logger.error('Schema error: %s', self.error)
-            raise ConfigurationError(
+            raise FailedValidation(
                 f'Configuration: {self.test_what}: Location: {self.location}: '
                 f'Bad Value: "{self.badvalue}", {self.error}. Check configuration file.'
             ) from exc
