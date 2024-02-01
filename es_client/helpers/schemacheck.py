@@ -50,7 +50,10 @@ class SchemaCheck(object):
         self.logger = logging.getLogger(__name__)
         # Set the Schema for validation...
         self.logger.debug('Schema: %s', schema)
-        self.logger.debug('"%s" config: %s', test_what, password_filter(config))
+        if isinstance(config, dict):
+            self.logger.debug('"%s" config: %s', test_what, password_filter(config))
+        else:
+            self.logger.debug('"%s" config: %s', test_what, config)
         self.config = config
         self.schema = schema
         self.test_what = test_what

@@ -3,6 +3,17 @@
 Changelog
 =========
 
+8.12.2 (31 January 2024)
+------------------------
+
+**Fixes**
+
+In trying to make ``SchemaCheck`` reusable, I discovered that it _always_,
+was unconditionally attempting apply the ``password_filter`` on every
+``config`` coming through. An empty filter shows up as ``None``, causing
+an AttributeError exception. Going to only do ``password_filter`` when
+``config`` is a ``dict``.
+
 8.12.1 (31 January 2024)
 ------------------------
 
