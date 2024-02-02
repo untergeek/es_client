@@ -53,15 +53,15 @@ class LogInfo:
             # We only do this if we detect Docker
             fpath = '/proc/1/fd/1'
             permission = False
-            with open(fpath, 'wb+', buffering=0) as fhdl:
-                try:
+            try:
+                with open(fpath, 'wb+', buffering=0) as fhdl:
                     # And we've verified that the path is a tty
                     if fhdl.isatty():
                         # And verified that we have write permissions to that path
-                        fhdl.write(f'Permission to write to {fpath}?\n'.encode())
+                        fhdl.write('...\n'.encode())
                         permission = True
-                except PermissionError:
-                    clicho(f'Docker container does not appear to have a writable tty at {fpath}.')
+            except PermissionError:
+                clicho(f'Docker container does not appear to have a writable tty at {fpath}.')
             if permission:
                 self.handler = logging.FileHandler(fpath)
         else:
