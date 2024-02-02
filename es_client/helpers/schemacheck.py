@@ -28,7 +28,7 @@ def password_filter(data: dict) -> dict:
         return mydict
     return iterdict(deepcopy(data))
 
-class SchemaCheck(object):
+class SchemaCheck:
     """
     Validate ``config`` with the provided :py:class:`~.voluptuous.schema_builder.Schema`.
     ``test_what`` and ``location`` are for reporting the results, in case of
@@ -61,7 +61,7 @@ class SchemaCheck(object):
         self.badvalue = 'no bad value yet'
         self.error = 'No error yet'
 
-    def __parse_error(self):
+    def parse_error(self):
         """
         Report the error, and try to report the bad key or value as well.
         """
@@ -98,7 +98,7 @@ class SchemaCheck(object):
             except Exception as err:
                 self.logger.error('Could not parse exception: %s', err)
                 self.error = f'{exc}'
-            self.__parse_error()
+            self.parse_error()
             self.logger.error('Schema error: %s', self.error)
             raise FailedValidation(
                 f'Configuration: {self.test_what}: Location: {self.location}: '

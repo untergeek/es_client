@@ -3,6 +3,16 @@
 Changelog
 =========
 
+8.12.4 (1 February 2024)
+------------------------
+
+**Fixes**
+
+The try/except block for Docker logging needed to be out one level farther.
+
+This should fix the permissions error issues at last.
+
+
 8.12.3 (31 January 2024)
 ------------------------
 
