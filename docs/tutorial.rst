@@ -49,11 +49,11 @@ A look at the code shows us where that name came from:
        """
        # Because of `@click.pass_context`, we can access `ctx.obj` here from the `run` function
        # that made it:
-       es_client = get_client(configdict=ctx.obj['configdict'])
+       client = get_client(configdict=ctx.obj['configdict'])
 
        # If we're here, we'll see the output from GET http(s)://hostname.tld:PORT
        click.secho('\nConnection result: ', bold=True)
-       click.secho(f'{es_client.info()}\n')
+       click.secho(f'{client.info()}\n')
 
 Yeah, it really is that simple. The name of the function becomes the name of the command. Also note
 that ``@run.command()`` decorator above the ``@click.pass_context`` decorator. These are both
@@ -75,11 +75,11 @@ So let's copy the entire ``test_connection`` function and make a few changes:
        """
        # Because of `@click.pass_context`, we can access `ctx.obj` here from the `run` function
        # that made it:
-       es_client = get_client(configdict=ctx.obj['configdict'])
+       client = get_client(configdict=ctx.obj['configdict'])
 
        # If we're here, we'll see the output from GET http(s)://hostname.tld:PORT
        click.secho('\nConnection result: ', bold=True)
-       click.secho(f'{es_client.info()}\n')
+       click.secho(f'{client.info()}\n')
 
 So what's different now? We renamed our copied function to ``delete_index``. We also changed the
 Python docstring--that's the part in between the triple quotes underneath the function name. Let's
@@ -123,11 +123,11 @@ While our function is named differently and has a different description, it's id
        """
        # Because of `@click.pass_context`, we can access `ctx.obj` here from the `run` function
        # that made it:
-       es_client = get_client(configdict=ctx.obj['configdict'])
+       client = get_client(configdict=ctx.obj['configdict'])
 
        # If we're here, we'll see the output from GET http(s)://hostname.tld:PORT
        click.secho('\nConnection result: ', bold=True)
-       click.secho(f'{es_client.info()}\n')
+       click.secho(f'{client.info()}\n')
 
 So, two more changes. We added a new option via one of those clever decorators. Please note that
 this is the direct way to add an option. The ones you see in the example are using stored default
@@ -187,7 +187,7 @@ logging:
        logger = logging.getLogger(__name__)
        logger.info("Let's delete index: %s", index)
        logger.info("But first, let's connect to Elasticsearch...")
-       es_client = get_client(configdict=ctx.obj['configdict'])
+       client = get_client(configdict=ctx.obj['configdict'])
 
 So we deleted some comments, and added 3 lines. The first one says, "create an instance of logger."
 The second and third use that ``logger`` at ``info`` level to write some log lines. The first
@@ -234,11 +234,11 @@ logic and see what happens:
        logger = logging.getLogger(__name__)
        logger.info("Let's delete index: %s", index)
        logger.info("But first, let's connect to Elasticsearch...")
-       es_client = get_client(configdict=ctx.obj['configdict'])
+       client = get_client(configdict=ctx.obj['configdict'])
        logger.info("We're connected!")
        result = 'FAIL'
        try:
-           result = es_client.indices.delete(index=index)
+           result = client.indices.delete(index=index)
        except NotFoundError as exc:
            logger.error("While trying to delete: %s, an error occurred: %s", index, exc.error)
        logger.info('Index deletion result: %s', result)
@@ -284,11 +284,11 @@ Begin the COPY PASTE! GO!
        logger = logging.getLogger(__name__)
        logger.info("Let's create index: %s", index)
        logger.info("But first, let's connect to Elasticsearch...")
-       es_client = get_client(configdict=ctx.obj['configdict'])
+       client = get_client(configdict=ctx.obj['configdict'])
        logger.info("We're connected!")
        result = 'FAIL'
        try:
-           result = es_client.indices.create(index=index)
+           result = client.indices.create(index=index)
        except BadRequestError as exc:
            logger.error("While trying to create: %s, an error occurred: %s", index, exc.error)
        logger.info('Index creation result: %s', result)
@@ -297,7 +297,7 @@ You'll note very few differences here in this copy/paste:
 
   * Our function name is ``create_index``
   * Our docstring also says ``Create``
-  * Our API call is now ``es_client.indices.create`` instead of ``delete``
+  * Our API call is now ``client.indices.create`` instead of ``delete``
   * Our ``except`` is looking for ``BadRequestError``. We expect a index we want to create to not
     be found, so a ``NotFoundError`` doesn't make much sense here. Instead, if we try to create an
     index that's already existing, that would be a bad request.
