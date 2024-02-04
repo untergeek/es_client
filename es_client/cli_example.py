@@ -141,11 +141,11 @@ def test_connection(ctx):
     """
     # Because of `@click.pass_context`, we can access `ctx.obj` here from the `run` function
     # that made it:
-    es_client = get_client(configdict=ctx.obj['configdict'])
+    client = get_client(configdict=ctx.obj['configdict'])
 
     # If we're here, we'll see the output from GET http(s)://hostname.tld:PORT
     click.secho('\nConnection result: ', bold=True)
-    click.secho(f'{es_client.info()}\n')
+    click.secho(f'{client.info()}\n')
 
 if __name__ == '__main__':
     run()
