@@ -4,12 +4,19 @@ from click import Choice, Path
 from six import string_types
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 
-VERSION_MIN = (8, 0, 0)
-VERSION_MAX = (8, 99, 99)
+VERSION_MIN: tuple = (8, 0, 0)
+"""Minimum compatible Elasticsearch version"""
 
-KEYS_TO_REDACT = ['password', 'basic_auth', 'bearer_auth', 'api_key', 'id', 'opaque_id']
+VERSION_MAX: tuple = (8, 99, 99)
+"""Maximum compatible Elasticsearch version"""
 
-CLIENT_SETTINGS = [
+KEYS_TO_REDACT: list = ['password', 'basic_auth', 'bearer_auth', 'api_key', 'id', 'opaque_id']
+"""
+When doing configuration Schema validation, redact the value from any listed dictionary key. This
+only happens if logging is at DEBUG level.
+"""
+
+CLIENT_SETTINGS: list = [
     'hosts', 'cloud_id', 'api_key', 'basic_auth', 'bearer_auth', 'opaque_id', 'headers',
     'connections_per_node', 'http_compress', 'verify_certs', 'ca_certs', 'client_cert',
     'client_key', 'ssl_assert_hostname', 'ssl_assert_fingerprint', 'ssl_version',
@@ -21,12 +28,14 @@ CLIENT_SETTINGS = [
     'min_delay_between_sniffing', 'sniffed_node_callback', 'meta_header',
     'host_info_callback', '_transport',
 ]
+"""Valid argument/option names for :py:class:`~.elasticsearch8.Elasticsearch`. Too large to show"""
 
-OTHER_SETTINGS = [
+OTHER_SETTINGS: list = [
     'master_only', 'skip_version_test', 'username', 'password', 'api_key'
 ]
+"""Valid option names for :py:class:`~.es_client.builder.Builder`'s other settings"""
 
-CLICK_SETTINGS = {
+CLICK_SETTINGS: list = {
     'config': {'help': 'Path to configuration file.', 'type': Path(exists=True)},
     'hosts': {'help': 'Elasticsearch URL to connect to.', 'multiple': True},
     'cloud_id': {'help': 'Elastic Cloud instance id'},
@@ -68,7 +77,7 @@ CLICK_SETTINGS = {
         'help': 'Only run if the single host provided is the elected master',
         'default': False,
         'show_default': True,
-        'hidden': True
+        'hidden': True,
     },
     'skip_version_test': {
         'help': 'Elasticsearch version compatibility check',
@@ -77,26 +86,68 @@ CLICK_SETTINGS = {
         'hidden': True
     }
 }
+"""Default settings used for building :py:class:`click.Option`. Too large to show."""
 
-ES_DEFAULT = {'elasticsearch':{'client':{'hosts':['http://127.0.0.1:9200']}}}
+ES_DEFAULT: dict = {'elasticsearch':{'client':{'hosts':['http://127.0.0.1:9200']}}}
+"""Default settings for :py:class:`~.es_client.builder.Builder`"""
 
-LOGGING_SETTINGS = {
+ENV_VAR_PREFIX: str = 'ESCLIENT'
+"""Environment variable prefix"""
+
+LOGLEVEL: str = 'INFO'
+"""Default loglevel"""
+
+LOGFILE: None = None
+"""Default value for logfile"""
+
+LOGFORMAT: str = 'default'
+"""Default value for logformat"""
+
+BLACKLIST: list = ['elastic_transport', 'urllib3']
+"""Default value for logging blacklist"""
+
+LOGDEFAULTS: dict = {
+    'loglevel': LOGLEVEL,
+    'logfile': LOGFILE,
+    'logformat': LOGFORMAT,
+    'blacklist': BLACKLIST,
+}
+"""All logging defaults in a single combined dictionary"""
+
+LOGGING_SETTINGS: dict = {
     'loglevel': {
         'help': 'Log level',
-        "type": Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+        'type': Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']),
+        'default': LOGLEVEL
     },
     'logfile': {'help': 'Log file', 'type': str},
     'logformat': {
         'help': 'Log output format',
-        "type": Choice(['default', 'json', 'ecs'])
+        'type': Choice(['default', 'json', 'ecs']),
+        'default': LOGFORMAT
+    },
+    'blacklist': {
+        'help': 'Named entities will not be logged',
+        'multiple': True,
+        'default': BLACKLIST,
+        'hidden': True,
     },
 }
+"""Default logging settings used for building :py:class:`click.Option`. Too large to show."""
 
-SHOW_OPTION = {'hidden': False}
+SHOW_OPTION: dict = {'hidden': False}
+"""Override value to "unhide" a :py:class:`click.Option`"""
+
+SHOW_ENVVAR: dict = {'show_envvar': True}
+"""Override value to make Click's help output show the associated environment variable"""
 
 # Logging schema
-def config_logging():
+def config_logging() -> Schema:
     """
+    :returns: A validation schema of all acceptable logging configuration parameter names and values
+        with defaults for unset parameters.
+    :rtype: :py:class:`~.voluptuous.schema_builder.Schema`
+
     Logging schema with defaults:
 
     .. code-block:: yaml
@@ -107,9 +158,6 @@ def config_logging():
           logformat: default
           blacklist: ['elastic_transport', 'urllib3']
 
-    :returns: A valid :py:class:`~.voluptuous.schema_builder.Schema` of all acceptable values with
-        the default values set.
-    :rtype: :py:class:`~.voluptuous.schema_builder.Schema`
     """
     return Schema(
         {
@@ -125,8 +173,15 @@ def config_logging():
     )
 
 # All elasticsearch client options, with a few additional arguments.
-def config_schema():
-    """Define the Schema for an ES client object"""
+def config_schema() -> Schema:
+    """
+    :returns: A validation schema of all acceptable client configuration parameter names and values
+        with defaults for unset parameters.
+    :rtype: :py:class:`~.voluptuous.schema_builder.Schema`
+
+    The validation schema for an :py:class:`~.elasticsearch8.Elasticsearch` client object with
+    defaults
+    """
     # pylint: disable=no-value-for-parameter
     return Schema(
         {
@@ -264,18 +319,33 @@ def config_schema():
         }
     )
 
-def version_max():
+def version_max() -> tuple:
     """Return the max version"""
     return VERSION_MAX
 
-def version_min():
+def version_min() -> tuple:
     """Return the min version"""
     return VERSION_MIN
 
-def client_settings():
+def client_settings() -> dict:
     """Return the client settings"""
     return CLIENT_SETTINGS
 
-def other_settings():
+def config_settings() -> dict:
+    """
+    Return only the client settings likely to be used in a config file or at the command-line.
+
+    This means ignoring some that are valid in :py:class:`~.elasticsearch8.Elasticsearch` but are
+    handled different locally. Namely, ``api_key`` is handled by
+    :py:class:`~.es_client.builder.OtherArgs`.
+    """
+    ignore = ['api_key']
+    settings = []
+    for setting in CLIENT_SETTINGS:
+        if not setting in ignore:
+            settings.append(setting)
+    return settings
+
+def other_settings() -> dict:
     """Return the other settings"""
     return OTHER_SETTINGS
