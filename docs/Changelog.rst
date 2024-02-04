@@ -3,10 +3,17 @@
 Changelog
 =========
 
+8.12.6 (? ? ?)
+--------------
+
+**Changes**
+
+  * After reading and re-reading through the tutorial, I made a few doc changes.
+
 8.12.5 (4 February 2024)
 ------------------------
 
-**Change**
+**Changes**
 
 After some usage, it seems wise to remove redundancy in calling params and config in the functions
 in ``helpers.config``. This is especially true since ``ctx`` already has all of the params, and
