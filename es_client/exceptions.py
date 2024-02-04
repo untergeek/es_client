@@ -1,3 +1,5 @@
+"""es_client Exception classes"""
+
 class ESClientException(Exception):
     """
     Base class for all exceptions raised by es_client which are not Elasticsearch

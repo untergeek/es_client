@@ -2,7 +2,7 @@
 # pylint: disable=protected-access, import-error
 # add import-error here ^^^ to avoid false-positives for the local import
 from unittest import TestCase
-from es_client.helpers.logging import LogInfo, check_logging_config
+from es_client.helpers.logging import check_logging_config, get_numeric_loglevel
 
 class TestCheckLoggingConfig(TestCase):
     """Test check_logging_config functionality"""
@@ -19,8 +19,8 @@ class TestCheckLoggingConfig(TestCase):
         """Ensure it yields default values too"""
         self.assertEqual(self.default, check_logging_config({'logging':{}}))
 
-class TestLogInfo(TestCase):
-    """Test LogInfo Class"""
+class TestGetNumericLogLevel(TestCase):
+    """Test get_numeric_loglevel function"""
     def test_invalid_loglevel(self):
         """Ensure it raises an exception when an invalid loglevel is provided"""
-        self.assertRaises(ValueError, LogInfo, {'loglevel': 'NONSENSE'})
+        self.assertRaises(ValueError, get_numeric_loglevel, 'NONSENSE')

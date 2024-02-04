@@ -8,16 +8,16 @@ from es_client.exceptions import FailedValidation
 
 def password_filter(data: dict) -> dict:
     """
-    Recursively look through all nested structures of ``data`` for the key ``'password'`` and redact
-    the value.
-
     :param data: Configuration data
 
     :type data: dict
 
-    :returns: A :py:class:`~.copy.deepcopy` of ``data`` with the value obscured by ``REDACTED``
-        if the key is ``'password'``.
     :rtype: dict
+    :returns: A :py:class:`~.copy.deepcopy` of `data` with the value obscured by ``REDACTED``
+        if the key is one of :py:const:`~.es_client.defaults.KEYS_TO_REDACT`.
+
+    Recursively look through all nested structures of `data` for keys from
+    :py:const:`~.es_client.defaults.KEYS_TO_REDACT` and redact the value with ``REDACTED``
     """
     def iterdict(mydict):
         for key, value in mydict.items():
@@ -30,11 +30,6 @@ def password_filter(data: dict) -> dict:
 
 class SchemaCheck:
     """
-    Validate ``config`` with the provided :py:class:`~.voluptuous.schema_builder.Schema`.
-    ``test_what`` and ``location`` are for reporting the results, in case of
-    failure.  If validation is successful, the method returns ``config`` as
-    valid through the :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.result` method.
-
     :param config: A configuration dictionary.
     :param schema: A voluptuous schema definition
     :param test_what: which configuration block is being validated
@@ -44,6 +39,13 @@ class SchemaCheck:
     :type schema: :py:class:`~.voluptuous.schema_builder.Schema`
     :type test_what: str
     :type location: str
+
+    Validate `config` with the provided :py:class:`~.voluptuous.schema_builder.Schema`.
+    :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.test_what` and
+    :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.location` are used for reporting in case
+    of failure.  If validation is successful, the
+    :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.result` method returns
+    :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`.
     """
     def __init__(self, config, schema, test_what, location):
 
@@ -54,11 +56,17 @@ class SchemaCheck:
             self.logger.debug('"%s" config: %s', test_what, password_filter(config))
         else:
             self.logger.debug('"%s" config: %s', test_what, config)
+        #: Object attribute that gets the value of param `config`
         self.config = config
+        #: Object attribute that gets the value of param `schema`
         self.schema = schema
+        #: Object attribute that gets the value of param `test_what`
         self.test_what = test_what
+        #: Object attribute that gets the value of param `location`
         self.location = location
+        #: Object attribute that is initialized with the value ``no bad value yet``
         self.badvalue = 'no bad value yet'
+        #: Object attribute that is initialized with the value ``No error yet``
         self.error = 'No error yet'
 
     def parse_error(self):
@@ -86,8 +94,15 @@ class SchemaCheck:
 
     def result(self):
         """
-        Return the result of the Schema test, if successful.
-        Otherwise, raise a :class:`FailedValidation <es_client.exceptions.FailedValidation>`
+        :rtype: dict
+        :returns: :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`
+
+        If validation is successful, return the value of
+        :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`
+
+        If unsuccessful, try to parse the error in
+        :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.parse_error` and raise a 
+        :py:exc:`FailedValidation <es_client.exceptions.FailedValidation>` exception.
         """
         try:
             return self.schema(self.config)

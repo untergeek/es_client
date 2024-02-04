@@ -3,6 +3,8 @@
 ES Client API reference
 #######################
 
+.. _client_args:
+
 ClientArgs Class
 ================
 
@@ -12,6 +14,8 @@ ClientArgs Class
    :undoc-members:
    :private-members:
 
+.. _other_args:
+
 OtherArgs Class
 ===============
 
@@ -20,6 +24,8 @@ OtherArgs Class
    :inherited-members:
    :undoc-members:
    :private-members:
+
+.. _builder:
 
 Builder Class
 =============

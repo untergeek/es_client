@@ -4,6 +4,37 @@ import random
 import shutil
 import string
 import tempfile
+import click
+from es_client.defaults import LOGGING_SETTINGS
+from es_client.helpers import config as cfgfn
+from es_client.helpers.utils import option_wrapper, prune_nones
+
+ONOFF = {'on': '', 'off': 'no-'}
+
+DEFAULTCFG = ('---\n'
+'elasticsearch:\n'
+'  client:\n'
+'    hosts: ["http://127.0.0.1:9200"]\n')
+
+EMPTYCFG = ('---\n'
+'elasticsearch:\n'
+'  client:\n'
+'    hosts: \n'
+'      - \n'
+'    cloud_id: \n')
+
+TESTUSER = 'joe_user'
+TESTPASS = 'password'
+
+YAMLCONFIG = ('---\n'
+'elasticsearch:\n'
+'  client:\n'
+'    hosts: ["http://127.0.0.1:9200"]\n'
+'  other_settings:\n'
+'    username: {0}\n'
+'    password: {1}\n')
+
+click_opt_wrap = option_wrapper()
 
 def random_directory():
     """Create a random dictionary"""
@@ -46,3 +77,135 @@ class FileTestObj(object):
         """Write config to named file"""
         with open(fname, 'w', encoding='utf-8') as f:
             f.write(data)
+
+# pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
+@click.command()
+@click_opt_wrap(*cfgfn.cli_opts('config'))
+@click_opt_wrap(*cfgfn.cli_opts('hosts'))
+@click_opt_wrap(*cfgfn.cli_opts('cloud_id'))
+@click_opt_wrap(*cfgfn.cli_opts('api_token'))
+@click_opt_wrap(*cfgfn.cli_opts('id'))
+@click_opt_wrap(*cfgfn.cli_opts('api_key'))
+@click_opt_wrap(*cfgfn.cli_opts('username'))
+@click_opt_wrap(*cfgfn.cli_opts('password'))
+@click_opt_wrap(*cfgfn.cli_opts('bearer_auth'))
+@click_opt_wrap(*cfgfn.cli_opts('opaque_id'))
+@click_opt_wrap(*cfgfn.cli_opts('request_timeout'))
+@click_opt_wrap(*cfgfn.cli_opts('http_compress', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('verify_certs', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('ca_certs'))
+@click_opt_wrap(*cfgfn.cli_opts('client_cert'))
+@click_opt_wrap(*cfgfn.cli_opts('client_key'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_assert_hostname'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_assert_fingerprint'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_version'))
+@click_opt_wrap(*cfgfn.cli_opts('master-only', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('skip_version_test', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('loglevel', settings=LOGGING_SETTINGS))
+@click_opt_wrap(*cfgfn.cli_opts('logfile', settings=LOGGING_SETTINGS))
+@click_opt_wrap(*cfgfn.cli_opts('logformat', settings=LOGGING_SETTINGS))
+@click.pass_context
+def simulator(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
+    opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
+    ssl_assert_hostname, ssl_assert_fingerprint, ssl_version, master_only, skip_version_test,
+    loglevel, logfile, logformat
+):
+    """Test command with all regular options"""
+    ctx.obj = {}
+    cfgfn.get_config(ctx)
+    cfgfn.generate_configdict(ctx)
+    click.echo(f'{ctx.obj["configdict"]}')
+
+# pylint: disable=unused-argument
+@click.command()
+@click_opt_wrap(*cfgfn.cli_opts('config'))
+@click_opt_wrap(*cfgfn.cli_opts('hosts'))
+@click_opt_wrap(*cfgfn.cli_opts('cloud_id'))
+@click_opt_wrap(*cfgfn.cli_opts('api_token'))
+@click_opt_wrap(*cfgfn.cli_opts('id'))
+@click_opt_wrap(*cfgfn.cli_opts('api_key'))
+@click_opt_wrap(*cfgfn.cli_opts('username'))
+@click_opt_wrap(*cfgfn.cli_opts('password'))
+@click_opt_wrap(*cfgfn.cli_opts('bearer_auth'))
+@click_opt_wrap(*cfgfn.cli_opts('opaque_id'))
+@click_opt_wrap(*cfgfn.cli_opts('request_timeout'))
+@click_opt_wrap(*cfgfn.cli_opts('http_compress', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('verify_certs', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('ca_certs'))
+@click_opt_wrap(*cfgfn.cli_opts('client_cert'))
+@click_opt_wrap(*cfgfn.cli_opts('client_key'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_assert_hostname'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_assert_fingerprint'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_version'))
+@click_opt_wrap(*cfgfn.cli_opts('master-only', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('skip_version_test', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('loglevel', settings=LOGGING_SETTINGS))
+@click_opt_wrap(*cfgfn.cli_opts('logfile', settings=LOGGING_SETTINGS))
+@click_opt_wrap(*cfgfn.cli_opts('logformat', settings=LOGGING_SETTINGS))
+@click.pass_context
+def default_config_cmd(
+    ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
+    opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
+    ssl_assert_hostname, ssl_assert_fingerprint, ssl_version, master_only, skip_version_test,
+    loglevel, logfile, logformat
+):
+    """Test command with all regular options"""
+    # Build config file
+    file_obj = FileTestObj()
+    file_obj.write_config(file_obj.args['configfile'], YAMLCONFIG.format(TESTUSER, TESTPASS))
+    # User config file
+    ctx.obj = {'default_config': file_obj.args['configfile']}
+    cfgfn.get_config(ctx)
+    # Teardown config file
+    file_obj.teardown()
+    # Finish the function
+    cfgfn.generate_configdict(ctx)
+    click.echo(f'{ctx.obj["configdict"]}')
+
+# pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
+@click.command()
+@click_opt_wrap(*cfgfn.cli_opts('config'))
+@click_opt_wrap(*cfgfn.cli_opts('hosts'))
+@click_opt_wrap(*cfgfn.cli_opts('cloud_id'))
+@click_opt_wrap(*cfgfn.cli_opts('api_token'))
+@click_opt_wrap(*cfgfn.cli_opts('id'))
+@click_opt_wrap(*cfgfn.cli_opts('api_key'))
+@click_opt_wrap(*cfgfn.cli_opts('username'))
+@click_opt_wrap(*cfgfn.cli_opts('password'))
+@click_opt_wrap(*cfgfn.cli_opts('bearer_auth'))
+@click_opt_wrap(*cfgfn.cli_opts('opaque_id'))
+@click_opt_wrap(*cfgfn.cli_opts('request_timeout'))
+@click_opt_wrap(*cfgfn.cli_opts('http_compress', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('verify_certs', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('ca_certs'))
+@click_opt_wrap(*cfgfn.cli_opts('client_cert'))
+@click_opt_wrap(*cfgfn.cli_opts('client_key'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_assert_hostname'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_assert_fingerprint'))
+@click_opt_wrap(*cfgfn.cli_opts('ssl_version'))
+@click_opt_wrap(*cfgfn.cli_opts('master-only', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('skip_version_test', onoff=ONOFF))
+@click_opt_wrap(*cfgfn.cli_opts('loglevel', settings=LOGGING_SETTINGS))
+@click_opt_wrap(*cfgfn.cli_opts('logfile', settings=LOGGING_SETTINGS))
+@click_opt_wrap(*cfgfn.cli_opts('logformat', settings=LOGGING_SETTINGS))
+@click.pass_context
+def simulate_override_client_args(
+    ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
+    opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
+    ssl_assert_hostname, ssl_assert_fingerprint, ssl_version, master_only, skip_version_test,
+    loglevel, logfile, logformat
+):
+    """Test command with all regular options"""
+    ctx.obj = {}
+    cfgfn.get_config(ctx)
+    cfgfn.get_arg_objects(ctx)
+    # Manual override
+    ctx.obj['client_args'].hosts = None
+    cfgfn.override_client_args(ctx)
+    ctx.obj['configdict'] = {
+        'elasticsearch': {
+            'client': prune_nones(ctx.obj['client_args'].asdict()),
+            'other_settings': prune_nones(ctx.obj['other_args'].asdict())
+        }
+    }
+    click.echo(f'{ctx.obj["configdict"]}')

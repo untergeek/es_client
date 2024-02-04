@@ -3,6 +3,11 @@
 Default Values
 --------------
 
+.. _client_configuration:
+
+Client Configuration
+====================
+
 The :py:class:`~.esclient.Builder` class expects a ``raw_dict`` of
 configuration settings.  This :py:class:`dict` should contain the top level
 key: ``elasticsearch``, thought it can also contain the key ``logging``. This
@@ -141,3 +146,49 @@ Anything of note regarding other options is mentioned below:
     :request_timeout: :py:class:`float`: `(Optional)` If unset, the default value from
         :py:class:`~.elasticsearch.Elasticsearch` is used,
         which is 10.0 seconds.
+
+.. _default_values:
+
+Constants and Settings
+======================
+
+Default values and constants shown here are used throughought the code.
+
+.. autodata:: es_client.defaults.VERSION_MIN
+
+.. autodata:: es_client.defaults.VERSION_MAX
+
+.. autodata:: es_client.defaults.KEYS_TO_REDACT
+
+.. autodata:: es_client.defaults.CLIENT_SETTINGS
+   :annotation:
+
+.. autodata:: es_client.defaults.OTHER_SETTINGS
+
+.. autodata:: es_client.defaults.CLICK_SETTINGS
+   :annotation:
+
+.. autodata:: es_client.defaults.ES_DEFAULT
+
+.. autodata:: es_client.defaults.ENV_VAR_PREFIX
+
+.. autodata:: es_client.defaults.LOGLEVEL
+
+.. autodata:: es_client.defaults.LOGFILE
+
+.. autodata:: es_client.defaults.LOGFORMAT
+
+.. autodata:: es_client.defaults.BLACKLIST
+
+.. autodata:: es_client.defaults.LOGDEFAULTS
+
+.. autodata:: es_client.defaults.LOGGING_SETTINGS
+   :annotation:
+
+.. autodata:: es_client.defaults.SHOW_OPTION
+
+.. autodata:: es_client.defaults.SHOW_ENVVAR
+
+.. autofunction:: es_client.defaults.config_logging
+
+.. autofunction:: es_client.defaults.config_schema

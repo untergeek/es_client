@@ -17,13 +17,50 @@ schema validation bits I was employing, namely:
   * Acceptable values and ranges are established (where known)--and easy to
     amend, if necessary.
 
-So, if you don't need these, then this library probably isn't what you're
-looking for.  If you want these features, then you've come to the right place.
+But that's just the tip of the iceberg. That's only the :ref:`builder`!
 
-Example Usage
--------------
+In addition to a Builder class, there's an entire set of :ref:`helpers` and a :ref:`tutorial` to
+show you how to build your own command-line interface like :ref:`this one <example_file>`:
 
-::
+.. code-block:: shell
+
+    Usage: run_script.py [OPTIONS] COMMAND [ARGS]...
+
+      CLI Example
+
+    Options:
+      --config PATH                   Path to configuration file.
+      --hosts TEXT                    Elasticsearch URL to connect to.
+      --cloud_id TEXT                 Elastic Cloud instance id
+      --api_token TEXT                The base64 encoded API Key token
+      --id TEXT                       API Key "id" value
+      --api_key TEXT                  API Key "api_key" value
+      --username TEXT                 Elasticsearch username
+      --password TEXT                 Elasticsearch password
+      --request_timeout FLOAT         Request timeout in seconds
+      --verify_certs / --no-verify_certs
+                                      Verify SSL/TLS certificate(s)  [default: verify_certs]
+      --ca_certs TEXT                 Path to CA certificate file or directory
+      --client_cert TEXT              Path to client certificate file
+      --client_key TEXT               Path to client key file
+      --loglevel [DEBUG|INFO|WARNING|ERROR|CRITICAL]
+                                      Log level
+      --logfile TEXT                  Log file
+      --logformat [default|json|ecs]  Log output format
+      -v, --version                   Show the version and exit.
+      -h, --help                      Show this message and exit.
+
+    Commands:
+      show-all-options  Show all configuration options
+      test-connection   Test connection to Elasticsearch
+
+So, if you don't need these, then this library probably isn't what you're looking for.  If you do
+want features like these, then you've come to the right place.
+
+Example Builder Class Usage
+---------------------------
+
+.. code-block:: python
 
     from es_client import Builder
 
@@ -59,7 +96,7 @@ Example Usage
 
 Additionally, you can read from a YAML configuration file:
 
-::
+.. code-block:: yaml
 
     ---
     elasticsearch:
@@ -77,7 +114,7 @@ Additionally, you can read from a YAML configuration file:
       logformat: default
       blacklist: ['elastic_transport', 'urllib3']
 
-::
+.. code-block:: python
 
     from es_client import Builder
 
@@ -115,11 +152,12 @@ Contents
 .. toctree::
    api
    example
+   tutorial
    defaults
    helpers
    exceptions
    Changelog
-   :maxdepth: 2
+   :maxdepth: 5
 
 Indices and tables
 ==================
