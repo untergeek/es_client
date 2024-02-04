@@ -8,33 +8,10 @@ Helpers
 Config
 ======
 
-.. py:module:: es_client.helpers.config
-
-.. autofunction:: cli_opts
-
-.. autofunction:: cloud_id_override
-
-.. autofunction:: context_settings
-
-.. autofunction:: get_arg_objects
-
-.. autofunction:: get_args
-
-.. autofunction:: get_client
-
-.. autofunction:: get_config
-
-.. autofunction:: get_hosts
-
-.. autofunction:: get_width
-
-.. autofunction:: hosts_override
-
-.. autofunction:: override_client_args
-
-.. autofunction:: override_other_args
-
-.. autofunction:: override_settings
+.. automodule:: es_client.helpers.config
+   :members:
+   :private-members:
+   :undoc-members:
 
 
 .. _helpers_logging:
@@ -42,33 +19,11 @@ Config
 Logging
 =======
 
-.. py:module:: es_client.helpers.logging
-
-.. autofunction:: check_logging_config
-
-.. autofunction:: configure_logging
-
-.. autofunction:: de_dot
-
-.. autofunction:: deepmerge
-
-.. autofunction:: is_docker
-
-.. autofunction:: override_logging
-
-.. autofunction:: set_logging
-
-.. autoclass:: es_client.helpers.logging.Whitelist
+.. automodule:: es_client.helpers.logging
    :members:
-
-.. autoclass:: es_client.helpers.logging.Blacklist
-   :members:
-
-.. autoclass:: es_client.helpers.logging.LogInfo
-   :members:
-
-.. autoclass:: es_client.helpers.logging.JSONFormatter
-   :members:
+   :private-members:
+   :undoc-members:
+   :member-order: bysource
 
 
 .. _helpers_schemacheck:
@@ -76,12 +31,11 @@ Logging
 SchemaCheck
 ===========
 
-.. py:module:: es_client.helpers.schemacheck
-
-.. autofunction:: password_filter
-
-.. autoclass:: es_client.helpers.schemacheck.SchemaCheck
+.. automodule:: es_client.helpers.schemacheck
    :members:
+   :private-members:
+   :undoc-members:
+   :member-order: bysource
 
 
 .. _helpers_utils:
@@ -89,28 +43,7 @@ SchemaCheck
 Utils
 =====
 
-.. py:module:: es_client.helpers.utils
-
-.. autofunction:: check_config
-
-.. autofunction:: ensure_list
-
-.. autofunction:: file_exists
-
-.. autofunction:: get_version
-
-.. autofunction:: get_yaml
-
-.. autofunction:: option_wrapper
-
-.. autofunction:: parse_apikey_token
-
-.. autofunction:: passthrough
-
-.. autofunction:: prune_nones
-
-.. autofunction:: read_file
-
-.. autofunction:: verify_ssl_paths
-
-.. autofunction:: verify_url_schema
+.. automodule:: es_client.helpers.utils
+   :members:
+   :private-members:
+   :undoc-members:

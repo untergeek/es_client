@@ -3,6 +3,63 @@
 Changelog
 =========
 
+8.12.5 (4 February 2024)
+------------------------
+
+**Change**
+
+After some usage, it seems wise to remove redundancy in calling params and config in the functions
+in ``helpers.config``. This is especially true since ``ctx`` already has all of the params, and
+``ctx.params['config']`` has the config file (if specified).
+
+It necessitated a more irritating revamp of the tests to make it work (why, Click? Why can't a
+Context be provided and just work?), but it does work cleanly now, with those clean looking
+function calls.
+
+New standards include:
+
+  * ENVIRONMENT VARIABLE SUPPORT.  Very big. Suffice to say that all command-line options can now
+    be set by an environment variable by putting the prefix ``ESCLIENT_`` in front of the uppercase
+    option name, and replace any hyphens with underscores. ``--http-compress True`` is settable by
+    having ``ESCLIENT_HTTP_COMPRESS=1``. Boolean values are 1, 0, True, or False (case-insensitive).
+    Options like ``hosts`` which can have multiple values just need to have whitespace between the
+    values:
+
+    .. code-block:: shell
+
+       ESCLIENT_HOSTS='http://127.0.0.1:9200 http://localhost:9200'
+    
+    It splits perfectly. This is big news for the containerization/k8s community. You won't have to
+    have all of the options spilled out any more. Just have the environment variables assigned.
+  * ``ctx.obj['default_config']`` will be the place to insert a default configuration file
+    _before_ calling ``helpers.config.get_config()``.
+  * ``helpers.config.get_arg_objects()`` will now set ``ctx.obj['client_args'] = ClientArgs()``
+    and ``ctx.obj['other_args'] = OtherArgs()``, where they become part of ``ctx.obj`` and are
+    accessible thereby.
+  * ``helpers.config.generate_configdict`` will now populate ``ctx.obj['configdict']``
+  * ``Builder(configdict=ctx.obj['configdict'])`` will work, as will 
+    ``helpers.config.get_client(configdict=ctx.obj['configdict'])``
+
+In fact, this has been so simplified now that the flow of a command-line app is as simple as:
+
+  .. code-block:: python
+
+      def myapp(ctx, *args):
+          ctx.obj = {}
+          ctx.obj['default_config'] = '/path/to/cfg.yaml'
+          get_config(ctx)
+          configure_logging(ctx)
+          generate_configdict(ctx)
+          es_client = get_client(configdict=ctx.obj['configdict'])
+          # Your other code...
+
+Additionally, the log blacklist functionality has been added to the command-line, the default
+settings, the ``helpers.logging`` module, and the ``cli_example``, which should be welcome news to
+the containerized world.
+
+Major work to standardize the documentation has also been undertaken. In fact, there is now a
+tutorial on how to make a command-line app in the documentation.
+
 8.12.4 (1 February 2024)
 ------------------------
 

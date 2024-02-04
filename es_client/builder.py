@@ -51,17 +51,23 @@ class OtherArgs(Args):
 
 class Builder:
     """
-    Build a client out of settings from ``configfile`` or ``configdict``
-    If neither ``configfile`` nor ``configdict`` is provided, empty defaults will be used.
-    If both are provided, ``configdict`` will be used, and `configfile` ignored.
-
-    :param configdict: See :doc:`defaults </defaults>` to find acceptable values
-    :param configfile: See :doc:`defaults </defaults>` to find acceptable values
+    :param configdict: A configuration dictionary
+    :param configfile: A YAML configuration file
     :param autoconnect: Connect to client automatically
+    :param version_min: Minimum acceptable version of Elasticsearch (major, minor, patch)
+    :param version_max: Maximum acceptable version of Elasticsearch (major, minor, patch)
 
     :type configdict: dict
     :type configfile: str
     :type autoconnect: bool
+    :type version_min: tuple
+    :type version_max: tuple
+
+    Build a client connection object out of settings from `configfile` or `configdict`.
+
+    If neither `configfile` nor `configdict` is provided, empty defaults will be used.
+    
+    If both are provided, `configdict` will be used, and `configfile` ignored.
     """
     def __init__(self, configdict=None, configfile=None, autoconnect=False,
         version_min=VERSION_MIN, version_max=VERSION_MAX):
@@ -261,5 +267,5 @@ class Builder:
         self.client = elasticsearch8.Elasticsearch(**client_args)
 
     def test_connection(self):
-        """Connect and execute :meth:`elasticsearch8.Elasticsearch.info`"""
+        """Connect and execute :meth:`Elasticsearch.info() <elasticsearch8.Elasticsearch.info>`"""
         return self.client.info()
