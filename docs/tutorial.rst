@@ -8,6 +8,9 @@ Tutorial
 Create A Command-Line App
 *************************
 
+If you haven't gone through the :ref:`example` yet, you should do a once-over there before
+proceeding here.
+
 Now that we see the power of the command-line that is ready for the taking, what's the next step?
 How do you make your own app work with ``es_client``?
 
@@ -16,12 +19,13 @@ start there. I've done the ground work so you don't have to.
 
 .. important:: All of these examples assume you have a simple Elasticsearch instance running at
    localhost:9200 that needs no username or password. This can, in fact, be done using the 
-   ``docker_test`` scripts included in the Github repository. Run 
-   ``docker_test/scripts/create.sh 8.12.0`` to create such an image locally (substitute the version
-   of your choice), and ``docker_test/scripts/destroy.sh`` to remove them when you're done. If you
-   do not have Docker, or choose to use a different cluster, you're responsible for adding whatever
-   configuration options/flags are needed to connect. And I am not at all responsible if you delete
-   an index in production because you did something you shouldn't have.
+   ``docker_test`` scripts included in the Github repository.
+   
+   Run ``docker_test/scripts/create.sh 8.12.0`` to create such an image locally (substitute the 
+   version of your choice), and ``docker_test/scripts/destroy.sh`` to remove them when you're done.
+   If you do not have Docker, or choose to use a different cluster, you're responsible for adding
+   whatever configuration options/flags are needed to connect. And I am not at all responsible if
+   you delete an index in production because you did something you shouldn't have.
 
 .. _tutorial_step_1:
 

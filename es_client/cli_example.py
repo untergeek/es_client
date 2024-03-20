@@ -1,52 +1,58 @@
 """Sample CLI script that will get a client using both config file and CLI args/options"""
 # pylint: disable=unused-import, no-value-for-parameter, invalid-name, redefined-builtin
-import logging
 import click
 from elasticsearch8.exceptions import BadRequestError, NotFoundError
 from es_client.helpers.config import (
-    cli_opts, context_settings, generate_configdict, get_client, get_config)
-from es_client.defaults import LOGGING_SETTINGS, SHOW_OPTION, SHOW_ENVVAR
+    context_settings, generate_configdict, get_client, get_config,
+    options_from_dict)
+from es_client.defaults import OPTION_DEFAULTS, SHOW_EVERYTHING
 from es_client.helpers.logging import configure_logging
-from es_client.helpers.utils import option_wrapper
-from es_client.version import __version__
 
-ONOFF = {'on': '', 'off': 'no-'}
-OVERRIDE = {**SHOW_OPTION, **SHOW_ENVVAR}
-click_opt_wrap = option_wrapper()
+# The following default options are all automatically added by the decorator:
+#
+# ``@options_from_dict(OPTION_DEFAULTS)``
+#
+# Be sure to add any other options or arguments either before or after this decorator, and add any
+# added arguments in ``def run()``, preserving their order in both locations.  ``ctx`` needs to be
+# the first arg after ``def run()`` as a special argument for Click, and does not need a decorator
+# function.
 
-# Be sure to add any other options or arguments either before ``config`` or after
-# ``skip_version_test`` for both the decorators and the list of arguments in ``def run()``,
-# preserving their order in both locations.  ``ctx`` needs to be the first arg after
-# ``def run()`` as a special argument for Click, and does not need a decorator function.
+# These options require the following other includes:
+#
+# from es_client.defaults import LOGGING_SETTINGS, ONOFF
+# from es_client.helpers.utils import option_wrapper
+# click_opt_wrap = option_wrapper()
+#
+# @click_opt_wrap(*cli_opts('config'))
+# @click_opt_wrap(*cli_opts('hosts'))
+# @click_opt_wrap(*cli_opts('cloud_id'))
+# @click_opt_wrap(*cli_opts('api_token'))
+# @click_opt_wrap(*cli_opts('id'))
+# @click_opt_wrap(*cli_opts('api_key'))
+# @click_opt_wrap(*cli_opts('username'))
+# @click_opt_wrap(*cli_opts('password'))
+# @click_opt_wrap(*cli_opts('bearer_auth'))
+# @click_opt_wrap(*cli_opts('opaque_id'))
+# @click_opt_wrap(*cli_opts('request_timeout'))
+# @click_opt_wrap(*cli_opts('http_compress', onoff=ONOFF))
+# @click_opt_wrap(*cli_opts('verify_certs', onoff=ONOFF))
+# @click_opt_wrap(*cli_opts('ca_certs'))
+# @click_opt_wrap(*cli_opts('client_cert'))
+# @click_opt_wrap(*cli_opts('client_key'))
+# @click_opt_wrap(*cli_opts('ssl_assert_hostname'))
+# @click_opt_wrap(*cli_opts('ssl_assert_fingerprint'))
+# @click_opt_wrap(*cli_opts('ssl_version'))
+# @click_opt_wrap(*cli_opts('master-only', onoff=ONOFF))
+# @click_opt_wrap(*cli_opts('skip_version_test', onoff=ONOFF))
+# @click_opt_wrap(*cli_opts('loglevel', settings=LOGGING_SETTINGS))
+# @click_opt_wrap(*cli_opts('logfile', settings=LOGGING_SETTINGS))
+# @click_opt_wrap(*cli_opts('logformat', settings=LOGGING_SETTINGS))
+# @click_opt_wrap(*cli_opts('blacklist', settings=LOGGING_SETTINGS))
 
 # pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
 @click.group(context_settings=context_settings())
-@click_opt_wrap(*cli_opts('config'))
-@click_opt_wrap(*cli_opts('hosts'))
-@click_opt_wrap(*cli_opts('cloud_id'))
-@click_opt_wrap(*cli_opts('api_token'))
-@click_opt_wrap(*cli_opts('id'))
-@click_opt_wrap(*cli_opts('api_key'))
-@click_opt_wrap(*cli_opts('username'))
-@click_opt_wrap(*cli_opts('password'))
-@click_opt_wrap(*cli_opts('bearer_auth'))
-@click_opt_wrap(*cli_opts('opaque_id'))
-@click_opt_wrap(*cli_opts('request_timeout'))
-@click_opt_wrap(*cli_opts('http_compress', onoff=ONOFF))
-@click_opt_wrap(*cli_opts('verify_certs', onoff=ONOFF))
-@click_opt_wrap(*cli_opts('ca_certs'))
-@click_opt_wrap(*cli_opts('client_cert'))
-@click_opt_wrap(*cli_opts('client_key'))
-@click_opt_wrap(*cli_opts('ssl_assert_hostname'))
-@click_opt_wrap(*cli_opts('ssl_assert_fingerprint'))
-@click_opt_wrap(*cli_opts('ssl_version'))
-@click_opt_wrap(*cli_opts('master-only', onoff=ONOFF))
-@click_opt_wrap(*cli_opts('skip_version_test', onoff=ONOFF))
-@click_opt_wrap(*cli_opts('loglevel', settings=LOGGING_SETTINGS))
-@click_opt_wrap(*cli_opts('logfile', settings=LOGGING_SETTINGS))
-@click_opt_wrap(*cli_opts('logformat', settings=LOGGING_SETTINGS))
-@click_opt_wrap(*cli_opts('blacklist', settings=LOGGING_SETTINGS))
-@click.version_option(__version__, '-v', '--version', prog_name="cli_example")
+@options_from_dict(OPTION_DEFAULTS)
+@click.version_option(None, '-v', '--version', prog_name="cli_example")
 @click.pass_context
 def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
     opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
@@ -54,14 +60,15 @@ def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password
     loglevel, logfile, logformat, blacklist
 ):
     """
-    CLI Example (anything here will show up in --help)
-    """
-    # Specifying ctx.obj as an empty dictionary is useful for passing things to [sub]commands
-    # as you'll see below
-    ctx.obj = {}
+    CLI Example 
+    
+    Any text added to a docstring will show up in the --help/usage output.
 
+    Set short_help='' in @func.command() definitions for each command for terse descriptions in the
+    main help/usage output, as with show_all_options() in this example.
+    """
     # If there's a default file location for client configuration, e.g. $HOME/.curator/curator.yml,
-    # then specify it here.
+    # then specify it here. ctx.obj is now instantiated in ``helpers.config.context_settings()``
     ctx.obj['default_config'] = None
 
     # The ``get_config`` function will grab the configuration derived from a YAML config file
@@ -82,38 +89,53 @@ def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password
     # ctx.obj['configdict']
     generate_configdict(ctx)
 
-# Below is the ``show-all-options`` command, which does nothing more than set ``hidden: False`` for
-# the hidden options (using the SHOW_OPTION constant) in the top-level menu so they are exposed in
-# the --help output.
+### SHOW ALL OPTIONS ###
+#
+# Below is the ``show-all-options`` command which overrides the default with the values in the
+# OVERRIDE constant (``hidden: False`` and ``show_env_vars: True``) which will reveal any hidden by
+# default options in the top-level menu so they are exposed in the --help output, as well as show
+# the environment variable name that can be used to set the option without a flag/argument.
+
+# The below options are all included automatically by the decorator:
+#
+# ``@options_from_dict(SHOW_EVERYTHING)``
+#
+# These options require the following other includes:
+#
+# from es_client.defaults import LOGGING_SETTINGS, ONOFF, OVERRIDE
+# from es_client.helpers.utils import option_wrapper
+# click_opt_wrap = option_wrapper()
+#
+# @click_opt_wrap(*cli_opts('config', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('hosts', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('cloud_id', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('api_token', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('id', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('api_key', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('username', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('password', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('bearer_auth', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('opaque_id', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('request_timeout', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('http_compress', onoff=ONOFF, override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('verify_certs', onoff=ONOFF, override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('ca_certs', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('client_cert', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('client_key', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('ssl_assert_hostname', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('ssl_assert_fingerprint', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('ssl_version', override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('master-only', onoff=ONOFF, override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('skip_version_test', onoff=ONOFF, override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('loglevel', settings=LOGGING_SETTINGS, override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('logfile', settings=LOGGING_SETTINGS, override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('logformat', settings=LOGGING_SETTINGS, override=OVERRIDE))
+# @click_opt_wrap(*cli_opts('blacklist', settings=LOGGING_SETTINGS, override=OVERRIDE))
 
 # pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
-@run.command(context_settings=context_settings(), short_help='Show all configuration options')
-@click_opt_wrap(*cli_opts('config', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('hosts', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('cloud_id', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('api_token', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('id', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('api_key', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('username', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('password', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('bearer_auth', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('opaque_id', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('request_timeout', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('http_compress', onoff=ONOFF, override=OVERRIDE))
-@click_opt_wrap(*cli_opts('verify_certs', onoff=ONOFF))
-@click_opt_wrap(*cli_opts('ca_certs', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('client_cert', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('client_key', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('ssl_assert_hostname', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('ssl_assert_fingerprint', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('ssl_version', override=OVERRIDE))
-@click_opt_wrap(*cli_opts('master-only', onoff=ONOFF, override=OVERRIDE))
-@click_opt_wrap(*cli_opts('skip_version_test', onoff=ONOFF, override=OVERRIDE))
-@click_opt_wrap(*cli_opts('loglevel', settings=LOGGING_SETTINGS, override=OVERRIDE))
-@click_opt_wrap(*cli_opts('logfile', settings=LOGGING_SETTINGS, override=OVERRIDE))
-@click_opt_wrap(*cli_opts('logformat', settings=LOGGING_SETTINGS, override=OVERRIDE))
-@click_opt_wrap(*cli_opts('blacklist', settings=LOGGING_SETTINGS, override=OVERRIDE))
-@click.version_option(__version__, '-v', '--version', prog_name="cli_example")
+@run.command(short_help='Show all configuration options')
+@options_from_dict(SHOW_EVERYTHING)
+@click.version_option(None, '-v', '--version', prog_name="cli_example")
 @click.pass_context
 def show_all_options(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
     opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
@@ -130,10 +152,11 @@ def show_all_options(ctx, config, hosts, cloud_id, api_token, id, api_key, usern
     ctx.exit()
 
 ###
-### Below is a way to run a command from the main command-line page.
+### Below is a way to run a command from the main command-line page. The Tutorial in the
+### documentation shows how to take this example, copy it, and run your own code.
 ###
 
-@run.command(context_settings=context_settings())
+@run.command()
 @click.pass_context
 def test_connection(ctx):
     """

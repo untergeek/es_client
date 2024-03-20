@@ -42,35 +42,40 @@ Output
 
 .. code-block:: shell-session
 
-    Usage: run_script.py [OPTIONS] COMMAND [ARGS]...
-
-      CLI Example (anything here will show up in --help)
-
-    Options:
-      --config PATH                   Path to configuration file.
-      --hosts TEXT                    Elasticsearch URL to connect to.
-      --cloud_id TEXT                 Elastic Cloud instance id
-      --api_token TEXT                The base64 encoded API Key token
-      --id TEXT                       API Key "id" value
-      --api_key TEXT                  API Key "api_key" value
-      --username TEXT                 Elasticsearch username
-      --password TEXT                 Elasticsearch password
-      --request_timeout FLOAT         Request timeout in seconds
-      --verify_certs / --no-verify_certs
-                                      Verify SSL/TLS certificate(s)  [default: verify_certs]
-      --ca_certs TEXT                 Path to CA certificate file or directory
-      --client_cert TEXT              Path to client certificate file
-      --client_key TEXT               Path to client key file
-      --loglevel [DEBUG|INFO|WARNING|ERROR|CRITICAL]
-                                      Log level
-      --logfile TEXT                  Log file
-      --logformat [default|json|ecs]  Log output format
-      -v, --version                   Show the version and exit.
-      -h, --help                      Show this message and exit.
-
-    Commands:
-      show-all-options  Show all configuration options
-      test-connection   Test connection to Elasticsearch
+   Usage: run_script.py [OPTIONS] COMMAND [ARGS]...
+   
+     CLI Example
+   
+     Any text added to a docstring will show up in the --help/usage output.
+   
+     Set short_help='' in @func.command() definitions for each command for terse descriptions in the main help/usage output, as
+     with show_all_options() in this example.
+   
+   Options:
+     --config PATH                   Path to configuration file.
+     --hosts TEXT                    Elasticsearch URL to connect to.
+     --cloud_id TEXT                 Elastic Cloud instance id
+     --api_token TEXT                The base64 encoded API Key token
+     --id TEXT                       API Key "id" value
+     --api_key TEXT                  API Key "api_key" value
+     --username TEXT                 Elasticsearch username
+     --password TEXT                 Elasticsearch password
+     --request_timeout FLOAT         Request timeout in seconds
+     --verify_certs / --no-verify_certs
+                                     Verify SSL/TLS certificate(s)  [default: verify_certs]
+     --ca_certs TEXT                 Path to CA certificate file or directory
+     --client_cert TEXT              Path to client certificate file
+     --client_key TEXT               Path to client key file
+     --loglevel [DEBUG|INFO|WARNING|ERROR|CRITICAL]
+                                     Log level
+     --logfile TEXT                  Log file
+     --logformat [default|json|ecs]  Log output format
+     -v, --version                   Show the version and exit.
+     -h, --help                      Show this message and exit.
+   
+   Commands:
+     show-all-options  Show all configuration options
+     test-connection   Test connection to Elasticsearch
 
 Run the Script with a Command
 -----------------------------
