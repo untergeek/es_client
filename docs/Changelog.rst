@@ -3,12 +3,36 @@
 Changelog
 =========
 
-8.12.6 (? ? ?)
---------------
+8.12.6 (20 March 2024)
+----------------------
 
 **Changes**
 
   * After reading and re-reading through the tutorial, I made a few doc changes.
+  * ``ctx.obj`` is instantiated in ``helpers.config.context_settings`` now, saving yet another
+    line of code from being needed in a functional command-line script.
+  * Decided it was actually time to programmatically approach the huge list of decorators necessary
+    to make ``es_client`` work in the example. Now there's a single decorator,
+    ``@options_from_dict()`` in ``helpers.config``, and it takes a dictionary as an argument. The
+    form of this dictionary should be:
+
+    .. code-block:: python
+
+      {
+        "option1": {"onoff": {}, "override": {}, "settings": {}},
+        "option2": {"onoff": {}, "override": {}, "settings": {}},
+        # ...
+        "optionN": {"onoff": {}, "override": {}, "settings": {}},
+      }
+    
+    The defaults are provided in ``helpers.defaults`` as constants ``OPTION_DEFAULTS`` and
+    ``SHOW_EVERYTHING``. These can be overridden programmatically or very tediously manually.
+  * Dependency version bumps:
+
+    .. code-block:: python
+
+      elasticsearch8==8.12.1
+      certifi==2024.2.2
 
 8.12.5 (4 February 2024)
 ------------------------

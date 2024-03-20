@@ -2,7 +2,7 @@
 from typing import Tuple
 import logging
 from shutil import get_terminal_size
-from click import Context, secho
+from click import Context, secho, option as clickopt
 from elasticsearch8 import Elasticsearch
 from es_client.builder import Builder, ClientArgs, OtherArgs
 from es_client import defaults
@@ -56,12 +56,12 @@ def cli_opts(
 
       import click
       from es_client.helpers.utils import option_wrapper
-      ONOFF = {'on': '', 'off': 'no-'}
+      defaults.ONOFF = {'on': '', 'off': 'no-'}
       click_opt_wrap = option_wrapper()
 
       @click.group(context_settings=context_settings())
       @click_opt_wrap(*cli_opts('OPTION1', settings={KEY: NEWVALUE}))
-      @click_opt_wrap(*cli_opts('OPTION2', onoff=ONOFF))
+      @click_opt_wrap(*cli_opts('OPTION2', onoff=tgl))
       ...
       @click_opt_wrap(*cli_opts('OPTIONX'))
       @click.pass_context
@@ -77,12 +77,12 @@ def cli_opts(
 
       '--OPTION2/--no-OPTION2'
 
-    The dictionary structure of `ONOFF` is what this what this function requires, i.e. an `on` key
-    and an `off` key. The values for `on` and `off` can be whatever you like, e.g.  
+    The dictionary structure of `defaults.ONOFF` is what this what this function requires, i.e. an
+    `on` key and an `off` key. The values for `on` and `off` can be whatever you like, e.g.  
 
     .. code-block:: python
 
-      ONOFF = {'on': 'enable-', 'off': 'disable-'}
+      defaults.ONOFF = {'on': 'enable-', 'off': 'disable-'}
 
     which would render as:
     
@@ -96,7 +96,7 @@ def cli_opts(
 
     .. code-block:: python
 
-      ONOFF = {'on': 'monty-', 'off': 'python-'}
+      defaults.ONOFF = {'on': 'monty-', 'off': 'python-'}
 
     which would render as: 
     
@@ -162,8 +162,8 @@ def cloud_id_override(args: dict, ctx: Context) -> dict:
 def context_settings() -> dict:
     """
     :rtype: dict
-    :returns: A dictionary suitable to be used as the Click :py:class:`Command <click.Command>`
-        `context_settings` parameter.
+    :returns: kwargs suitable to be used as Click :py:class:`Command <click.Command>`
+        `context_settings` parameters.
     
     Includes the terminal width from :py:func:`get_width()`
     
@@ -171,19 +171,26 @@ def context_settings() -> dict:
     
     .. code-block:: python
     
-       {'help_option_names': ['-h', '--help']}
+       help_option_names=['-h', '--help']
+    
+    The default context object (``ctx.obj``) dictionary:
+    
+    .. code-block:: python
+    
+       obj={'default_config': None}
     
     And automatic environment variable reading based on a prefix value: 
     
     .. code-block:: python
     
-       {'auto_envvar_prefix': ENV_VAR_PREFIX'}
+       auto_envvar_prefix=ENV_VAR_PREFIX
 
     from :py:const:`ENV_VAR_PREFIX <es_client.defaults.ENV_VAR_PREFIX>`
     """
+    objdef = {'obj': {'default_config': None}}
     prefix = {'auto_envvar_prefix': defaults.ENV_VAR_PREFIX}
     help_options = {'help_option_names': ['-h', '--help']}
-    return {**get_width(), **help_options, **prefix}
+    return {**get_width(), **help_options, **objdef, **prefix}
 
 def generate_configdict(ctx: Context) -> None:
     """
@@ -402,6 +409,29 @@ def hosts_override(args: dict, ctx: Context) -> dict:
         args.pop('cloud_id', None)
     return args
 
+def options_from_dict(options_dict):
+    """Build Click options decorators programmatically"""
+    def decorator(func):
+        for option in reversed(options_dict):
+            # Shorten our "if" statements by making dct shorthand for options_dict[option]
+            dct = options_dict[option]
+            onoff = dct['onoff'] if 'onoff' in dct else None
+            override = dct['override'] if 'override' in dct else None
+            settings = dct['settings'] if 'settings' in dct else None
+            if settings is None:
+                settings = defaults.CLICK_SETTINGS[option]
+            argval = f'--{option}'
+            if isinstance(onoff, dict):
+                try:
+                    argval = f'--{onoff["on"]}{option}/--{onoff["off"]}{option}'
+                except KeyError as exc:
+                    raise ConfigurationError from exc
+            param_decls = (argval, option.replace('-', '_'))
+            attrs = override_settings(settings, override) if override else settings
+            clickopt(*param_decls, **attrs)(func)
+        return func
+    return decorator
+
 def override_client_args(ctx: Context) -> None:
     """
     :param ctx: The Click command context
@@ -505,12 +535,12 @@ def override_settings(settings: dict, override: dict) -> dict:
 
       import click
       from es_client.helpers.utils import option_wrapper
-      OVERRIDE = {KEY: NEWVALUE}
+      defaults.OVERRIDE = {KEY: NEWVALUE}
       click_opt_wrap = option_wrapper()
 
       @click.group(context_settings=context_settings())
       @click_opt_wrap(*cli_opts('OPTION1'))
-      @click_opt_wrap(*cli_opts('OPTION2', settings=OVERRIDE))
+      @click_opt_wrap(*cli_opts('OPTION2', settings=defaults.OVERRIDE))
       ...
       @click_opt_wrap(*cli_opts('OPTIONX'))
       @click.pass_context

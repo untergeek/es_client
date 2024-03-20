@@ -153,6 +153,7 @@ Contents
    api
    example
    tutorial
+   advanced
    defaults
    helpers
    exceptions

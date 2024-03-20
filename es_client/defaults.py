@@ -1,5 +1,6 @@
 """Define default values"""
 # pylint: disable=line-too-long
+from copy import deepcopy
 from click import Choice, Path
 from six import string_types
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
@@ -77,7 +78,7 @@ CLICK_SETTINGS: list = {
         'help': 'Only run if the single host provided is the elected master',
         'default': False,
         'show_default': True,
-        'hidden': True,
+        'hidden': True
     },
     'skip_version_test': {
         'help': 'Elasticsearch version compatibility check',
@@ -140,6 +141,54 @@ SHOW_OPTION: dict = {'hidden': False}
 
 SHOW_ENVVAR: dict = {'show_envvar': True}
 """Override value to make Click's help output show the associated environment variable"""
+
+OVERRIDE: dict = {**SHOW_OPTION, **SHOW_ENVVAR}
+"""Override value to combine these into a single constant"""
+
+ONOFF: dict = {'on': '', 'off': 'no-'}
+"""Default values for enable/disable click options"""
+
+OPTION_DEFAULTS: dict = {
+    'config':{},
+    'hosts':{},
+    'cloud_id':{},
+    'api_token':{},
+    'id':{},
+    'api_key':{},
+    'username':{},
+    'password':{},
+    'bearer_auth':{},
+    'opaque_id':{},
+    'request_timeout':{},
+    'http_compress':{'onoff':ONOFF},
+    'verify_certs':{'onoff':ONOFF},
+    'ca_certs':{},
+    'client_cert':{},
+    'client_key':{},
+    'ssl_assert_hostname':{},
+    'ssl_assert_fingerprint':{},
+    'ssl_version':{},
+    'master-only':{'onoff':ONOFF},
+    'skip_version_test':{'onoff':ONOFF},
+    'loglevel':{'settings':LOGGING_SETTINGS['loglevel']},
+    'logfile':{'settings':LOGGING_SETTINGS['logfile']},
+    'logformat':{'settings':LOGGING_SETTINGS['logformat']},
+    'blacklist':{'settings':LOGGING_SETTINGS['blacklist']},
+}
+"""Default options for iteratively building Click decorators"""
+
+def all_on():
+    """Return default options with all overrides enabled"""
+    options = deepcopy(OPTION_DEFAULTS)
+    retval = {}
+    # pylint: disable=consider-using-dict-items
+    for option in options:
+        retval[option] = options[option]
+        retval[option]['override'] = OVERRIDE
+    return retval
+
+SHOW_EVERYTHING: dict = all_on()
+"""Return options for iteratively building Click decorators with all overrides on"""
 
 # Logging schema
 def config_logging() -> Schema:
