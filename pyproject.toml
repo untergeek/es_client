@@ -32,7 +32,8 @@ dependencies = [
     "click==8.1.7",
     "pyyaml==6.0.1",
     "voluptuous>=0.14.1",
-    "certifi>=2024.2.2"
+    "certifi>=2024.2.2",
+    "six==1.16.0",
 ]
 
 [project.optional-dependencies]
