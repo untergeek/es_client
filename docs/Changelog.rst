@@ -3,6 +3,13 @@
 Changelog
 =========
 
+8.12.8 (20 March 2024)
+----------------------
+
+**Bugfix**
+
+  * Really batting 1000 today. Missed some version bumps.
+
 8.12.7 (20 March 2024)
 ----------------------
 
