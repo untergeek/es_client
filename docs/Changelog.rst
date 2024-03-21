@@ -3,6 +3,13 @@
 Changelog
 =========
 
+8.12.7 (20 March 2024)
+----------------------
+
+**Bugfix**
+
+  * Erroneously removed ``six`` dependency. It's back at ``1.16.0``.
+
 8.12.6 (20 March 2024)
 ----------------------
 
