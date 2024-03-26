@@ -50,12 +50,11 @@ CLICK_SETTINGS: list = {
     'request_timeout': {'help': 'Request timeout in seconds', 'type': float},
     'http_compress': {
         'help': 'Enable HTTP compression',
-        'default': False,
-        'show_default': True,
+        'default': None,
         'hidden': True,
     },
     'verify_certs': {
-        'help': 'Verify SSL/TLS certificate(s)', 'default': True, 'show_default': True},
+        'help': 'Verify SSL/TLS certificate(s)', 'default': None},
     'ca_certs': {'help': 'Path to CA certificate file or directory', 'type': str},
     'client_cert': {'help': 'Path to client certificate file', 'type': str},
     'client_key': {'help': 'Path to client key file', 'type': str},
@@ -76,14 +75,12 @@ CLICK_SETTINGS: list = {
     'ssl_version': {'help': 'Minimum acceptable TLS/SSL version', 'type': str, 'hidden': True},
     'master-only': {
         'help': 'Only run if the single host provided is the elected master',
-        'default': False,
-        'show_default': True,
+        'default': None,
         'hidden': True
     },
     'skip_version_test': {
         'help': 'Elasticsearch version compatibility check',
-        'default': False,
-        'show_default': True,
+        'default': None,
         'hidden': True
     }
 }
@@ -95,16 +92,16 @@ ES_DEFAULT: dict = {'elasticsearch':{'client':{'hosts':['http://127.0.0.1:9200']
 ENV_VAR_PREFIX: str = 'ESCLIENT'
 """Environment variable prefix"""
 
-LOGLEVEL: str = 'INFO'
+LOGLEVEL: None = None
 """Default loglevel"""
 
 LOGFILE: None = None
 """Default value for logfile"""
 
-LOGFORMAT: str = 'default'
+LOGFORMAT: None = None
 """Default value for logformat"""
 
-BLACKLIST: list = ['elastic_transport', 'urllib3']
+BLACKLIST: None = None
 """Default value for logging blacklist"""
 
 LOGDEFAULTS: dict = {
@@ -119,18 +116,18 @@ LOGGING_SETTINGS: dict = {
     'loglevel': {
         'help': 'Log level',
         'type': Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']),
-        'default': LOGLEVEL
+        'default': None
     },
     'logfile': {'help': 'Log file', 'type': str},
     'logformat': {
         'help': 'Log output format',
         'type': Choice(['default', 'json', 'ecs']),
-        'default': LOGFORMAT
+        'default': None
     },
     'blacklist': {
         'help': 'Named entities will not be logged',
         'multiple': True,
-        'default': BLACKLIST,
+        'default': None,
         'hidden': True,
     },
 }

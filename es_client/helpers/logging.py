@@ -109,7 +109,6 @@ def check_logging_config(config):
     Pass the result to
     :py:class:`~.es_client.helpers.schemacheck.SchemaCheck` for full validation.
     """
-
     if not isinstance(config, dict):
         clicho(
             f'Must supply logging information as a dictionary. '
@@ -142,9 +141,9 @@ def configure_logging(ctx: Context) -> None:
     Values in :py:attr:`ctx.params <click.Context.params>` will override anything set in
     :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>`
     """
-    logcfg = override_logging(ctx.obj['draftcfg'], ctx.params)
+    logcfg = override_logging(ctx)
     # Now enable logging with the merged settings, verifying the settings are still good
-    set_logging(check_logging_config({'logging': logcfg}))
+    set_logging(logcfg)
 
 def de_dot(dot_string: str, msg: str) -> dict:
     """
@@ -308,30 +307,46 @@ def is_docker() -> bool:
             'docker' in cgroup.read_text(encoding='utf8')
     )
 
-def override_logging(config: dict, params: dict) -> dict:
+def override_logging(ctx: Context) -> dict:
     """
-    :param config: The configuration from file
-    :param params: The parameters entered at the command-line 
+    :param ctx: The Click command context 
 
-    :type config: dict
-    :type params: dict from :py:attr:`ctx.params <click.Context.params>`
+    :type params: :py:class:`~.click.Context`
 
     :returns: Log configuration ready for validation
     :rtype: dict
 
-    Get logging configuration from `config` and override with any command-line options
+    Get logging configuration from `ctx.obj['draftcfg']` and override with any command-line options
     """
     # Check for log settings from config file
-    init_logcfg = check_logging_config(config)
+    init_logcfg = check_logging_config(ctx.obj['draftcfg'])
+
+    # Set debug to True if config file says loglevel is DEBUG
+    debug = ('loglevel' in init_logcfg and init_logcfg['loglevel'] == 'DEBUG')
+    # if 'loglevel' is not None
+    if 'loglevel' in ctx.params and ctx.params['loglevel'] is not None:
+        # Set debug to True if command-line options says loglevel is DEBUG,
+        # otherwise set debug to False (overriding what was set by config file)
+        debug = ctx.params['loglevel'] == 'DEBUG'
 
     # Override anything with options from the command-line
     paramlist = ['loglevel', 'logfile', 'logformat', 'blacklist']
+
     for entry in paramlist:
-        if entry in params:
+        if entry in ctx.params:
+            if not ctx.params[entry]:
+                continue
+            # Output to stdout if debug is True and we're not overriding a None (default)
+            # and we're not overriding DEBUG with DEBUG ;)
+            if debug and init_logcfg[entry] is not None and init_logcfg['loglevel'] != 'DEBUG':
+                clicho(
+                    f'DEBUG: Overriding configuration file setting {entry}={init_logcfg[entry]} '
+                    f'with command-line option {entry}={ctx.params[entry]}'
+                )
             if entry == 'blacklist':
-                init_logcfg[entry] = list(params[entry])
+                init_logcfg[entry] = list(ctx.params[entry])
             else:
-                init_logcfg[entry] = params[entry]
+                init_logcfg[entry] = ctx.params[entry]
 
     return init_logcfg
 

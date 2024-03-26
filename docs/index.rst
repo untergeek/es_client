@@ -154,6 +154,7 @@ Contents
    example
    tutorial
    advanced
+   envvars
    defaults
    helpers
    exceptions
