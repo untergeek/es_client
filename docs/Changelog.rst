@@ -3,6 +3,26 @@
 Changelog
 =========
 
+8.12.9 (26 March 2024)
+----------------------
+
+**Bugfix**
+
+  * Reported in #1708. Default values (rather than None values) were overriding what was in config
+    files. As a result, these default values from command-line settings were overriding important
+    settings which were set properly in the configuration file. Hat tip to @rgaduput for reporting
+    this.
+
+**Changes**
+
+  * Updated cli_example.py to make the ``show_all_options`` sub-command show the proper environment
+    variables. This entailed resetting the context_settings. A note explaining the why is now in
+    the comments above that function.
+  * Updates to reflect the default values in the command-line were made in the tutorial and example
+    documentation pages.
+  * A new documentation page was created specific to environment variables.
+  * Version bump ``voluptuous==0.14.2`` from ``0.14.1``
+
 8.12.8 (20 March 2024)
 ----------------------
 

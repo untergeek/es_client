@@ -96,7 +96,7 @@ Output
 .. code-block:: shell-session
 
    Usage: run_script.py show-all-options [OPTIONS]
-
+   
      ALL OPTIONS SHOWN
    
      The full list of options available for configuring a connection at the command-line.
@@ -114,9 +114,9 @@ Output
      --opaque_id TEXT                X-Opaque-Id HTTP header value  [env var: ESCLIENT_OPAQUE_ID]
      --request_timeout FLOAT         Request timeout in seconds  [env var: ESCLIENT_REQUEST_TIMEOUT]
      --http_compress / --no-http_compress
-                                     Enable HTTP compression  [env var: ESCLIENT_HTTP_COMPRESS; default: no-http_compress]
+                                     Enable HTTP compression  [env var: ESCLIENT_HTTP_COMPRESS]
      --verify_certs / --no-verify_certs
-                                     Verify SSL/TLS certificate(s)  [default: verify_certs]
+                                     Verify SSL/TLS certificate(s)  [env var: ESCLIENT_VERIFY_CERTS]
      --ca_certs TEXT                 Path to CA certificate file or directory  [env var: ESCLIENT_CA_CERTS]
      --client_cert TEXT              Path to client certificate file  [env var: ESCLIENT_CLIENT_CERT]
      --client_key TEXT               Path to client key file  [env var: ESCLIENT_CLIENT_KEY]
@@ -127,11 +127,9 @@ Output
                                      ESCLIENT_SSL_ASSERT_FINGERPRINT]
      --ssl_version TEXT              Minimum acceptable TLS/SSL version  [env var: ESCLIENT_SSL_VERSION]
      --master-only / --no-master-only
-                                     Only run if the single host provided is the elected master  [env var: ESCLIENT_MASTER_ONLY;
-                                     default: no-master-only]
+                                     Only run if the single host provided is the elected master  [env var: ESCLIENT_MASTER_ONLY]
      --skip_version_test / --no-skip_version_test
-                                     Elasticsearch version compatibility check  [env var: ESCLIENT_SKIP_VERSION_TEST; default:
-                                     no-skip_version_test]
+                                     Elasticsearch version compatibility check  [env var: ESCLIENT_SKIP_VERSION_TEST]
      --loglevel [DEBUG|INFO|WARNING|ERROR|CRITICAL]
                                      Log level  [env var: ESCLIENT_LOGLEVEL]
      --logfile TEXT                  Log file  [env var: ESCLIENT_LOGFILE]

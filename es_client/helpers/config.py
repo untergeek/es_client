@@ -463,6 +463,8 @@ def override_client_args(ctx: Context) -> None:
     args = prune_nones(args)
     # Update the object if we have settings to override after pruning None values
     if args:
+        for arg in args:
+            logger.debug('Using value for %s provided as a command-line option', arg)
         ctx.obj['client_args'].update_settings(args)
     # Use a default hosts value of localhost:9200 if there is no host and no cloud_id set
     if ctx.obj['client_args'].hosts is None and ctx.obj['client_args'].cloud_id is None:
@@ -482,6 +484,7 @@ def override_other_args(ctx: Context) -> None:
 
     Update :py:attr:`ctx.obj['other_args'] <click.Context.obj>` with the results.
     """
+    logger = logging.getLogger(__name__)
     apikey = prune_nones({
         'id': ctx.params['id'],
         'api_key': ctx.params['api_key'],
@@ -501,6 +504,8 @@ def override_other_args(ctx: Context) -> None:
         del args['api_key']
 
     if args:
+        for arg in args:
+            logger.debug('Using value for %s provided as a command-line option', arg)
         ctx.obj['other_args'].update_settings(args)
 
 def override_settings(settings: dict, override: dict) -> dict:

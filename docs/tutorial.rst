@@ -45,7 +45,7 @@ A look at the code shows us where that name came from:
 
 .. code-block:: python
 
-   @run.command(context_settings=context_settings())
+   @run.command()
    @click.pass_context
    def test_connection(ctx):
        """
@@ -71,7 +71,7 @@ So let's copy the entire ``test_connection`` function and make a few changes:
 
 .. code-block:: python
 
-   @run.command(context_settings=context_settings())
+   @run.command()
    @click.pass_context
    def delete_index(ctx):
        """
@@ -118,7 +118,7 @@ While our function is named differently and has a different description, it's id
 
 .. code-block:: python
 
-   @run.command(context_settings=context_settings())
+   @run.command()
    @click.option('--index', help='An index name', type=str)
    @click.pass_context
    def delete_index(ctx, index):
@@ -181,7 +181,7 @@ logging:
 
 .. code-block:: python
 
-   @run.command(context_settings=context_settings())
+   @run.command()
    @click.option('--index', help='An index name', type=str)
    @click.pass_context
    def delete_index(ctx, index):
@@ -228,7 +228,7 @@ logic and see what happens:
 
 .. code-block:: python
 
-   @run.command(context_settings=context_settings())
+   @run.command()
    @click.option('--index', help='An index name', type=str)
    @click.pass_context
    def delete_index(ctx, index):
@@ -278,7 +278,7 @@ Begin the COPY PASTE! GO!
 
 .. code-block:: python
 
-   @run.command(context_settings=context_settings())
+   @run.command()
    @click.option('--index', help='An index name', type=str)
    @click.pass_context
    def create_index(ctx, index):
@@ -379,7 +379,7 @@ With the ``confirmation_option()`` decorator, Like this:
 
 .. code-block:: python
 
-   @run.command(context_settings=context_settings())
+   @run.command()
    @click.option('--index', help='An index name', type=str)
    @click.confirmation_option()
    @click.pass_context

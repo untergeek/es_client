@@ -132,8 +132,14 @@ def run(ctx, config, hosts, cloud_id, api_token, id, api_key, username, password
 # @click_opt_wrap(*cli_opts('logformat', settings=LOGGING_SETTINGS, override=OVERRIDE))
 # @click_opt_wrap(*cli_opts('blacklist', settings=LOGGING_SETTINGS, override=OVERRIDE))
 
+### NOTE: Different procedure for show_all_options than other sub-commands
+# Normally, for a sub-command, you would not reset the `context_settings` as we've done here
+# because it also resets the context (ctx). We normally want to pass this along from the top level
+# command. In this case, we want it to look like the root-level command for the sake of the
+# environment variables being shown for the root-level and not a sub-level command.
+
 # pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
-@run.command(short_help='Show all configuration options')
+@run.command(context_settings=context_settings(), short_help='Show all configuration options')
 @options_from_dict(SHOW_EVERYTHING)
 @click.version_option(None, '-v', '--version', prog_name="cli_example")
 @click.pass_context
