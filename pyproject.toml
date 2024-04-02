@@ -27,7 +27,7 @@ keywords = [
     "command-line"
 ]
 dependencies = [
-    "elasticsearch8==8.12.1",
+    "elasticsearch8==8.13.0",
     "ecs-logging==2.1.0",
     "click==8.1.7",
     "pyyaml==6.0.1",
