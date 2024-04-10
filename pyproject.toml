@@ -72,3 +72,29 @@ testpaths = [
     "tests/unit",
     "tests/integration",
 ]
+
+# Lint environment
+[tool.hatch.envs.lint.scripts]
+run-pyright = "pyright {args:.}"
+run-black = "black --quiet --check --diff {args:.}"
+run-ruff = "ruff check --quiet {args:.}"
+run-curlylint = "curlylint {args:.}"
+python = ["run-pyright", "run-black", "run-ruff"]
+templates = ["run-curlylint"]
+all = ["python", "templates"]
+
+# Test environment
+[[tool.hatch.envs.test.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.test]
+dependencies = [
+    "requests",
+    "pytest >=7.2.1",
+    "pytest-cov"
+]
+
+[tool.hatch.envs.test.scripts]
+test = "pytest"
+test-cov = "pytest --cov=es_client"
+cov-report = "pytest --cov=es_client --cov-report html:cov_html"
