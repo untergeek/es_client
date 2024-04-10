@@ -3,6 +3,21 @@
 Changelog
 =========
 
+8.13.1 (10 April 2024)
+----------------------
+
+**Bugfix**
+
+  * Reported in #60. Newer code changes do not work properly with Python versions < 3.10 due to
+    changes to dictionary annotations. The offending code has been patched to work around this.
+
+**Announcement**
+
+  * Added infrastructure to test multiple versions of Python against the code base. This requires
+    you to run ``pip install -U hatch hatchling``, and then ``hatch run test:test``. integration
+    tests will fail if you do not have a local Elasticsearch running (see the
+    ``docker_test/scripts`` directory for some help with that).
+
 8.13.0 (2 April 2024)
 ---------------------
 

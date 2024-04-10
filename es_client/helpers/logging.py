@@ -1,4 +1,6 @@
 """Logging Helpers"""
+# The __future__ annotations line allows support for Python 3.8 and 3.9 to continue
+from __future__ import annotations
 from typing import Union
 import sys
 import json
