@@ -204,8 +204,8 @@ def simulate_override_client_args(
     cfgfn.override_client_args(ctx)
     ctx.obj['configdict'] = {
         'elasticsearch': {
-            'client': prune_nones(ctx.obj['client_args'].asdict()),
-            'other_settings': prune_nones(ctx.obj['other_args'].asdict())
+            'client': prune_nones(ctx.obj['client_args'].toDict()),
+            'other_settings': prune_nones(ctx.obj['other_args'].toDict())
         }
     }
     click.echo(f'{ctx.obj["configdict"]}')

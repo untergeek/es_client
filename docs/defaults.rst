@@ -8,13 +8,14 @@ Default Values
 Client Configuration
 ====================
 
-The :py:class:`~.esclient.Builder` class expects a ``raw_dict`` of
-configuration settings.  This :py:class:`dict` should contain the top level
-key: ``elasticsearch``, thought it can also contain the key ``logging``. This
-is an example of what the structure looks like with many keys present (some
+The :py:class:`~.esclient.Builder` class expects either a ``dict`` (`configdict`) or a YAML file
+(`configfile`) of configuration settings.  Whichever is used, both must contain the top level key:
+``elasticsearch``. The top level key ``logging`` is also acceptable as outlined.
+
+This is an example of what the structure looks like with many keys present (some
 contradictory, but shown for reference)::
 
-    raw_dict = {
+    {
         'elasticsearch': {
             'client': {
                 'hosts': ...,
@@ -51,7 +52,7 @@ contradictory, but shown for reference)::
         },
     }
 
-The top-level keys are further described below.
+The next level keys are further described below.
 
     :client: :py:class:`dict`: `(Optional)`
     :other_settings: :py:class:`dict`: `(Optional)`

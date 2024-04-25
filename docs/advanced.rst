@@ -111,7 +111,7 @@ that file will be a header labeled ``[project]``, and under that section will be
 titled ``dependencies`` followed by a list of modules your project depends on. This is where you
 need to list ``es_client`` as a dependency:
 
-.. code-block:: toml
+.. code-block::
 
    dependencies = [
        ...

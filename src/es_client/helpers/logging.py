@@ -1,22 +1,20 @@
 """Logging Helpers"""
 # The __future__ annotations line allows support for Python 3.8 and 3.9 to continue
 from __future__ import annotations
-from typing import Union
+import typing as t
 import sys
 import json
 import logging
 import time
 from pathlib import Path
+from voluptuous import Schema
 from click import Context, echo as clicho
 import ecs_logging
-from es_client.helpers.schemacheck import SchemaCheck
-from es_client.helpers.utils import ensure_list, prune_nones
-from es_client.exceptions import LoggingException
-from es_client.defaults import config_logging, LOGDEFAULTS
+from ..helpers.schemacheck import SchemaCheck
+from ..helpers.utils import ensure_list, prune_nones
+from ..exceptions import LoggingException
+from ..defaults import config_logging, LOGDEFAULTS
 
-###############
-### Classes ###
-###############
 
 class Whitelist(logging.Filter):
     """
@@ -24,21 +22,20 @@ class Whitelist(logging.Filter):
     :py:func:`loggers <logging.getLogger()>` to write logs.
     """
     # pylint: disable=super-init-not-called
-    def __init__(self, *whitelist):
+    def __init__(self, *whitelist: list):
         """
         :param whitelist: List of names defined by :py:func:`logging.getLogger()`
-            e.g. 
+            e.g.
 
               .. code-block: python
 
                 ['es_client.helpers.config', 'es_client.builder']
-
-        :type whitelist: list
         """
         self.whitelist = [logging.Filter(name) for name in whitelist]
 
     def filter(self, record):
         return any(f.filter(record) for f in self.whitelist)
+
 
 class Blacklist(Whitelist):
     """
@@ -67,7 +64,7 @@ class JSONFormatter(logging.Formatter):
         'name': 'name'
     }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         """
         :param record: The incoming log message
 
@@ -92,11 +89,8 @@ class JSONFormatter(logging.Formatter):
             result['message'] = available['message']
         return json.dumps(result, sort_keys=True)
 
-#################
-### Functions ###
-#################
 
-def check_logging_config(config):
+def check_logging_config(config: t.Dict) -> Schema:
     """
     :param config: Logging configuration data
 
@@ -118,7 +112,7 @@ def check_logging_config(config):
             f'Using default logging values.'
         )
         log_settings = {}
-    elif not 'logging' in config:
+    elif 'logging' not in config:
         # None provided. Use defaults.
         log_settings = {}
     else:
@@ -129,9 +123,10 @@ def check_logging_config(config):
     return SchemaCheck(
         log_settings, config_logging(), 'Logging Configuration', 'logging').result()
 
+
 def configure_logging(ctx: Context) -> None:
     """
-    :param ctx: The Click command context 
+    :param ctx: The Click command context
 
     :type params: :py:class:`~.click.Context`
 
@@ -147,7 +142,8 @@ def configure_logging(ctx: Context) -> None:
     # Now enable logging with the merged settings, verifying the settings are still good
     set_logging(logcfg)
 
-def de_dot(dot_string: str, msg: str) -> dict:
+
+def de_dot(dot_string: str, msg: str) -> t.Union[t.Dict[str, str], None]:
     """
     :param dot_string: The dotted string
     :param msg: The message
@@ -177,7 +173,8 @@ def de_dot(dot_string: str, msg: str) -> dict:
                 raise LoggingException(err) from err
     return retval
 
-def deepmerge(source: dict, destination: dict) -> dict:
+
+def deepmerge(source: t.Dict, destination: t.Dict) -> t.Dict:
     """
     :param source: Source dictionary
     :param destination: Destination dictionary
@@ -199,7 +196,8 @@ def deepmerge(source: dict, destination: dict) -> dict:
             destination[key] = value
     return destination
 
-def get_handler(logfile: str | None) -> Union[logging.FileHandler, logging.StreamHandler]:
+
+def get_handler(logfile: t.Union[str, None]) -> logging.Handler:
     """
     :param logfile: The path of a log file
 
@@ -219,17 +217,16 @@ def get_handler(logfile: str | None) -> Union[logging.FileHandler, logging.Strea
       .. code-block:: shell
 
          docker logs CONTAINERNAME
-    
+
     If neither of the prior are true, then it will return
     :py:class:`logging.StreamHandler(stream=sys.stdout) <logging.StreamHandler>`, and will write to
     STDOUT.
     """
-    handler = None
     # Priority handling of provided logfile first
     if logfile:
-        handler = logging.FileHandler(logfile)
+        return logging.FileHandler(logfile)
     # If no logfile is specified, check to see if we're running in a Docker container next
-    elif is_docker():
+    if is_docker():
         fpath = '/proc/1/fd/1'
         permission = False
         try:
@@ -242,11 +239,9 @@ def get_handler(logfile: str | None) -> Union[logging.FileHandler, logging.Strea
         except PermissionError:
             clicho(f'Docker container does not appear to have a writable tty at {fpath}.')
         if permission:
-            handler = logging.FileHandler(fpath)
-    # Otherwise, write to STDOUT
-    if handler is None:
-        handler = logging.StreamHandler(stream=sys.stdout)
-    return handler
+            return logging.FileHandler(fpath)
+    return logging.StreamHandler(stream=sys.stdout)  # Default
+
 
 def get_numeric_loglevel(level: str) -> int:
     """
@@ -261,7 +256,7 @@ def get_numeric_loglevel(level: str) -> int:
       .. list-table:: Log Levels
          :widths: 10 5 85
          :header-rows: 1
-         
+
          * - Level
            - #
            - Description
@@ -298,6 +293,7 @@ def get_numeric_loglevel(level: str) -> int:
         raise ValueError(f"Invalid log level: {level}")
     return numeric_log_level
 
+
 def is_docker() -> bool:
     """
     :rtype: bool
@@ -305,18 +301,21 @@ def is_docker() -> bool:
     """
     cgroup = Path('/proc/self/cgroup')
     return (
-        Path('/.dockerenv').is_file() or cgroup.is_file() and
+            Path('/.dockerenv').is_file()
+            or
+            cgroup.is_file()
+            and
             'docker' in cgroup.read_text(encoding='utf8')
     )
 
-def override_logging(ctx: Context) -> dict:
+
+def override_logging(ctx: Context) -> t.Dict:
     """
-    :param ctx: The Click command context 
+    :param ctx: The Click command context
 
     :type params: :py:class:`~.click.Context`
 
     :returns: Log configuration ready for validation
-    :rtype: dict
 
     Get logging configuration from `ctx.obj['draftcfg']` and override with any command-line options
     """
@@ -352,36 +351,30 @@ def override_logging(ctx: Context) -> dict:
 
     return init_logcfg
 
-def check_log_opts(log_opts: dict) -> dict:
+
+def check_log_opts(log_opts: t.Dict) -> t.Dict:
     """
     :param log_opts: Logging configuration data
 
-    :type log_opts: dict
-
-    :rtype: dict
     :returns: Updated `log_opts` dictionary with default values where unset
     """
     for k, v in LOGDEFAULTS.items():
-        log_opts[k] = v if not k in log_opts else log_opts[k]
+        log_opts[k] = v if k not in log_opts else log_opts[k]
     return log_opts
 
-def set_logging(options: dict, logger_name: str='es_client') -> None:
+
+def set_logging(options: t.Dict, logger_name: str = 'es_client') -> None:
     """
     :param options: Logging configuration data
     :param logger_name: Default logger name to use in :py:func:`logging.getLogger()`
 
-    :type options: dict
-    :type logger_name: str
-
-    :rtype: None
-    
     Configure global logging options from `options` and set a default `logger_name`
     """
     log_opts = check_log_opts(options)
     handler = get_handler(log_opts['logfile'])
     numeric_log_level = get_numeric_loglevel(log_opts['loglevel'])
 
-    if numeric_log_level == 10: # DEBUG
+    if numeric_log_level == 10:  # DEBUG
         format_string = (
             '%(asctime)s %(levelname)-9s %(name)22s %(funcName)22s:%(lineno)-4d %(message)s')
     else:

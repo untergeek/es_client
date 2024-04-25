@@ -1,18 +1,18 @@
 """SchemaCheck class and associated functions"""
 # pylint: disable=protected-access, broad-except
+import typing as t
 import logging
 from re import sub
 from copy import deepcopy
-from es_client.defaults import KEYS_TO_REDACT
-from es_client.exceptions import FailedValidation
+from voluptuous import Schema
+from ..defaults import KEYS_TO_REDACT
+from ..exceptions import FailedValidation
 
-def password_filter(data: dict) -> dict:
+
+def password_filter(data: t.Dict) -> t.Dict:
     """
     :param data: Configuration data
 
-    :type data: dict
-
-    :rtype: dict
     :returns: A :py:class:`~.copy.deepcopy` of `data` with the value obscured by ``REDACTED``
         if the key is one of :py:const:`~.es_client.defaults.KEYS_TO_REDACT`.
 
@@ -27,6 +27,7 @@ def password_filter(data: dict) -> dict:
                 mydict.update({key: "REDACTED"})
         return mydict
     return iterdict(deepcopy(data))
+
 
 class SchemaCheck:
     """
@@ -47,8 +48,12 @@ class SchemaCheck:
     :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.result` method returns
     :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`.
     """
-    def __init__(self, config, schema, test_what, location):
-
+    def __init__(
+            self,
+            config: t.Dict,
+            schema: Schema,
+            test_what: str,
+            location: str):
         self.logger = logging.getLogger(__name__)
         # Set the Schema for validation...
         self.logger.debug('Schema: %s', schema)
@@ -69,13 +74,13 @@ class SchemaCheck:
         #: Object attribute that is initialized with the value ``No error yet``
         self.error = 'No error yet'
 
-    def parse_error(self):
+    def parse_error(self) -> t.Any:
         """
         Report the error, and try to report the bad key or value as well.
         """
         def get_badvalue(data_string, data):
             elements = sub(r'[\'\]]', '', data_string).split('[')
-            elements.pop(0) # Get rid of data as the first element
+            elements.pop(0)  # Get rid of data as the first element
             value = None
             for k in elements:
                 try:
@@ -92,16 +97,16 @@ class SchemaCheck:
             self.logger.error('Unable to extract value: %s', exc)
             self.badvalue = '(could not determine)'
 
-    def result(self):
+    def result(self) -> Schema:
         """
-        :rtype: dict
+        :rtype: Schema
         :returns: :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`
 
         If validation is successful, return the value of
         :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`
 
         If unsuccessful, try to parse the error in
-        :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.parse_error` and raise a 
+        :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.parse_error` and raise a
         :py:exc:`FailedValidation <es_client.exceptions.FailedValidation>` exception.
         """
         try:
