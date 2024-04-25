@@ -1,23 +1,24 @@
 """Define default values"""
 # pylint: disable=line-too-long
+import typing as t
 from copy import deepcopy
 from click import Choice, Path
-from six import string_types
+from six import string_types  # type: ignore
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 
-VERSION_MIN: tuple = (8, 0, 0)
+VERSION_MIN: t.Tuple = (8, 0, 0)
 """Minimum compatible Elasticsearch version"""
 
-VERSION_MAX: tuple = (8, 99, 99)
+VERSION_MAX: t.Tuple = (8, 99, 99)
 """Maximum compatible Elasticsearch version"""
 
-KEYS_TO_REDACT: list = ['password', 'basic_auth', 'bearer_auth', 'api_key', 'id', 'opaque_id']
+KEYS_TO_REDACT: t.Sequence[str] = ['password', 'basic_auth', 'bearer_auth', 'api_key', 'id', 'opaque_id']
 """
 When doing configuration Schema validation, redact the value from any listed dictionary key. This
 only happens if logging is at DEBUG level.
 """
 
-CLIENT_SETTINGS: list = [
+CLIENT_SETTINGS: t.Sequence[str] = [
     'hosts', 'cloud_id', 'api_key', 'basic_auth', 'bearer_auth', 'opaque_id', 'headers',
     'connections_per_node', 'http_compress', 'verify_certs', 'ca_certs', 'client_cert',
     'client_key', 'ssl_assert_hostname', 'ssl_assert_fingerprint', 'ssl_version',
@@ -31,12 +32,12 @@ CLIENT_SETTINGS: list = [
 ]
 """Valid argument/option names for :py:class:`~.elasticsearch8.Elasticsearch`. Too large to show"""
 
-OTHER_SETTINGS: list = [
+OTHER_SETTINGS: t.Sequence[str] = [
     'master_only', 'skip_version_test', 'username', 'password', 'api_key'
 ]
 """Valid option names for :py:class:`~.es_client.builder.Builder`'s other settings"""
 
-CLICK_SETTINGS: list = {
+CLICK_SETTINGS: t.Dict[str, t.Dict] = {
     'config': {'help': 'Path to configuration file.', 'type': Path(exists=True)},
     'hosts': {'help': 'Elasticsearch URL to connect to.', 'multiple': True},
     'cloud_id': {'help': 'Elastic Cloud instance id'},
@@ -86,7 +87,7 @@ CLICK_SETTINGS: list = {
 }
 """Default settings used for building :py:class:`click.Option`. Too large to show."""
 
-ES_DEFAULT: dict = {'elasticsearch':{'client':{'hosts':['http://127.0.0.1:9200']}}}
+ES_DEFAULT: t.Dict = {'elasticsearch': {'client': {'hosts': ['http://127.0.0.1:9200']}}}
 """Default settings for :py:class:`~.es_client.builder.Builder`"""
 
 ENV_VAR_PREFIX: str = 'ESCLIENT'
@@ -104,7 +105,7 @@ LOGFORMAT: None = None
 BLACKLIST: None = None
 """Default value for logging blacklist"""
 
-LOGDEFAULTS: dict = {
+LOGDEFAULTS: t.Dict = {
     'loglevel': LOGLEVEL,
     'logfile': LOGFILE,
     'logformat': LOGFORMAT,
@@ -112,7 +113,7 @@ LOGDEFAULTS: dict = {
 }
 """All logging defaults in a single combined dictionary"""
 
-LOGGING_SETTINGS: dict = {
+LOGGING_SETTINGS: t.Dict[str, t.Dict] = {
     'loglevel': {
         'help': 'Log level',
         'type': Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']),
@@ -133,48 +134,49 @@ LOGGING_SETTINGS: dict = {
 }
 """Default logging settings used for building :py:class:`click.Option`. Too large to show."""
 
-SHOW_OPTION: dict = {'hidden': False}
+SHOW_OPTION: t.Dict[str, bool] = {'hidden': False}
 """Override value to "unhide" a :py:class:`click.Option`"""
 
-SHOW_ENVVAR: dict = {'show_envvar': True}
+SHOW_ENVVAR: t.Dict[str, bool] = {'show_envvar': True}
 """Override value to make Click's help output show the associated environment variable"""
 
-OVERRIDE: dict = {**SHOW_OPTION, **SHOW_ENVVAR}
+OVERRIDE: t.Dict = {**SHOW_OPTION, **SHOW_ENVVAR}
 """Override value to combine these into a single constant"""
 
-ONOFF: dict = {'on': '', 'off': 'no-'}
+ONOFF: t.Dict[str, str] = {'on': '', 'off': 'no-'}
 """Default values for enable/disable click options"""
 
-OPTION_DEFAULTS: dict = {
-    'config':{},
-    'hosts':{},
-    'cloud_id':{},
-    'api_token':{},
-    'id':{},
-    'api_key':{},
-    'username':{},
-    'password':{},
-    'bearer_auth':{},
-    'opaque_id':{},
-    'request_timeout':{},
-    'http_compress':{'onoff':ONOFF},
-    'verify_certs':{'onoff':ONOFF},
-    'ca_certs':{},
-    'client_cert':{},
-    'client_key':{},
-    'ssl_assert_hostname':{},
-    'ssl_assert_fingerprint':{},
-    'ssl_version':{},
-    'master-only':{'onoff':ONOFF},
-    'skip_version_test':{'onoff':ONOFF},
-    'loglevel':{'settings':LOGGING_SETTINGS['loglevel']},
-    'logfile':{'settings':LOGGING_SETTINGS['logfile']},
-    'logformat':{'settings':LOGGING_SETTINGS['logformat']},
-    'blacklist':{'settings':LOGGING_SETTINGS['blacklist']},
+OPTION_DEFAULTS: t.Dict[str, t.Dict] = {
+    'config': {},
+    'hosts': {},
+    'cloud_id': {},
+    'api_token': {},
+    'id': {},
+    'api_key': {},
+    'username': {},
+    'password': {},
+    'bearer_auth': {},
+    'opaque_id': {},
+    'request_timeout': {},
+    'http_compress': {'onoff': ONOFF},
+    'verify_certs': {'onoff': ONOFF},
+    'ca_certs': {},
+    'client_cert': {},
+    'client_key': {},
+    'ssl_assert_hostname': {},
+    'ssl_assert_fingerprint': {},
+    'ssl_version': {},
+    'master-only': {'onoff': ONOFF},
+    'skip_version_test': {'onoff': ONOFF},
+    'loglevel': {'settings': LOGGING_SETTINGS['loglevel']},
+    'logfile': {'settings': LOGGING_SETTINGS['logfile']},
+    'logformat': {'settings': LOGGING_SETTINGS['logformat']},
+    'blacklist': {'settings': LOGGING_SETTINGS['blacklist']},
 }
 """Default options for iteratively building Click decorators"""
 
-def all_on():
+
+def all_on() -> t.Dict[str, t.Dict]:
     """Return default options with all overrides enabled"""
     options = deepcopy(OPTION_DEFAULTS)
     retval = {}
@@ -184,8 +186,10 @@ def all_on():
         retval[option]['override'] = OVERRIDE
     return retval
 
-SHOW_EVERYTHING: dict = all_on()
+
+SHOW_EVERYTHING: t.Dict[str, t.Dict] = all_on()
 """Return options for iteratively building Click decorators with all overrides on"""
+
 
 # Logging schema
 def config_logging() -> Schema:
@@ -217,6 +221,7 @@ def config_logging() -> Schema:
             Optional('blacklist', default=['elastic_transport', 'urllib3']): Any(None, list),
         }
     )
+
 
 # All elasticsearch client options, with a few additional arguments.
 def config_schema() -> Schema:
@@ -274,13 +279,13 @@ def config_schema() -> Schema:
                 #: **experimental**.
                 Optional('ssl_assert_fingerprint'): Any(None, *string_types),
 
-                Optional('ssl_version'): Any(None, *string_types), # Minimum acceptable TLS/SSL version
+                Optional('ssl_version'): Any(None, *string_types),  # Minimum acceptable TLS/SSL version
 
                 #: Pre-configured :class:`ssl.SSLContext` OBJECT. If this value
                 #: is given then no other TLS options (besides ``ssl_assert_fingerprint``)
                 #: can be set on the :class:`elastic_transport.NodeConfig`.
-                ### Keeping this here in case someone APIs it, but otherwise it's not likely to be used.
                 Optional('ssl_context'): Any(None, *string_types),
+                # Keeping this here in case someone APIs it, but otherwise it's not likely to be used.
 
                 Optional('ssl_show_warn'): Boolean(),
                 Optional('transport_class'): Any(None, *string_types),
@@ -308,7 +313,7 @@ def config_schema() -> Schema:
                 # "CompatibilityModeJsonSerializer"
                 # "CompatibilityModeNdjsonSerializer"
                 # "MapboxVectorTileSerializer"
-                Optional('serializer'): Any(None, *string_types), # ???
+                Optional('serializer'): Any(None, *string_types),  # ???
 
                 # :arg serializers: optional dict of serializer instances that will be
                 # used for deserializing data coming from the server. (key is the mimetype)
@@ -351,7 +356,7 @@ def config_schema() -> Schema:
                 # Cannot specify both 'randomize_hosts' and 'randomize_nodes_in_pool'
                 # Optional('randomize_hosts', default=True): Boolean(),
 
-                Optional('host_info_callback'): Any(None, *string_types), # ??? needs the name of a callback function
+                Optional('host_info_callback'): Any(None, *string_types),  # ??? needs the name of a callback function
 
                 # Cannot specify both 'sniffer_timeout' and 'min_delay_between_sniffing'
                 # Optional('sniffer_timeout', default=0.5): All(Coerce(float), Range(min=0.1, max=10.0)),
@@ -360,24 +365,28 @@ def config_schema() -> Schema:
                 # Optional('sniff_on_connection_fail', default=False): Boolean(),
 
                 # Optional('http_auth'): Any(None, *string_types), # ??? Favor basic_auth instead.w
-                Optional('_transport'): Any(None, *string_types) # ???
+                Optional('_transport'): Any(None, *string_types)  # ???
             }
         }
     )
 
-def version_max() -> tuple:
+
+def version_max() -> t.Tuple:
     """Return the max version"""
     return VERSION_MAX
 
-def version_min() -> tuple:
+
+def version_min() -> t.Tuple:
     """Return the min version"""
     return VERSION_MIN
 
-def client_settings() -> dict:
+
+def client_settings() -> t.Sequence[str]:
     """Return the client settings"""
     return CLIENT_SETTINGS
 
-def config_settings() -> dict:
+
+def config_settings() -> t.Sequence[str]:
     """
     Return only the client settings likely to be used in a config file or at the command-line.
 
@@ -388,10 +397,11 @@ def config_settings() -> dict:
     ignore = ['api_key']
     settings = []
     for setting in CLIENT_SETTINGS:
-        if not setting in ignore:
+        if setting not in ignore:
             settings.append(setting)
     return settings
 
-def other_settings() -> dict:
+
+def other_settings() -> t.Sequence[str]:
     """Return the other settings"""
     return OTHER_SETTINGS

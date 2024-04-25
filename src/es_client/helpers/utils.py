@@ -1,26 +1,25 @@
 """Helper Utility Functions"""
+import typing as t
 import logging
 import os
 import re
 import base64
 import binascii
 from pathlib import Path
-import yaml
+import yaml  # type: ignore
 import click
 from elasticsearch8 import Elasticsearch
-from es_client.defaults import ES_DEFAULT, config_schema
-from es_client.exceptions import ConfigurationError
-from es_client.helpers.schemacheck import SchemaCheck
+from ..defaults import ES_DEFAULT, config_schema
+from ..exceptions import ConfigurationError
+from ..helpers.schemacheck import SchemaCheck
 
 LOGGER = logging.getLogger(__name__)
+
 
 def check_config(config: dict, quiet: bool = False) -> dict:
     """
     :param config: The configuration
-    
-    :type config: dict
 
-    :rtype: dict
     :returns: A validated configuration dictionary for :py:class:`~.es_client.builder.Builder`
 
     Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``other_settings`` and
@@ -32,7 +31,7 @@ def check_config(config: dict, quiet: bool = False) -> dict:
         LOGGER.warning('You supplied: "%s" which is "%s".', config, type(config))
         LOGGER.warning('Using default values.')
         es_settings = ES_DEFAULT
-    elif not 'elasticsearch' in config:
+    elif 'elasticsearch' not in config:
         # I only need this to be logged when Builder is initializing
         if not quiet:
             LOGGER.warning('No "elasticsearch" setting in supplied configuration.  Using defaults.')
@@ -44,38 +43,37 @@ def check_config(config: dict, quiet: bool = False) -> dict:
             es_settings['elasticsearch'][key] = {}
         else:
             es_settings['elasticsearch'][key] = prune_nones(es_settings['elasticsearch'][key])
-    return SchemaCheck(es_settings['elasticsearch'], config_schema(),
+    return SchemaCheck(
+        es_settings['elasticsearch'], config_schema(),
         'Elasticsearch Configuration', 'elasticsearch').result()
+
 
 def ensure_list(data) -> list:
     """
     :param data: A list or scalar variable to act upon
-    :rtype: list
 
     Return a :py:class:`list`, even if `data` is a single value
     """
-    if not isinstance(data, list): # in case of a single value passed
+    if not isinstance(data, list):  # in case of a single value passed
         data = [data]
     return data
+
 
 def file_exists(file: str) -> bool:
     """
     :param file: The file to test
-    :type file: str
-
-    :rtype: bool
 
     Verify `file` exists
     """
     return Path(file).is_file()
 
-def get_version(client: Elasticsearch) -> tuple:
+
+def get_version(client: Elasticsearch) -> t.Tuple:
     """
     :param client: An Elasticsearch client object
     :type client: :py:class:`~.elasticsearch.Elasticsearch`
 
     :returns: The Elasticsearch version as a 3-part tuple, (major, minor, patch)
-    :rtype: tuple
 
     Get the Elasticsearch version of the connected node
     """
@@ -89,13 +87,12 @@ def get_version(client: Elasticsearch) -> tuple:
         version = version.split('.')
     return tuple(map(int, version))
 
-def get_yaml(path: str) -> dict:
+
+def get_yaml(path: str) -> t.Dict:
     """
     :param path: The path to a YAML configuration file.
-    :type path: str
 
     :returns: The contents of `path` translated from YAML to :py:class:`dict`
-    :rtype: dict
 
     Read the file identified by `path` and import its YAML contents.
     """
@@ -103,6 +100,7 @@ def get_yaml(path: str) -> dict:
     # the YAML file being read
     single = re.compile(r'^\$\{(.*)\}$')
     yaml.add_implicit_resolver("!single", single)
+
     def single_constructor(loader, node):
         value = loader.construct_scalar(node)
         proto = single.match(value).group(1)
@@ -120,48 +118,49 @@ def get_yaml(path: str) -> dict:
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as exc:
         raise ConfigurationError(f'Unable to parse YAML file. Error: {exc}') from exc
 
-def option_wrapper():
+
+def option_wrapper() -> t.Callable:
     """
     :py:func:`~.es_client.helpers.utils.passthrough()` the :py:func:`click.option` decorator
     function.
     """
     return passthrough(click.option)
 
-def parse_apikey_token(token: str) -> tuple:
+
+def parse_apikey_token(token: str) -> t.Tuple:
     """
     :param token: The base64 encoded API Key
-    :type token: str
 
     :returns: A tuple of (id, api_key)
-    :rtype: tuple
 
     Split a base64 encoded API Key Token into id and api_key
     """
     try:
-        decoded=base64.b64decode(token).decode('utf-8')
+        decoded = base64.b64decode(token).decode('utf-8')
         split = decoded.split(':')
     except (binascii.Error, IndexError, UnicodeDecodeError) as exc:
         raise ConfigurationError(f'Unable to parse base64 API Key Token: {exc}') from exc
     return (split[0], split[1])
 
-def passthrough(func):
+
+def passthrough(func) -> t.Callable:
     """Wrapper to make it easy to store click configuration elsewhere"""
     return lambda a, k: func(*a, **k)
 
-def prune_nones(mydict: dict) -> dict:
+
+def prune_nones(mydict: t.Dict) -> t.Dict:
     """
     :param mydict: The dictionary to act on
-    :rtype: dict
 
     Remove keys from `mydict` whose values are `None`
     """
     # Test for `None` instead of existence or zero values will be caught
     return dict([(k, v) for k, v in mydict.items() if v is not None and v != 'None'])
 
+
 def read_file(myfile: str) -> str:
     """
     :param myfile: A file to read.
-    :rtype: str
 
     Read a file and return the resulting data. Raise an
     :py:exc:`~.es_client.exceptions.ConfigurationError` exception if the file is unable to be read.
@@ -175,10 +174,10 @@ def read_file(myfile: str) -> str:
         LOGGER.error(msg)
         raise ConfigurationError(msg) from exc
 
-def verify_ssl_paths(args: dict) -> dict:
+
+def verify_ssl_paths(args: t.Dict) -> None:
     """
     :param args: The ``client`` block of the config dictionary.
-    :type args: dict
 
     Verify that the various certificate/key paths are readable.  The
     :py:func:`~.es_client.helpers.utils.read_file` function will raise a
@@ -194,13 +193,12 @@ def verify_ssl_paths(args: dict) -> dict:
     if 'client_key' in args and args['client_key'] is not None:
         read_file(args['client_key'])
 
+
 def verify_url_schema(url: str) -> str:
     """
     :param url: The url to verify
-    :type url: str
 
     :returns: Verified URL
-    :rtype: str
 
     Ensure that a valid URL schema (HTTP[S]://URL:PORT) is used
 

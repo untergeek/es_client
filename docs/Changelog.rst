@@ -3,6 +3,88 @@
 Changelog
 =========
 
+8.13.2 (25 April 2024)
+----------------------
+
+**Changes**
+
+  * Added typing hints, everywhere. Trying to make the module play nicer with others.
+  * Moved all code under ``src/es_client`` to be more package compliant.
+  * Moved ``__version__`` to ``__init__.py``
+  * Updated the ``pyproject.toml`` file to reflect these changes.
+  * Updated tests and documentation as needed.
+
+**Potentially Breaking Changes**
+
+  * Migrated away from custom ``dict``-to-attribute class ``Args`` to ``DotMap``. It's the best of
+    both worlds as it gives full dotted notation access to a dictionary, making it appear like
+    class attributes. But it also still affords you the ability to treat each nested field just like
+    a dictionary, still. ``Builder.client_args`` and ``Builder.other_args`` should look and feel the
+    exact same as before, with one noted difference, and that is the ``.asdict()`` method has been
+    replaced by the ``.toDict()`` method. This is the one change that might mess you up. If you
+    are using that anywhere, please replace those calls. Also, if you were manually building these
+    objects before, rather than supplying a config file or dict, you can create these now as
+    follows:
+
+      .. code-block:: python
+
+        from es_client import Builder
+        from dotmap import DotMap
+
+        client_settings = {}  # Filled with your client settings
+        client_args = DotMap(client_settings)
+
+        builder = Builder()
+        builder.client_args = client_args
+        # Or directly assign:
+        builder.client_args = DotMap(client_settings)
+    
+    Updating a single key is simple:
+
+      .. code-block:: python
+
+        other_args = DotMap(other_settings)
+        other_args.username = 'nobody'
+        other_args['password'] = 'The Spanish Inquisition'
+    
+    As noted, both dotted and dict formats are acceptable, as demonstrated above.
+    Updating with a dictionary of root level keys is simple:
+
+      .. code-block:: python
+
+        other_settings = {
+            'master_only': False,
+            'username': 'original',
+            'password': 'oldpasswd',
+        }
+        other_args = DotMap(other_settings)
+        # DotMap(master_only=False, username='original', password='oldpasswd')
+        changes = {
+            'master_only': True,
+            'username': 'newuser',
+            'password': 'newpasswd',
+        }
+        other_args.update(changes)
+        # DotMap(master_only=True, username='newuser', password='newpasswd')
+    
+    If putting a nested dictionary in place, you should convert it to a DotMap first:
+
+      .. code-block:: python
+
+        d = {'a':'A', 'b':{'c':'C', 'd':{'e':'E'}}}
+        dm = DotMap(d)
+        # DotMap(a='A', b=DotMap(c='C', d=DotMap(e='E')))
+        b = {'b':{'g':'G', 'h':{'i':'I'}}}
+        dm.update(b)
+        # DotMap(a='A', b={'g': 'G', 'h': {'i': 'I'}})
+        #                 ^^^
+        #              Not a DotMap
+        dm.update(DotMap(b))
+        DotMap(a='A', b=DotMap(g='G', h=DotMap(i='I')))
+    
+    It's always safest to update with a DotMap rather than a bare dict.
+    That's about it.
+
 8.13.1 (10 April 2024)
 ----------------------
 

@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Flake8
+.flake8
+
 # Dockerfile built from template
 docker_test/scripts/Dockerfile
 
@@ -103,3 +106,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# VS Code
+.vscode
