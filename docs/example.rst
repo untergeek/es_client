@@ -305,5 +305,5 @@ File Source Code
 
 This file is part of the source code and is at ``./es_client/cli_example.py``.
 
-.. literalinclude:: ../es_client/cli_example.py
+.. literalinclude:: ../src/es_client/cli_example.py
   :language: python

@@ -3,28 +3,6 @@
 ES Client API reference
 #######################
 
-.. _client_args:
-
-ClientArgs Class
-================
-
-.. autoclass:: es_client.builder.ClientArgs
-   :members:
-   :inherited-members:
-   :undoc-members:
-   :private-members:
-
-.. _other_args:
-
-OtherArgs Class
-===============
-
-.. autoclass:: es_client.builder.OtherArgs
-   :members:
-   :inherited-members:
-   :undoc-members:
-   :private-members:
-
 .. _builder:
 
 Builder Class
@@ -32,8 +10,6 @@ Builder Class
 
 .. autoclass:: es_client.builder.Builder
    :members:
-   :undoc-members:
-   :private-members:
 
 Builder Attribute Errata
 ------------------------

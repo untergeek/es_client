@@ -64,7 +64,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 intersphinx_mapping = {
-	'python': ('https://docs.python.org/3.11', None),
+	'python': ('https://docs.python.org/3.12', None),
 	'elasticsearch8': ('https://elasticsearch-py.readthedocs.io/en/v8.13.0', None),
     'elastic-transport': ('https://elastic-transport-python.readthedocs.io/en/stable', None),
     'voluptuous': ('http://alecthomas.github.io/voluptuous/docs/_build/html', None),
