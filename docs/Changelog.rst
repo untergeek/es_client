@@ -3,6 +3,13 @@
 Changelog
 =========
 
+8.13.3 (26 April 2024)
+----------------------
+
+**Changes**
+
+  * After all that work to ensure proper typing, I forgot to include the ``py.typed`` marker file.
+
 8.13.2 (25 April 2024)
 ----------------------
 

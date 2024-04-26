@@ -63,6 +63,10 @@ exclude = [
     "examples",
     "html_docs",
     "tests",
+    "cli.py",
+    "example.yml",
+    "pytest.ini",
+    "src/local_test.py",
 ]
 
 [tool.pytest.ini_options]
