@@ -1,4 +1,5 @@
 """Helper Utility Functions"""
+
 import typing as t
 import logging
 import os
@@ -27,25 +28,34 @@ def check_config(config: dict, quiet: bool = False) -> dict:
     :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
     """
     if not isinstance(config, dict):
-        LOGGER.warning('Elasticsearch client configuration must be provided as a dictionary.')
+        LOGGER.warning(
+            "Elasticsearch client configuration must be provided as a dictionary."
+        )
         LOGGER.warning('You supplied: "%s" which is "%s".', config, type(config))
-        LOGGER.warning('Using default values.')
+        LOGGER.warning("Using default values.")
         es_settings = ES_DEFAULT
-    elif 'elasticsearch' not in config:
+    elif "elasticsearch" not in config:
         # I only need this to be logged when Builder is initializing
         if not quiet:
-            LOGGER.warning('No "elasticsearch" setting in supplied configuration.  Using defaults.')
+            LOGGER.warning(
+                'No "elasticsearch" setting in supplied configuration.  Using defaults.'
+            )
         es_settings = ES_DEFAULT
     else:
         es_settings = config
-    for key in ['client', 'other_settings']:
-        if key not in es_settings['elasticsearch']:
-            es_settings['elasticsearch'][key] = {}
+    for key in ["client", "other_settings"]:
+        if key not in es_settings["elasticsearch"]:
+            es_settings["elasticsearch"][key] = {}
         else:
-            es_settings['elasticsearch'][key] = prune_nones(es_settings['elasticsearch'][key])
+            es_settings["elasticsearch"][key] = prune_nones(
+                es_settings["elasticsearch"][key]
+            )
     return SchemaCheck(
-        es_settings['elasticsearch'], config_schema(),
-        'Elasticsearch Configuration', 'elasticsearch').result()
+        es_settings["elasticsearch"],
+        config_schema(),
+        "Elasticsearch Configuration",
+        "elasticsearch",
+    ).result()
 
 
 def ensure_list(data) -> list:
@@ -77,14 +87,14 @@ def get_version(client: Elasticsearch) -> t.Tuple:
 
     Get the Elasticsearch version of the connected node
     """
-    version = client.info()['version']['number']
+    version = client.info()["version"]["number"]
     # Split off any -dev, -beta, or -rc tags
-    version = version.split('-')[0]
+    version = version.split("-")[0]
     # Only take SEMVER (drop any fields over 3)
-    if len(version.split('.')) > 3:
-        version = version.split('.')[:-1]
+    if len(version.split(".")) > 3:
+        version = version.split(".")[:-1]
     else:
-        version = version.split('.')
+        version = version.split(".")
     return tuple(map(int, version))
 
 
@@ -98,25 +108,25 @@ def get_yaml(path: str) -> t.Dict:
     """
     # Set the stage here to parse single scalar value environment vars from
     # the YAML file being read
-    single = re.compile(r'^\$\{(.*)\}$')
+    single = re.compile(r"^\$\{(.*)\}$")
     yaml.add_implicit_resolver("!single", single)
 
     def single_constructor(loader, node):
         value = loader.construct_scalar(node)
         proto = single.match(value).group(1)
         default = None
-        if len(proto.split(':')) > 1:
-            envvar, default = proto.split(':')
+        if len(proto.split(":")) > 1:
+            envvar, default = proto.split(":")
         else:
             envvar = proto
         return os.environ[envvar] if envvar in os.environ else default
 
-    yaml.add_constructor('!single', single_constructor)
+    yaml.add_constructor("!single", single_constructor)
 
     try:
         return yaml.load(read_file(path), Loader=yaml.FullLoader)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as exc:
-        raise ConfigurationError(f'Unable to parse YAML file. Error: {exc}') from exc
+        raise ConfigurationError(f"Unable to parse YAML file. Error: {exc}") from exc
 
 
 def option_wrapper() -> t.Callable:
@@ -136,10 +146,12 @@ def parse_apikey_token(token: str) -> t.Tuple:
     Split a base64 encoded API Key Token into id and api_key
     """
     try:
-        decoded = base64.b64decode(token).decode('utf-8')
-        split = decoded.split(':')
+        decoded = base64.b64decode(token).decode("utf-8")
+        split = decoded.split(":")
     except (binascii.Error, IndexError, UnicodeDecodeError) as exc:
-        raise ConfigurationError(f'Unable to parse base64 API Key Token: {exc}') from exc
+        raise ConfigurationError(
+            f"Unable to parse base64 API Key Token: {exc}"
+        ) from exc
     return (split[0], split[1])
 
 
@@ -155,7 +167,7 @@ def prune_nones(mydict: t.Dict) -> t.Dict:
     Remove keys from `mydict` whose values are `None`
     """
     # Test for `None` instead of existence or zero values will be caught
-    return dict([(k, v) for k, v in mydict.items() if v is not None and v != 'None'])
+    return dict([(k, v) for k, v in mydict.items() if v is not None and v != "None"])
 
 
 def read_file(myfile: str) -> str:
@@ -166,11 +178,11 @@ def read_file(myfile: str) -> str:
     :py:exc:`~.es_client.exceptions.ConfigurationError` exception if the file is unable to be read.
     """
     try:
-        with open(myfile, 'r', encoding='utf-8') as f:
+        with open(myfile, "r", encoding="utf-8") as f:
             data = f.read()
         return data
     except IOError as exc:
-        msg = f'Unable to read file {myfile}. Exception: {exc}'
+        msg = f"Unable to read file {myfile}. Exception: {exc}"
         LOGGER.error(msg)
         raise ConfigurationError(msg) from exc
 
@@ -184,14 +196,14 @@ def verify_ssl_paths(args: t.Dict) -> None:
     :py:exc:`~.es_client.exceptions.ConfigurationError` if a file fails to be read.
     """
     # Test whether certificate is a valid file path
-    if 'ca_certs' in args and args['ca_certs'] is not None:
-        read_file(args['ca_certs'])
+    if "ca_certs" in args and args["ca_certs"] is not None:
+        read_file(args["ca_certs"])
     # Test whether client_cert is a valid file path
-    if 'client_cert' in args and args['client_cert'] is not None:
-        read_file(args['client_cert'])
+    if "client_cert" in args and args["client_cert"] is not None:
+        read_file(args["client_cert"])
     # Test whether client_key is a valid file path
-    if 'client_key' in args and args['client_key'] is not None:
-        read_file(args['client_key'])
+    if "client_key" in args and args["client_key"] is not None:
+        read_file(args["client_key"])
 
 
 def verify_url_schema(url: str) -> str:
@@ -205,20 +217,20 @@ def verify_url_schema(url: str) -> str:
     Raise a :py:exc:`~.es_client.exceptions.ConfigurationError` exception if a URL schema is
     invalid for any reason.
     """
-    parts = url.lower().split(':')
-    errmsg = f'URL Schema invalid for {url}'
+    parts = url.lower().split(":")
+    errmsg = f"URL Schema invalid for {url}"
     if len(parts) < 3:
         # We do not have a port
-        if parts[0] == 'https':
-            port = '443'
-        elif parts[0] == 'http':
-            port = '80'
+        if parts[0] == "https":
+            port = "443"
+        elif parts[0] == "http":
+            port = "80"
         else:
             raise ConfigurationError(errmsg)
     elif len(parts) == 3:
-        if (parts[0] != 'http') and (parts[0] != 'https'):
+        if (parts[0] != "http") and (parts[0] != "https"):
             raise ConfigurationError(errmsg)
         port = parts[2]
     else:
         raise ConfigurationError(errmsg)
-    return parts[0] + ':' + parts[1] + ':' + port
+    return parts[0] + ":" + parts[1] + ":" + port

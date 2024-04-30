@@ -21,8 +21,16 @@ start there. I've done the ground work so you don't have to.
    localhost:9200 that needs no username or password. This can, in fact, be done using the 
    ``docker_test`` scripts included in the Github repository.
    
-   Run ``docker_test/scripts/create.sh 8.12.0`` to create such an image locally (substitute the 
-   version of your choice), and ``docker_test/scripts/destroy.sh`` to remove them when you're done.
+   Run ``docker_test/create.sh 8.13.2`` to create such an image locally (substitute the 
+   version of your choice), and ``docker_test/destroy.sh`` to remove them when you're done. These
+   Docker images will export necessary settings to a ``.env`` file in the root directory of your
+   git fork of ``es_client``, and the CA certificate will be put in
+   ``tests/integration/http_ca.crt``. The tests, as presently constituted, are already configured
+   to use these settings and values. After running ``docker_test/create.sh 8.13.2``, simply run
+   ``pytest`` to see it work. Don't forget to run ``docker_test/destroy.sh`` after you've run the
+   tests--for now, anyway. I will probably have pytest run the ``create.sh`` and ``destroy.sh`` in
+   the future as part of test setup and teardown (at the ``scope='session'`` level).
+
    If you do not have Docker, or choose to use a different cluster, you're responsible for adding
    whatever configuration options/flags are needed to connect. And I am not at all responsible if
    you delete an index in production because you did something you shouldn't have.

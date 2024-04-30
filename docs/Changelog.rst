@@ -3,6 +3,24 @@
 Changelog
 =========
 
+8.13.4 (30 April 2024)
+----------------------
+
+**Changes**
+
+  * Updated ``docker_test`` scripts to enable TLS testing and better integration with pytest.
+    TEST_USER and TEST_PASS and TEST_ES_SERVER, etc. are all populated and put into ``.env``
+    Even the CA certificate is copied to TEST_PATH, so it's easy for the tests to pick it up.
+    Not incidentally, the scripts were moved from ``docker_test/scripts`` to just ``docker_test``.
+    The tutorial in the documentation has been updated to reflect these changes.
+  * Added ``pytest-dotenv`` as a test dependency to take advantage of the ``.env``
+  * Minor code formatting in most files as I've switched to using ``black`` with VS Code, and
+    flake8, and mypy.
+
+**Bugfix**
+
+  * Found 1 stray instance of ``update_settings`` from before the DotMap switch. Fixed.
+
 8.13.3 (26 April 2024)
 ----------------------
 

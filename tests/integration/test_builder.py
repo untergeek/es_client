@@ -1,18 +1,22 @@
 """Test the Builder class"""
+
 # pylint: disable=protected-access
-import os
+from os import environ
 from unittest import TestCase
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
 
-host = os.environ.get('TEST_ES_SERVER', 'http://127.0.0.1:9200')
+HOST = environ.get("TEST_ES_SERVER", "https://127.0.0.1:9200")
+USER = environ.get("TEST_USER", "elastic")
+PASS = environ.get("TEST_PASS")
+PATH = environ.get("TEST_PATH")
+CACRT = f"{PATH}/http_ca.crt"
+
 
 config = {
-    'elasticsearch': {
-        'other_settings': {},
-        'client': {
-            'hosts': host
-        }
+    "elasticsearch": {
+        "other_settings": {"username": USER, "password": PASS},
+        "client": {"hosts": HOST, "ca_certs": CACRT},
     }
 }
 
@@ -23,13 +27,16 @@ class TestCheckMaster(TestCase):
     def test_multiple_hosts_raises(self):
         """Raise exception if multiple hosts are specified and 'master_only' is True"""
         local_conf = {
-            'elasticsearch': {
-                'other_settings': {
-                    'master_only': True
+            "elasticsearch": {
+                "other_settings": {
+                    "master_only": True,
+                    "username": USER,
+                    "password": PASS,
                 },
-                'client': {
-                    'hosts': ['http://127.0.0.1:9200', 'http://localhost:9200']
-                }
+                "client": {
+                    "hosts": [HOST, "https://localhost:9200"],
+                    "ca_certs": CACRT,
+                },
             }
         }
         obj = Builder(configdict=local_conf, autoconnect=False)
@@ -67,16 +74,9 @@ class TestCheckVersion(TestCase):
 class TestConnection(TestCase):
     """Test client connection"""
 
-    def test_non_dict_passed(self):
-        """Ensure that a 'bad' configdict connects using defaults"""
-        obj = Builder(configdict='string', autoconnect=True)
-        client = obj.client
-        expected = client.info()
-        self.assertEqual(expected, obj.test_connection())
-
     def test_incomplete_dict_passed(self):
         """Sending a proper dictionary but None value for hosts will raise ValueError"""
-        cfg = {'elasticsearch': {'client': {'hosts': None}}}
+        cfg = {"elasticsearch": {"client": {"hosts": None}}}
         self.assertRaises(ValueError, Builder, configdict=cfg, autoconnect=True)
 
     def test_client_info(self):

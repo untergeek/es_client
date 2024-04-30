@@ -1,4 +1,5 @@
 """Sphinx Documentation Configuration"""
+
 # -*- coding: utf-8 -*-
 #  Licensed to Elasticsearch B.V. under one or more contributor
 #  license agreements. See the NOTICE file distributed with
@@ -23,35 +24,35 @@ import os
 from datetime import datetime
 from es_client import __version__ as ver
 
-COPYRIGHT_YEARS = f'2022-{datetime.now().year}'
+COPYRIGHT_YEARS = f"2022-{datetime.now().year}"
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath("../"))
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx']
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphinx"]
 
 autoclass_content = "both"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = 'es_client'
-author = 'Aaron Mildenstein'
-copyright = f'{COPYRIGHT_YEARS}, Aaron Mildenstein'
+project = "es_client"
+author = "Aaron Mildenstein"
+copyright = f"{COPYRIGHT_YEARS}, Aaron Mildenstein"
 
 release = ver
-version = '.'.join(release.split('.')[:2])
+version = ".".join(release.split(".")[:2])
 
-exclude_patterns = ['_build']
+exclude_patterns = ["_build"]
 
 pygments_style = "sphinx"
 
@@ -64,9 +65,12 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 intersphinx_mapping = {
-	'python': ('https://docs.python.org/3.12', None),
-	'elasticsearch8': ('https://elasticsearch-py.readthedocs.io/en/v8.13.0', None),
-    'elastic-transport': ('https://elastic-transport-python.readthedocs.io/en/stable', None),
-    'voluptuous': ('http://alecthomas.github.io/voluptuous/docs/_build/html', None),
-    'click': ('https://click.palletsprojects.com/en/8.1.x', None),
+    "python": ("https://docs.python.org/3.12", None),
+    "elasticsearch8": ("https://elasticsearch-py.readthedocs.io/en/v8.13.0", None),
+    "elastic-transport": (
+        "https://elastic-transport-python.readthedocs.io/en/stable",
+        None,
+    ),
+    "voluptuous": ("http://alecthomas.github.io/voluptuous/docs/_build/html", None),
+    "click": ("https://click.palletsprojects.com/en/8.1.x", None),
 }
