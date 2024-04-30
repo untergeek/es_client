@@ -1,4 +1,5 @@
 """Logging Helpers"""
+
 # The __future__ annotations line allows support for Python 3.8 and 3.9 to continue
 from __future__ import annotations
 import typing as t
@@ -21,6 +22,7 @@ class Whitelist(logging.Filter):
     Child class inheriting :py:class:`logging.Filter`, patched to permit only specifically named
     :py:func:`loggers <logging.getLogger()>` to write logs.
     """
+
     # pylint: disable=super-init-not-called
     def __init__(self, *whitelist: list):
         """
@@ -48,20 +50,22 @@ class Blacklist(Whitelist):
 
       return not Whitelist.filter(self, record)
     """
+
     def filter(self, record):
         return not Whitelist.filter(self, record)
 
 
 class JSONFormatter(logging.Formatter):
     """JSON message formatting"""
+
     # The LogRecord attributes we want to carry over to the JSON message,
     # mapped to the corresponding output key.
     WANTED_ATTRS = {
-        'levelname': 'loglevel',
-        'funcName': 'function',
-        'lineno': 'linenum',
-        'message': 'message',
-        'name': 'name'
+        "levelname": "loglevel",
+        "funcName": "function",
+        "lineno": "linenum",
+        "message": "message",
+        "name": "name",
     }
 
     def format(self, record: logging.LogRecord) -> str:
@@ -71,13 +75,15 @@ class JSONFormatter(logging.Formatter):
         :rtype: :py:meth:`json.dumps`
         """
         self.converter = time.gmtime
-        timestamp = f"{self.formatTime(record, datefmt='%Y-%m-%dT%H:%M:%S')}.{record.msecs:03}Z"
-        result = {'@timestamp': timestamp}
+        timestamp = (
+            f"{self.formatTime(record, datefmt='%Y-%m-%dT%H:%M:%S')}.{record.msecs:03}Z"
+        )
+        result = {"@timestamp": timestamp}
         available = record.__dict__
         # This is cleverness because 'message' is NOT a member key of ``record.__dict__``
         # the ``getMessage()`` method is effectively ``msg % args`` (actual keys)
         # By manually adding 'message' to ``available``, it simplifies the code
-        available['message'] = record.getMessage()
+        available["message"] = record.getMessage()
         for attribute in set(self.WANTED_ATTRS).intersection(available):
             result = deepmerge(
                 de_dot(self.WANTED_ATTRS[attribute], getattr(record, attribute)), result
@@ -85,8 +91,8 @@ class JSONFormatter(logging.Formatter):
         # The following is mostly for mimicking the ecs format. You can't have 2x 'message' keys in
         # WANTED_ATTRS, so we set the value to 'log.original' for ecs, and this code block
         # guarantees it still appears as 'message' too.
-        if 'message' not in result.items():
-            result['message'] = available['message']
+        if "message" not in result.items():
+            result["message"] = available["message"]
         return json.dumps(result, sort_keys=True)
 
 
@@ -107,21 +113,22 @@ def check_logging_config(config: t.Dict) -> Schema:
     """
     if not isinstance(config, dict):
         clicho(
-            f'Must supply logging information as a dictionary. '
+            f"Must supply logging information as a dictionary. "
             f'You supplied: "{config}" which is "{type(config)}"'
-            f'Using default logging values.'
+            f"Using default logging values."
         )
         log_settings = {}
-    elif 'logging' not in config:
+    elif "logging" not in config:
         # None provided. Use defaults.
         log_settings = {}
     else:
-        if config['logging']:
-            log_settings = prune_nones(config['logging'])
+        if config["logging"]:
+            log_settings = prune_nones(config["logging"])
         else:
             log_settings = {}
     return SchemaCheck(
-        log_settings, config_logging(), 'Logging Configuration', 'logging').result()
+        log_settings, config_logging(), "Logging Configuration", "logging"
+    ).result()
 
 
 def configure_logging(ctx: Context) -> None:
@@ -156,18 +163,18 @@ def de_dot(dot_string: str, msg: str) -> t.Union[t.Dict[str, str], None]:
 
     Turn `message` and `dot_string` into a nested dictionary. Used by :py:class:`JSONFormatter`
     """
-    arr = dot_string.split('.')
+    arr = dot_string.split(".")
     arr.append(msg)
     retval = None
     for idx in range(len(arr), 1, -1):
         if not retval:
             try:
-                retval = {arr[idx-2]: arr[idx-1]}
+                retval = {arr[idx - 2]: arr[idx - 1]}
             except Exception as err:
                 raise LoggingException(err) from err
         else:
             try:
-                new_d = {arr[idx-2]: retval}
+                new_d = {arr[idx - 2]: retval}
                 retval = new_d
             except Exception as err:
                 raise LoggingException(err) from err
@@ -227,17 +234,19 @@ def get_handler(logfile: t.Union[str, None]) -> logging.Handler:
         return logging.FileHandler(logfile)
     # If no logfile is specified, check to see if we're running in a Docker container next
     if is_docker():
-        fpath = '/proc/1/fd/1'
+        fpath = "/proc/1/fd/1"
         permission = False
         try:
-            with open(fpath, 'wb+', buffering=0) as fhdl:
+            with open(fpath, "wb+", buffering=0) as fhdl:
                 # And we've verified that the path is a tty
                 if fhdl.isatty():
                     # And verified that we have write permissions to that path
-                    fhdl.write('...\n'.encode())
+                    fhdl.write("...\n".encode())
                     permission = True
         except PermissionError:
-            clicho(f'Docker container does not appear to have a writable tty at {fpath}.')
+            clicho(
+                f"Docker container does not appear to have a writable tty at {fpath}."
+            )
         if permission:
             return logging.FileHandler(fpath)
     return logging.StreamHandler(stream=sys.stdout)  # Default
@@ -299,13 +308,11 @@ def is_docker() -> bool:
     :rtype: bool
     :returns: Boolean result of whether we are runinng in a Docker container or not
     """
-    cgroup = Path('/proc/self/cgroup')
+    cgroup = Path("/proc/self/cgroup")
     return (
-            Path('/.dockerenv').is_file()
-            or
-            cgroup.is_file()
-            and
-            'docker' in cgroup.read_text(encoding='utf8')
+        Path("/.dockerenv").is_file()
+        or cgroup.is_file()
+        and "docker" in cgroup.read_text(encoding="utf8")
     )
 
 
@@ -320,18 +327,18 @@ def override_logging(ctx: Context) -> t.Dict:
     Get logging configuration from `ctx.obj['draftcfg']` and override with any command-line options
     """
     # Check for log settings from config file
-    init_logcfg = check_logging_config(ctx.obj['draftcfg'])
+    init_logcfg = check_logging_config(ctx.obj["draftcfg"])
 
     # Set debug to True if config file says loglevel is DEBUG
-    debug = ('loglevel' in init_logcfg and init_logcfg['loglevel'] == 'DEBUG')
+    debug = "loglevel" in init_logcfg and init_logcfg["loglevel"] == "DEBUG"
     # if 'loglevel' is not None
-    if 'loglevel' in ctx.params and ctx.params['loglevel'] is not None:
+    if "loglevel" in ctx.params and ctx.params["loglevel"] is not None:
         # Set debug to True if command-line options says loglevel is DEBUG,
         # otherwise set debug to False (overriding what was set by config file)
-        debug = ctx.params['loglevel'] == 'DEBUG'
+        debug = ctx.params["loglevel"] == "DEBUG"
 
     # Override anything with options from the command-line
-    paramlist = ['loglevel', 'logfile', 'logformat', 'blacklist']
+    paramlist = ["loglevel", "logfile", "logformat", "blacklist"]
 
     for entry in paramlist:
         if entry in ctx.params:
@@ -339,12 +346,16 @@ def override_logging(ctx: Context) -> t.Dict:
                 continue
             # Output to stdout if debug is True and we're not overriding a None (default)
             # and we're not overriding DEBUG with DEBUG ;)
-            if debug and init_logcfg[entry] is not None and init_logcfg['loglevel'] != 'DEBUG':
+            if (
+                debug
+                and init_logcfg[entry] is not None
+                and init_logcfg["loglevel"] != "DEBUG"
+            ):
                 clicho(
-                    f'DEBUG: Overriding configuration file setting {entry}={init_logcfg[entry]} '
-                    f'with command-line option {entry}={ctx.params[entry]}'
+                    f"DEBUG: Overriding configuration file setting {entry}={init_logcfg[entry]} "
+                    f"with command-line option {entry}={ctx.params[entry]}"
                 )
-            if entry == 'blacklist':
+            if entry == "blacklist":
                 init_logcfg[entry] = list(ctx.params[entry])
             else:
                 init_logcfg[entry] = ctx.params[entry]
@@ -363,7 +374,7 @@ def check_log_opts(log_opts: t.Dict) -> t.Dict:
     return log_opts
 
 
-def set_logging(options: t.Dict, logger_name: str = 'es_client') -> None:
+def set_logging(options: t.Dict, logger_name: str = "es_client") -> None:
     """
     :param options: Logging configuration data
     :param logger_name: Default logger name to use in :py:func:`logging.getLogger()`
@@ -371,18 +382,17 @@ def set_logging(options: t.Dict, logger_name: str = 'es_client') -> None:
     Configure global logging options from `options` and set a default `logger_name`
     """
     log_opts = check_log_opts(options)
-    handler = get_handler(log_opts['logfile'])
-    numeric_log_level = get_numeric_loglevel(log_opts['loglevel'])
+    handler = get_handler(log_opts["logfile"])
+    numeric_log_level = get_numeric_loglevel(log_opts["loglevel"])
 
     if numeric_log_level == 10:  # DEBUG
-        format_string = (
-            '%(asctime)s %(levelname)-9s %(name)22s %(funcName)22s:%(lineno)-4d %(message)s')
+        format_string = "%(asctime)s %(levelname)-9s %(name)22s %(funcName)22s:%(lineno)-4d %(message)s"
     else:
-        format_string = '%(asctime)s %(levelname)-9s %(message)s'
+        format_string = "%(asctime)s %(levelname)-9s %(message)s"
 
-    if log_opts['logformat'] == 'json':
+    if log_opts["logformat"] == "json":
         handler.setFormatter(JSONFormatter())
-    elif log_opts['logformat'] == 'ecs':
+    elif log_opts["logformat"] == "ecs":
         handler.setFormatter(ecs_logging.StdlibFormatter())
     else:
         handler.setFormatter(logging.Formatter(format_string))
@@ -393,8 +403,8 @@ def set_logging(options: t.Dict, logger_name: str = 'es_client') -> None:
     _ = logging.getLogger(logger_name)
     # Set up NullHandler() to handle nested elasticsearch8.trace Logger
     # instance in elasticsearch python client
-    logging.getLogger('elasticsearch8.trace').addHandler(logging.NullHandler())
-    if log_opts['blacklist']:
-        for entry in ensure_list(log_opts['blacklist']):
+    logging.getLogger("elasticsearch8.trace").addHandler(logging.NullHandler())
+    if log_opts["blacklist"]:
+        for entry in ensure_list(log_opts["blacklist"]):
             for handler in logging.root.handlers:
                 handler.addFilter(Blacklist(entry))

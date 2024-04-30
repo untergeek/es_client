@@ -1,3 +1,10 @@
+# Project Specific Files
+
+docker_test/scripts/Dockerfile
+docker_test/scripts/.kurl
+docker_test/.kurl
+tests/integration/http_ca.crt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -9,8 +16,6 @@ __pycache__/
 # Flake8
 .flake8
 
-# Dockerfile built from template
-docker_test/scripts/Dockerfile
 
 # Distribution / packaging
 .Python
