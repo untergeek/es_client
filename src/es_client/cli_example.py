@@ -1,12 +1,14 @@
 """Sample CLI script that will get a client using both config file and CLI args/options"""
+
 # pylint: disable=unused-import, no-value-for-parameter, invalid-name, redefined-builtin
 import click
 from elasticsearch8.exceptions import BadRequestError, NotFoundError
 from es_client.helpers import config as cfg
 from es_client.defaults import OPTION_DEFAULTS, SHOW_EVERYTHING
 from es_client.helpers.logging import configure_logging
+
 # Since this file will not be imported, we use this to squash the F401 error
-__all__ = ['BadRequestError', 'NotFoundError']
+__all__ = ["BadRequestError", "NotFoundError"]
 
 # The following default options are all automatically added by the decorator:
 #
@@ -53,13 +55,36 @@ __all__ = ['BadRequestError', 'NotFoundError']
 # pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
 @click.group(context_settings=cfg.context_settings())
 @cfg.options_from_dict(OPTION_DEFAULTS)
-@click.version_option(None, '-v', '--version', prog_name="cli_example")
+@click.version_option(None, "-v", "--version", prog_name="cli_example")
 @click.pass_context
 def run(
-        ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
-        opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
-        ssl_assert_hostname, ssl_assert_fingerprint, ssl_version, master_only, skip_version_test,
-        loglevel, logfile, logformat, blacklist):
+    ctx,
+    config,
+    hosts,
+    cloud_id,
+    api_token,
+    id,
+    api_key,
+    username,
+    password,
+    bearer_auth,
+    opaque_id,
+    request_timeout,
+    http_compress,
+    verify_certs,
+    ca_certs,
+    client_cert,
+    client_key,
+    ssl_assert_hostname,
+    ssl_assert_fingerprint,
+    ssl_version,
+    master_only,
+    skip_version_test,
+    loglevel,
+    logfile,
+    logformat,
+    blacklist,
+):
     """
     CLI Example
 
@@ -70,7 +95,7 @@ def run(
     """
     # If there's a default file location for client configuration, e.g. $HOME/.curator/curator.yml,
     # then specify it here. ctx.obj is now instantiated in ``helpers.config.cfg.context_settings()``
-    ctx.obj['default_config'] = None
+    ctx.obj["default_config"] = None
 
     # The ``cfg.get_config`` function will grab the configuration derived from a YAML config file
     # specified in command-line parameters, or if that is unspecified but
@@ -89,6 +114,7 @@ def run(
     # by command-line specified ones and stores the ready-to-be-used by Builder configuration in
     # ctx.obj['configdict']
     cfg.generate_configdict(ctx)
+
 
 # SHOW ALL OPTIONS
 #
@@ -141,15 +167,40 @@ def run(
 
 
 # pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
-@run.command(context_settings=cfg.context_settings(), short_help='Show all configuration options')
+@run.command(
+    context_settings=cfg.context_settings(), short_help="Show all configuration options"
+)
 @cfg.options_from_dict(SHOW_EVERYTHING)
-@click.version_option(None, '-v', '--version', prog_name="cli_example")
+@click.version_option(None, "-v", "--version", prog_name="cli_example")
 @click.pass_context
 def show_all_options(
-        ctx, config, hosts, cloud_id, api_token, id, api_key, username, password, bearer_auth,
-        opaque_id, request_timeout, http_compress, verify_certs, ca_certs, client_cert, client_key,
-        ssl_assert_hostname, ssl_assert_fingerprint, ssl_version, master_only, skip_version_test,
-        loglevel, logfile, logformat, blacklist):
+    ctx,
+    config,
+    hosts,
+    cloud_id,
+    api_token,
+    id,
+    api_key,
+    username,
+    password,
+    bearer_auth,
+    opaque_id,
+    request_timeout,
+    http_compress,
+    verify_certs,
+    ca_certs,
+    client_cert,
+    client_key,
+    ssl_assert_hostname,
+    ssl_assert_fingerprint,
+    ssl_version,
+    master_only,
+    skip_version_test,
+    loglevel,
+    logfile,
+    logformat,
+    blacklist,
+):
     """
     ALL OPTIONS SHOWN
 
@@ -158,6 +209,7 @@ def show_all_options(
     ctx = click.get_current_context()
     click.echo(ctx.get_help())
     ctx.exit()
+
 
 #
 # Below is a way to run a command from the main command-line page. The Tutorial in the
@@ -173,12 +225,13 @@ def test_connection(ctx):
     """
     # Because of `@click.pass_context`, we can access `ctx.obj` here from the `run` function
     # that made it:
-    client = cfg.get_client(configdict=ctx.obj['configdict'])
+
+    client = cfg.get_client(configdict=ctx.obj["configdict"])
 
     # If we're here, we'll see the output from GET http(s)://hostname.tld:PORT
-    click.secho('\nConnection result: ', bold=True)
-    click.secho(f'{client.info()}\n')
+    click.secho("\nConnection result: ", bold=True)
+    click.secho(f"{client.info()}\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

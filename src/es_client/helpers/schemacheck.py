@@ -1,4 +1,5 @@
 """SchemaCheck class and associated functions"""
+
 # pylint: disable=protected-access, broad-except
 import typing as t
 import logging
@@ -19,6 +20,7 @@ def password_filter(data: t.Dict) -> t.Dict:
     Recursively look through all nested structures of `data` for keys from
     :py:const:`~.es_client.defaults.KEYS_TO_REDACT` and redact the value with ``REDACTED``
     """
+
     def iterdict(mydict):
         for key, value in mydict.items():
             if isinstance(value, dict):
@@ -26,6 +28,7 @@ def password_filter(data: t.Dict) -> t.Dict:
             elif key in KEYS_TO_REDACT:
                 mydict.update({key: "REDACTED"})
         return mydict
+
     return iterdict(deepcopy(data))
 
 
@@ -48,15 +51,11 @@ class SchemaCheck:
     :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.result` method returns
     :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`.
     """
-    def __init__(
-            self,
-            config: t.Dict,
-            schema: Schema,
-            test_what: str,
-            location: str):
+
+    def __init__(self, config: t.Dict, schema: Schema, test_what: str, location: str):
         self.logger = logging.getLogger(__name__)
         # Set the Schema for validation...
-        self.logger.debug('Schema: %s', schema)
+        self.logger.debug("Schema: %s", schema)
         if isinstance(config, dict):
             self.logger.debug('"%s" config: %s', test_what, password_filter(config))
         else:
@@ -70,16 +69,17 @@ class SchemaCheck:
         #: Object attribute that gets the value of param `location`
         self.location = location
         #: Object attribute that is initialized with the value ``no bad value yet``
-        self.badvalue = 'no bad value yet'
+        self.badvalue = "no bad value yet"
         #: Object attribute that is initialized with the value ``No error yet``
-        self.error = 'No error yet'
+        self.error = "No error yet"
 
     def parse_error(self) -> t.Any:
         """
         Report the error, and try to report the bad key or value as well.
         """
+
         def get_badvalue(data_string, data):
-            elements = sub(r'[\'\]]', '', data_string).split('[')
+            elements = sub(r"[\'\]]", "", data_string).split("[")
             elements.pop(0)  # Get rid of data as the first element
             value = None
             for k in elements:
@@ -91,11 +91,12 @@ class SchemaCheck:
                     value = data[key]
                     # if this fails, it's caught below
             return value
+
         try:
             self.badvalue = get_badvalue(str(self.error).split()[-1], self.config)
         except Exception as exc:
-            self.logger.error('Unable to extract value: %s', exc)
-            self.badvalue = '(could not determine)'
+            self.logger.error("Unable to extract value: %s", exc)
+            self.badvalue = "(could not determine)"
 
     def result(self) -> Schema:
         """
@@ -116,11 +117,11 @@ class SchemaCheck:
                 # pylint: disable=E1101
                 self.error = exc.errors[0]
             except Exception as err:
-                self.logger.error('Could not parse exception: %s', err)
-                self.error = f'{exc}'
+                self.logger.error("Could not parse exception: %s", err)
+                self.error = f"{exc}"
             self.parse_error()
-            self.logger.error('Schema error: %s', self.error)
+            self.logger.error("Schema error: %s", self.error)
             raise FailedValidation(
-                f'Configuration: {self.test_what}: Location: {self.location}: '
+                f"Configuration: {self.test_what}: Location: {self.location}: "
                 f'Bad Value: "{self.badvalue}", {self.error}. Check configuration file.'
             ) from exc

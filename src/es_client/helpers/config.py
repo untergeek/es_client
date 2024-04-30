@@ -1,4 +1,5 @@
 """Command-line configuration parsing and client builder helper functions"""
+
 import typing as t
 import logging
 from shutil import get_terminal_size
@@ -12,9 +13,11 @@ from ..helpers.utils import check_config, get_yaml, prune_nones, verify_url_sche
 
 
 def cli_opts(
-        value: str, settings: t.Union[t.Dict, None] = None,
-        onoff: t.Union[t.Dict, None] = None, override: t.Union[t.Dict, None] = None
-        ) -> t.Tuple[t.Tuple[str,], t.Dict]:
+    value: str,
+    settings: t.Union[t.Dict, None] = None,
+    onoff: t.Union[t.Dict, None] = None,
+    override: t.Union[t.Dict, None] = None,
+) -> t.Tuple[t.Tuple[str,], t.Dict]:
     """
     :param value: The command-line :py:class:`option <click.Option>` name. The key must be present
         in `settings`, or in :py:const:`CLICK_SETTINGS <es_client.defaults.CLICK_SETTINGS>`
@@ -123,8 +126,8 @@ def cli_opts(
     if not isinstance(settings, dict):
         raise ConfigurationError(f'"settings" is not a dictionary: {type(settings)}')
     if value not in settings:
-        raise ConfigurationError(f'{value} not in settings')
-    argval = f'--{value}'
+        raise ConfigurationError(f"{value} not in settings")
+    argval = f"--{value}"
     if isinstance(onoff, dict):
         try:
             argval = f'--{onoff["on"]}{value}/--{onoff["off"]}{value}'
@@ -157,10 +160,12 @@ def cloud_id_override(args: t.Dict, ctx: Context) -> t.Dict:
     make another entry in :py:attr:`ctx.obj <click.Context.obj>` for this.
     """
     logger = logging.getLogger(__name__)
-    if 'cloud_id' in ctx.params and ctx.params['cloud_id']:
-        logger.debug('cloud_id from command-line superseding configuration file settings')
-        ctx.obj['client_args'].hosts = None
-        args.pop('hosts', None)
+    if "cloud_id" in ctx.params and ctx.params["cloud_id"]:
+        logger.debug(
+            "cloud_id from command-line superseding configuration file settings"
+        )
+        ctx.obj["client_args"].hosts = None
+        args.pop("hosts", None)
     return args
 
 
@@ -192,9 +197,9 @@ def context_settings() -> t.Dict:
 
     from :py:const:`ENV_VAR_PREFIX <es_client.defaults.ENV_VAR_PREFIX>`
     """
-    objdef = {'obj': {'default_config': None}}
-    prefix = {'auto_envvar_prefix': ENV_VAR_PREFIX}
-    help_options = {'help_option_names': ['-h', '--help']}
+    objdef = {"obj": {"default_config": None}}
+    prefix = {"auto_envvar_prefix": ENV_VAR_PREFIX}
+    help_options = {"help_option_names": ["-h", "--help"]}
     return {**get_width(), **help_options, **objdef, **prefix}
 
 
@@ -230,10 +235,10 @@ def generate_configdict(ctx: Context) -> None:
     get_arg_objects(ctx)
     override_client_args(ctx)
     override_other_args(ctx)
-    ctx.obj['configdict'] = {
-        'elasticsearch': {
-            'client': prune_nones(ctx.obj['client_args'].toDict()),
-            'other_settings': prune_nones(ctx.obj['other_args'].toDict())
+    ctx.obj["configdict"] = {
+        "elasticsearch": {
+            "client": prune_nones(ctx.obj["client_args"].toDict()),
+            "other_settings": prune_nones(ctx.obj["other_args"].toDict()),
         }
     }
 
@@ -257,17 +262,18 @@ def get_arg_objects(ctx: Context) -> None:
     :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>` was populated when :func:`get_config()` was
     called.
     """
-    ctx.obj['client_args'] = DotMap()
-    ctx.obj['other_args'] = DotMap()
-    validated_config = check_config(ctx.obj['draftcfg'], quiet=True)
-    ctx.obj['client_args'].update(DotMap(validated_config['client']))
-    ctx.obj['other_args'].update(DotMap(validated_config['other_settings']))
+    ctx.obj["client_args"] = DotMap()
+    ctx.obj["other_args"] = DotMap()
+    validated_config = check_config(ctx.obj["draftcfg"], quiet=True)
+    ctx.obj["client_args"].update(DotMap(validated_config["client"]))
+    ctx.obj["other_args"].update(DotMap(validated_config["other_settings"]))
 
 
 def get_client(
-        configdict: t.Union[t.Dict, None] = None,
-        configfile: t.Union[str, None] = None,
-        autoconnect: bool = False) -> Elasticsearch:
+    configdict: t.Union[t.Dict, None] = None,
+    configfile: t.Union[str, None] = None,
+    autoconnect: bool = False,
+) -> Elasticsearch:
     """
     :param configdict: A configuration dictionary
     :param configfile: A YAML configuration file
@@ -288,16 +294,17 @@ def get_client(
     connect.
     """
     logger = logging.getLogger(__name__)
-    logger.debug('Creating client object and testing connection')
+    logger.debug("Creating client object and testing connection")
 
     builder = Builder(
-        configdict=configdict, configfile=configfile, autoconnect=autoconnect)
+        configdict=configdict, configfile=configfile, autoconnect=autoconnect
+    )
 
     try:
         builder.connect()
     except Exception as exc:
-        logger.critical('Unable to establish client connection to Elasticsearch!')
-        logger.critical('Exception encountered: %s', exc)
+        logger.critical("Unable to establish client connection to Elasticsearch!")
+        logger.critical("Exception encountered: %s", exc)
         raise ESClientException from exc
 
     return builder.client
@@ -326,14 +333,17 @@ def get_config(ctx: Context, quiet: bool = True) -> Context:
 
     Store the result in :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>`
     """
-    ctx.obj['draftcfg'] = {'config': {}}  # Set a default empty value
-    if ctx.params['config']:
-        ctx.obj['draftcfg'] = get_yaml(ctx.params['config'])
+    ctx.obj["draftcfg"] = {"config": {}}  # Set a default empty value
+    if ctx.params["config"]:
+        ctx.obj["draftcfg"] = get_yaml(ctx.params["config"])
     # If no config was provided, but default config path exists, use it instead
-    elif 'default_config' in ctx.obj and ctx.obj['default_config']:
+    elif "default_config" in ctx.obj and ctx.obj["default_config"]:
         if not quiet:
-            secho(f"Using default configuration file at {ctx.obj['default_config']}", bold=True)
-        ctx.obj['draftcfg'] = get_yaml(ctx.obj['default_config'])
+            secho(
+                f"Using default configuration file at {ctx.obj['default_config']}",
+                bold=True,
+            )
+        ctx.obj["draftcfg"] = get_yaml(ctx.obj["default_config"])
     return ctx
 
 
@@ -355,12 +365,12 @@ def get_hosts(ctx: Context) -> t.Union[t.Sequence[str], None]:
     """
     logger = logging.getLogger(__name__)
     hostslist = []
-    if 'hosts' in ctx.params and ctx.params['hosts']:
-        for host in list(ctx.params['hosts']):
+    if "hosts" in ctx.params and ctx.params["hosts"]:
+        for host in list(ctx.params["hosts"]):
             try:
                 hostslist.append(verify_url_schema(host))
             except ConfigurationError as err:
-                logger.error('Incorrect URL Schema: %s', err)
+                logger.error("Incorrect URL Schema: %s", err)
                 raise ConfigurationError from err
     else:
         return None
@@ -404,35 +414,37 @@ def hosts_override(args: t.Dict, ctx: Context) -> t.Dict:
     make another entry in :py:attr:`ctx.obj <click.Context.obj>` for this.
     """
     logger = logging.getLogger(__name__)
-    if 'hosts' in ctx.params and ctx.params['hosts']:
-        logger.debug('hosts from command-line superseding configuration file settings')
-        ctx.obj['client_args'].hosts = None
-        ctx.obj['client_args'].cloud_id = None
-        args.pop('cloud_id', None)
+    if "hosts" in ctx.params and ctx.params["hosts"]:
+        logger.debug("hosts from command-line superseding configuration file settings")
+        ctx.obj["client_args"].hosts = None
+        ctx.obj["client_args"].cloud_id = None
+        args.pop("cloud_id", None)
     return args
 
 
 def options_from_dict(options_dict) -> t.Callable:
     """Build Click options decorators programmatically"""
+
     def decorator(func):
         for option in reversed(options_dict):
             # Shorten our "if" statements by making dct shorthand for options_dict[option]
             dct = options_dict[option]
-            onoff = dct['onoff'] if 'onoff' in dct else None
-            override = dct['override'] if 'override' in dct else None
-            settings = dct['settings'] if 'settings' in dct else None
+            onoff = dct["onoff"] if "onoff" in dct else None
+            override = dct["override"] if "override" in dct else None
+            settings = dct["settings"] if "settings" in dct else None
             if settings is None:
                 settings = CLICK_SETTINGS[option]
-            argval = f'--{option}'
+            argval = f"--{option}"
             if isinstance(onoff, dict):
                 try:
                     argval = f'--{onoff["on"]}{option}/--{onoff["off"]}{option}'
                 except KeyError as exc:
                     raise ConfigurationError from exc
-            param_decls = (argval, option.replace('-', '_'))
+            param_decls = (argval, option.replace("-", "_"))
             attrs = override_settings(settings, override) if override else settings
             clickopt(*param_decls, **attrs)(func)
         return func
+
     return decorator
 
 
@@ -458,7 +470,7 @@ def override_client_args(ctx: Context) -> None:
     # Populate args from ctx.params
     for key, value in ctx.params.items():
         if key in config_settings():
-            if key == 'hosts':
+            if key == "hosts":
                 args[key] = get_hosts(ctx)
             elif value is not None:
                 args[key] = value
@@ -468,12 +480,14 @@ def override_client_args(ctx: Context) -> None:
     # Update the object if we have settings to override after pruning None values
     if args:
         for arg in args:
-            logger.debug('Using value for %s provided as a command-line option', arg)
-        ctx.obj['client_args'].update(DotMap(args))
+            logger.debug("Using value for %s provided as a command-line option", arg)
+        ctx.obj["client_args"].update(DotMap(args))
     # Use a default hosts value of localhost:9200 if there is no host and no cloud_id set
-    if ctx.obj['client_args'].hosts is None and ctx.obj['client_args'].cloud_id is None:
-        logger.debug('No hosts or cloud_id set! Setting default host to http://127.0.0.1:9200')
-        ctx.obj['client_args'].hosts = ["http://127.0.0.1:9200"]
+    if ctx.obj["client_args"].hosts is None and ctx.obj["client_args"].cloud_id is None:
+        logger.debug(
+            "No hosts or cloud_id set! Setting default host to http://127.0.0.1:9200"
+        )
+        ctx.obj["client_args"].hosts = ["http://127.0.0.1:9200"]
 
 
 def override_other_args(ctx: Context) -> None:
@@ -490,28 +504,35 @@ def override_other_args(ctx: Context) -> None:
     Update :py:attr:`ctx.obj['other_args'] <click.Context.obj>` with the results.
     """
     logger = logging.getLogger(__name__)
-    apikey = prune_nones({
-        'id': ctx.params['id'],
-        'api_key': ctx.params['api_key'],
-        'token': ctx.params['api_token'],
-    })
-    args = prune_nones({
-        'master_only': ctx.params['master_only'],
-        'skip_version_test': ctx.params['skip_version_test'],
-        'username': ctx.params['username'],
-        'password': ctx.params['password'],
-    })
-    args['api_key'] = apikey
+    apikey = prune_nones(
+        {
+            "id": ctx.params["id"],
+            "api_key": ctx.params["api_key"],
+            "token": ctx.params["api_token"],
+        }
+    )
+    args = prune_nones(
+        {
+            "master_only": ctx.params["master_only"],
+            "skip_version_test": ctx.params["skip_version_test"],
+            "username": ctx.params["username"],
+            "password": ctx.params["password"],
+        }
+    )
+    args["api_key"] = apikey
 
     # Remove `api_key` root key if `id` and `api_key` and `token` are all None
-    if (ctx.params['id'] is None and ctx.params['api_key'] is None and
-            ctx.params['api_token'] is None):
-        del args['api_key']
+    if (
+        ctx.params["id"] is None
+        and ctx.params["api_key"] is None
+        and ctx.params["api_token"] is None
+    ):
+        del args["api_key"]
 
     if args:
         for arg in args:
-            logger.debug('Using value for %s provided as a command-line option', arg)
-        ctx.obj['other_args'].update_settings(args)
+            logger.debug("Using value for %s provided as a command-line option", arg)
+        ctx.obj["other_args"].update(DotMap(args))
 
 
 def override_settings(settings: t.Dict, override: t.Dict) -> t.Dict:
@@ -561,7 +582,7 @@ def override_settings(settings: t.Dict, override: t.Dict) -> t.Dict:
     The default setting KEY of ``OPTION2`` would be overriden by NEWVALUE.
     """
     if not isinstance(override, dict):
-        raise ConfigurationError(f'override must be of type dict: {type(override)}')
+        raise ConfigurationError(f"override must be of type dict: {type(override)}")
     for key in list(override.keys()):
         # This formerly checked for the presence of key in settings, but override should add
         # non-existing keys if desired.
