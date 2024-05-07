@@ -1,17 +1,9 @@
 """Test the Builder class"""
 
-# pylint: disable=protected-access
-from os import environ
 from unittest import TestCase
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
-
-HOST = environ.get("TEST_ES_SERVER", "https://127.0.0.1:9200")
-USER = environ.get("TEST_USER", "elastic")
-PASS = environ.get("TEST_PASS")
-PATH = environ.get("TEST_PATH")
-CACRT = f"{PATH}/http_ca.crt"
-
+from . import CACRT, HOST, PASS, USER
 
 config = {
     "elasticsearch": {
@@ -19,6 +11,8 @@ config = {
         "client": {"hosts": HOST, "ca_certs": CACRT},
     }
 }
+
+# pylint: disable=protected-access
 
 
 class TestCheckMaster(TestCase):

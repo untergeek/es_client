@@ -22,8 +22,8 @@ KEYS_TO_REDACT: t.Sequence[str] = [
     "opaque_id",
 ]
 """
-When doing configuration Schema validation, redact the value from any listed dictionary key. This
-only happens if logging is at DEBUG level.
+When doing configuration Schema validation, redact the value from any listed dictionary
+key. This only happens if logging is at DEBUG level.
 """
 
 CLIENT_SETTINGS: t.Sequence[str] = [
@@ -69,7 +69,10 @@ CLIENT_SETTINGS: t.Sequence[str] = [
     "host_info_callback",
     "_transport",
 ]
-"""Valid argument/option names for :py:class:`~.elasticsearch8.Elasticsearch`. Too large to show"""
+"""
+Valid argument/option names for :py:class:`~.elasticsearch8.Elasticsearch`. Too large
+to show
+"""
 
 OTHER_SETTINGS: t.Sequence[str] = [
     "master_only",
@@ -108,9 +111,9 @@ CLICK_SETTINGS: t.Dict[str, t.Dict] = {
     },
     "ssl_assert_fingerprint": {
         "help": (
-            "SHA-256 fingerprint of the node's certificate. If this value is given then "
-            "root-of-trust verification isn't done and only the node's certificate fingerprint "
-            "is verified."
+            "SHA-256 fingerprint of the node's certificate. If this value is given "
+            "then root-of-trust verification isn't done and only the node's "
+            "certificate fingerprint is verified."
         ),
         "type": str,
         "hidden": True,
@@ -178,13 +181,16 @@ LOGGING_SETTINGS: t.Dict[str, t.Dict] = {
         "hidden": True,
     },
 }
-"""Default logging settings used for building :py:class:`click.Option`. Too large to show."""
+"""
+Default logging settings used for building :py:class:`click.Option`. Too large to show.
+"""
 
 SHOW_OPTION: t.Dict[str, bool] = {"hidden": False}
 """Override value to "unhide" a :py:class:`click.Option`"""
 
 SHOW_ENVVAR: t.Dict[str, bool] = {"show_envvar": True}
-"""Override value to make Click's help output show the associated environment variable"""
+"""Override value to make Click's help output show the associated environment variable
+"""
 
 OVERRIDE: t.Dict = {**SHOW_OPTION, **SHOW_ENVVAR}
 """Override value to combine these into a single constant"""
@@ -240,8 +246,8 @@ SHOW_EVERYTHING: t.Dict[str, t.Dict] = all_on()
 # Logging schema
 def config_logging() -> Schema:
     """
-    :returns: A validation schema of all acceptable logging configuration parameter names and values
-        with defaults for unset parameters.
+    :returns: A validation schema of all acceptable logging configuration parameter
+        names and values with defaults for unset parameters.
     :rtype: :py:class:`~.voluptuous.schema_builder.Schema`
 
     Logging schema with defaults:
@@ -281,12 +287,12 @@ def config_logging() -> Schema:
 # All elasticsearch client options, with a few additional arguments.
 def config_schema() -> Schema:
     """
-    :returns: A validation schema of all acceptable client configuration parameter names and values
-        with defaults for unset parameters.
+    :returns: A validation schema of all acceptable client configuration parameter
+        names and values with defaults for unset parameters.
     :rtype: :py:class:`~.voluptuous.schema_builder.Schema`
 
-    The validation schema for an :py:class:`~.elasticsearch8.Elasticsearch` client object with
-    defaults
+    The validation schema for an :py:class:`~.elasticsearch8.Elasticsearch` client
+    object with defaults
     """
     # pylint: disable=no-value-for-parameter
     return Schema(
@@ -337,10 +343,12 @@ def config_schema() -> Schema:
                     None, *string_types
                 ),  # Minimum acceptable TLS/SSL version
                 #: Pre-configured :class:`ssl.SSLContext` OBJECT. If this value
-                #: is given then no other TLS options (besides ``ssl_assert_fingerprint``)
-                #: can be set on the :class:`elastic_transport.NodeConfig`.
+                #: is given then no other TLS options (besides
+                #: ``ssl_assert_fingerprint``) can be set on the
+                #: :class:`elastic_transport.NodeConfig`.
                 Optional("ssl_context"): Any(None, *string_types),
-                # Keeping this here in case someone APIs it, but otherwise it's not likely to be used.
+                # Keeping this here in case someone APIs it, but otherwise it's not
+                # likely to be used.
                 Optional("ssl_show_warn"): Boolean(),
                 Optional("transport_class"): Any(None, *string_types),
                 Optional("request_timeout"): Any(
@@ -365,8 +373,8 @@ def config_schema() -> Schema:
                 # "MapboxVectorTileSerializer"
                 Optional("serializer"): Any(None, *string_types),  # ???
                 # :arg serializers: optional dict of serializer instances that will be
-                # used for deserializing data coming from the server. (key is the mimetype)
-                # e.g.: {'mimetype':'serializer'}
+                # used for deserializing data coming from the server. (key is the
+                # mimetype), e.g.: {'mimetype':'serializer'}
                 # "Serializer"
                 # "JsonSerializer"
                 # "TextSerializer"
@@ -400,17 +408,21 @@ def config_schema() -> Schema:
                 Optional("sniffed_node_callback"): Any(None, *string_types),
                 Optional("meta_header"): Boolean(),
                 # Cannot specify both 'request_timeout' and 'timeout'
-                # Optional('timeout', default=10.0): All(Coerce(float), Range(min=1, max=120)),
+                # Optional('timeout', default=10.0): All(Coerce(float),
+                #     Range(min=1, max=120)),
                 # Cannot specify both 'randomize_hosts' and 'randomize_nodes_in_pool'
                 # Optional('randomize_hosts', default=True): Boolean(),
                 Optional("host_info_callback"): Any(
                     None, *string_types
                 ),  # ??? needs the name of a callback function
                 # Cannot specify both 'sniffer_timeout' and 'min_delay_between_sniffing'
-                # Optional('sniffer_timeout', default=0.5): All(Coerce(float), Range(min=0.1, max=10.0)),
-                # Cannot specify both 'sniff_on_connection_fail' and 'sniff_on_node_failure'
+                # Optional('sniffer_timeout', default=0.5): All(Coerce(float),
+                #     Range(min=0.1, max=10.0)),
+                # Cannot specify both 'sniff_on_connection_fail' and
+                #     'sniff_on_node_failure'
                 # Optional('sniff_on_connection_fail', default=False): Boolean(),
-                # Optional('http_auth'): Any(None, *string_types), # ??? Favor basic_auth instead.w
+                # Optional('http_auth'): Any(None, *string_types),
+                #     Favor basic_auth instead
                 Optional("_transport"): Any(None, *string_types),  # ???
             },
         }
@@ -434,11 +446,12 @@ def client_settings() -> t.Sequence[str]:
 
 def config_settings() -> t.Sequence[str]:
     """
-    Return only the client settings likely to be used in a config file or at the command-line.
+    Return only the client settings likely to be used in a config file or at the
+    command-line.
 
-    This means ignoring some that are valid in :py:class:`~.elasticsearch8.Elasticsearch` but are
-    handled different locally. Namely, ``api_key`` is handled by
-    :py:class:`~.es_client.builder.OtherArgs`.
+    This means ignoring some that are valid in
+    :py:class:`~.elasticsearch8.Elasticsearch` but are handled different locally.
+    Namely, ``api_key`` is handled by :py:class:`~.es_client.builder.OtherArgs`.
     """
     ignore = ["api_key"]
     settings = []

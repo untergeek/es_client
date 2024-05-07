@@ -3,6 +3,21 @@
 Changelog
 =========
 
+8.13.5 (7 May 2024)
+-------------------
+
+**Changes**
+
+  * Version bump for ``elasticsearch8==8.13.1``
+  * Code formatting changes (cleanup of lines over 88 chars, mostly).
+  * Added ``.coveragerc``
+  * Improved ``docker_test`` scripts and env var importing in tests.
+
+**Bugfix**
+
+  * Discovered an instance where passwords were being logged. This has been corrected.
+
+
 8.13.4 (30 April 2024)
 ----------------------
 
