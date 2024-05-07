@@ -1,15 +1,10 @@
 """Test cli_example"""
 
-from os import devnull, environ
+from os import devnull
 from unittest import TestCase
 from click import testing as clicktest
 from es_client.cli_example import run
-
-HOST = environ.get("TEST_ES_SERVER", "https://127.0.0.1:9200")
-USER = environ.get("TEST_USER", "elastic")
-PASS = environ.get("TEST_PASS")
-PATH = environ.get("TEST_PATH")
-CACRT = f"{PATH}/http_ca.crt"
+from . import CACRT, HOST, PASS, USER
 
 
 class TestCLIExample(TestCase):

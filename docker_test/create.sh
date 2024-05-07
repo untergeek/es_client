@@ -22,26 +22,35 @@ VERSION=${1}
 rm -rf ${REPOLOCAL}
 mkdir -p ${REPOLOCAL}
 
-###################
-### Build Image ###
-###################
-
-# Check if the image has been built. If not, build it.
-if [[ "$(docker images -q ${IMAGE}:${VERSION} 2> /dev/null)" == "" ]]; then
-  echo "Docker image ${IMAGE}:${VERSION} not found. Building from Dockerfile..."
-  cd ${SCRIPTPATH}
-  # Create a Dockerfile from the template
-  cat Dockerfile.tmpl | sed -e "s/ES_VERSION/${VERSION}/" > Dockerfile
-  docker build . -t ${IMAGE}:${VERSION}
-fi
-
 #####################
 ### Run Container ###
 #####################
 
 # Start the container
-echo -en "\rStarting ${NAME} container... "
-docker run -d -it --name ${NAME} ${PORTMAP} ${VOLMAP} ${ESOPTS} ${IMAGE}:${VERSION}
+echo "Starting container \"${NAME}\" from ${IMAGE}:${VERSION}"
+echo -en "Container ID: "
+docker run -d -it --name ${NAME} -m ${MEMORY} \
+  -p ${LOCAL_PORT}:${DOCKER_PORT} \
+  -v ${REPOLOCAL}:${REPODOCKER} \
+  -e "discovery.type=single-node" \
+  -e "cluster.name=local-cluster" \
+  -e "node.name=local-node" \
+  -e "xpack.monitoring.templates.enabled=false" \
+  -e "path.repo=${REPODOCKER}" \
+${IMAGE}:${VERSION}
+
+# Set the URL
+URL=https://${URL_HOST}:${LOCAL_PORT}
+
+# Add TESTPATH to ${ENVCFG}, creating it or overwriting it
+echo "export CA_CRT=${PROJECT_ROOT}/http_ca.crt" >> ${ENVCFG}
+echo "export TEST_PATH=${TESTPATH}" >> ${ENVCFG}
+echo "export TEST_ES_SERVER=${URL}" >> ${ENVCFG}
+echo "export TEST_ES_REPO=${REPONAME}" >> ${ENVCFG}
+
+# Write some ESCLIENT_ environment variables to the .env file  
+echo "export ESCLIENT_CA_CERTS=${CACRT}" >> ${ENVCFG}
+echo "export ESCLIENT_HOSTS=${URL}" >> ${ENVCFG}
 
 # Set up the curl config file, first line creates a new file, all others append
 echo "-o /dev/null" > ${CURLCFG}
@@ -59,17 +68,8 @@ if [ $? -eq 1 ]; then
   exit 1
 fi
 
-# Set the URL
-URL=https://${URL_HOST}:${LOCAL_PORT}
-
-# Write the TEST_ES_SERVER environment variable to the .env file
-echo "export TEST_ES_SERVER=${URL}" >> ${ENVCFG}
-
 # We expect a 200 HTTP rsponse
 EXPECTED=200
-
-# Set the NODE var
-NODE="${NAME} instance"
 
 # Start with an empty value
 ACTUAL=0
@@ -78,17 +78,19 @@ ACTUAL=0
 COUNTER=0
 
 # Loop until we get our 200 code
+echo
 while [ "${ACTUAL}" != "${EXPECTED}" ] && [ ${COUNTER} -lt ${LIMIT} ]; do
 
   # Get our actual response
   ACTUAL=$(curl -K ${CURLCFG} ${URL})
 
   # Report what we received
-  echo -en "\rHTTP status code for ${NODE} is: ${ACTUAL}"
+  echo -en "\rWaiting for Elasticsearch. HTTP Status Code: ${ACTUAL}"
 
   # If we got what we expected, we're great!
   if [ "${ACTUAL}" == "${EXPECTED}" ]; then
-    echo " --- ${NODE} is ready!"
+    echo
+    echo "Elasticsearch is ready!"
 
   else
     # Otherwise sleep and try again 
@@ -107,15 +109,63 @@ if [ "${ACTUAL}" != "${EXPECTED}" ]; then
 
 fi
 
+# Initialize trial license
+echo
+response=$(curl -s \
+  --cacert ${CACRT} -u "${ESUSR}:${ESPWD}" \
+  -XPOST "${URL}/_license/start_trial?acknowledge=true")
+
+expected='{"acknowledged":true,"trial_was_started":true,"type":"trial"}'
+if [ "$response" != "$expected" ]; then
+  echo "ERROR! Unable to start trial license!"
+else
+  echo -n "Trial license started and acknowledged. "
+fi
+
+# Set up snapshot repository. The following will create a JSON file suitable for use with
+# curl -d @filename
+
+rm -f ${REPOJSON}  
+
+echo    '{'                    >> $REPOJSON
+echo    '  "type": "fs",'      >> $REPOJSON
+echo    '  "settings": {'      >> $REPOJSON
+echo -n '    "location": "'    >> $REPOJSON
+echo -n "${REPODOCKER}"        >> $REPOJSON
+echo    '"'                    >> $REPOJSON
+echo    '  }'                  >> $REPOJSON
+echo    '}'                    >> $REPOJSON
+
+# Create snapshot repository
+response=$(curl -s \
+  --cacert ${CACRT} -u "${ESUSR}:${ESPWD}" \
+  -H 'Content-Type: application/json' \
+  -XPOST "${URL}/_snapshot/${REPONAME}?verify=false" \
+  --json \@${REPOJSON})
+
+expected='{"acknowledged":true}'
+if [ "$response" != "$expected" ]; then
+  echo "ERROR! Unable to create snapshot repository"
+else
+  echo "Snapshot repository \"${REPONAME}\" created."
+  # Put ESCLIENT_ env var export here?
+fi
+
+
 ##################
 ### Wrap it up ###
 ##################
 
 echo
-echo "${NAME} container is up using image elasticsearch:${VERSION}"
-
-echo
-echo "Environment variables are in \$PROJECT_ROOT/.env"
-
-echo
+echo "Elasticsearch container \"${NAME}\" is up!"
 echo "Ready to test!"
+echo
+
+if [ "$EXECPATH" == "$PROJECT_ROOT" ]; then
+  echo "Environment variables are in .env"
+elif [ "$EXECPATH" == "$SCRIPTPATH" ]; then
+  echo "\$PWD is $SCRIPTPATH." 
+  echo "Environment variables are in ../.env"
+else
+  echo "Environment variables are in ${PROJECT_ROOT}/.env"
+fi

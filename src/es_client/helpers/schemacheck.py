@@ -6,19 +6,21 @@ import logging
 from re import sub
 from copy import deepcopy
 from voluptuous import Schema
-from ..defaults import KEYS_TO_REDACT
-from ..exceptions import FailedValidation
+from es_client.defaults import KEYS_TO_REDACT
+from es_client.exceptions import FailedValidation
 
 
 def password_filter(data: t.Dict) -> t.Dict:
     """
     :param data: Configuration data
 
-    :returns: A :py:class:`~.copy.deepcopy` of `data` with the value obscured by ``REDACTED``
-        if the key is one of :py:const:`~.es_client.defaults.KEYS_TO_REDACT`.
+    :returns: A :py:class:`~.copy.deepcopy` of `data` with the value obscured by
+        ``REDACTED`` if the key is one of
+        :py:const:`~.es_client.defaults.KEYS_TO_REDACT`.
 
     Recursively look through all nested structures of `data` for keys from
-    :py:const:`~.es_client.defaults.KEYS_TO_REDACT` and redact the value with ``REDACTED``
+    :py:const:`~.es_client.defaults.KEYS_TO_REDACT` and redact the value with
+    ``REDACTED``
     """
 
     def iterdict(mydict):
@@ -46,8 +48,8 @@ class SchemaCheck:
 
     Validate `config` with the provided :py:class:`~.voluptuous.schema_builder.Schema`.
     :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.test_what` and
-    :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.location` are used for reporting in case
-    of failure.  If validation is successful, the
+    :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.location` are used for
+    reporting in case of failure.  If validation is successful, the
     :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.result` method returns
     :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`.
     """

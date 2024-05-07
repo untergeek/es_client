@@ -11,16 +11,18 @@ from pathlib import Path
 from voluptuous import Schema
 from click import Context, echo as clicho
 import ecs_logging
-from ..helpers.schemacheck import SchemaCheck
-from ..helpers.utils import ensure_list, prune_nones
-from ..exceptions import LoggingException
-from ..defaults import config_logging, LOGDEFAULTS
+from es_client.exceptions import LoggingException
+from es_client.defaults import config_logging, LOGDEFAULTS
+from es_client.helpers.schemacheck import SchemaCheck
+from es_client.helpers.utils import ensure_list, prune_nones
+
+# pylint: disable=R0903
 
 
 class Whitelist(logging.Filter):
     """
-    Child class inheriting :py:class:`logging.Filter`, patched to permit only specifically named
-    :py:func:`loggers <logging.getLogger()>` to write logs.
+    Child class inheriting :py:class:`logging.Filter`, patched to permit only
+    specifically named :py:func:`loggers <logging.getLogger()>` to write logs.
     """
 
     # pylint: disable=super-init-not-called
@@ -41,8 +43,8 @@ class Whitelist(logging.Filter):
 
 class Blacklist(Whitelist):
     """
-    Child class inheriting :py:class:`Whitelist`, patched to permit all but specifically named
-    :py:func:`loggers <logging.getLogger()>` to write logs.
+    Child class inheriting :py:class:`Whitelist`, patched to permit all but
+    specifically named :py:func:`loggers <logging.getLogger()>` to write logs.
 
     A monkey-patched inversion of Whitelist, i.e.
 
@@ -80,17 +82,18 @@ class JSONFormatter(logging.Formatter):
         )
         result = {"@timestamp": timestamp}
         available = record.__dict__
-        # This is cleverness because 'message' is NOT a member key of ``record.__dict__``
-        # the ``getMessage()`` method is effectively ``msg % args`` (actual keys)
-        # By manually adding 'message' to ``available``, it simplifies the code
+        # This is cleverness because 'message' is NOT a member key of
+        # ``record.__dict__`` the ``getMessage()`` method is effectively ``msg % args``
+        # (actual keys) By manually adding 'message' to ``available``, it simplifies
+        # the code
         available["message"] = record.getMessage()
         for attribute in set(self.WANTED_ATTRS).intersection(available):
             result = deepmerge(
                 de_dot(self.WANTED_ATTRS[attribute], getattr(record, attribute)), result
             )
-        # The following is mostly for mimicking the ecs format. You can't have 2x 'message' keys in
-        # WANTED_ATTRS, so we set the value to 'log.original' for ecs, and this code block
-        # guarantees it still appears as 'message' too.
+        # The following is mostly for mimicking the ecs format. You can't have 2x
+        # 'message' keys in WANTED_ATTRS, so we set the value to 'log.original' for
+        # ecs, and this code block guarantees it still appears as 'message' too.
         if "message" not in result.items():
             result["message"] = available["message"]
         return json.dumps(result, sort_keys=True)
@@ -105,8 +108,8 @@ def check_logging_config(config: t.Dict) -> Schema:
     :returns: :py:class:`~.es_client.helpers.schemacheck.SchemaCheck` validated logging
         configuration.
 
-    Ensure that the top-level key ``logging`` is in `config`. Set empty default dictionary if key
-    ``logging`` is not in `config`.
+    Ensure that the top-level key ``logging`` is in `config`. Set empty default
+    dictionary if key ``logging`` is not in `config`.
 
     Pass the result to
     :py:class:`~.es_client.helpers.schemacheck.SchemaCheck` for full validation.
@@ -139,8 +142,8 @@ def configure_logging(ctx: Context) -> None:
 
     :rtype: None
 
-    Configure logging based on a combination of :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>`
-    and :py:attr:`ctx.params <click.Context.params>`.
+    Configure logging based on a combination of :py:attr:`ctx.obj['draftcfg']
+    <click.Context.obj>` and :py:attr:`ctx.params <click.Context.params>`.
 
     Values in :py:attr:`ctx.params <click.Context.params>` will override anything set in
     :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>`
@@ -161,7 +164,8 @@ def de_dot(dot_string: str, msg: str) -> t.Union[t.Dict[str, str], None]:
     :rtype: dict
     :returns: A nested dictionary of keys with the final value being the message
 
-    Turn `message` and `dot_string` into a nested dictionary. Used by :py:class:`JSONFormatter`
+    Turn `message` and `dot_string` into a nested dictionary. Used by
+    :py:class:`JSONFormatter`
     """
     arr = dot_string.split(".")
     arr.append(msg)
@@ -192,8 +196,8 @@ def deepmerge(source: t.Dict, destination: t.Dict) -> t.Dict:
     :returns: destination
     :rtype: dict
 
-    Recursively merge deeply nested dictionary structure `source` into `destination`. Used by
-    :py:class:`JSONFormatter`
+    Recursively merge deeply nested dictionary structure `source` into `destination`.
+    Used by :py:class:`JSONFormatter`
     """
     for key, value in source.items():
         if isinstance(value, dict):
@@ -210,29 +214,31 @@ def get_handler(logfile: t.Union[str, None]) -> logging.Handler:
 
     :type logfile: str
 
-    :rtype: Either :py:class:`~.logging.FileHandler` or :py:class:`~.logging.StreamHandler`
+    :rtype: Either :py:class:`~.logging.FileHandler` or
+        :py:class:`~.logging.StreamHandler`
     :returns: A logging handler
 
     This function checks first to see if a file path has been provided via `logfile`. If
     so, it will return :py:class:`logging.Filehandler(logfile) <logging.FileHandler>`
 
-    If this is not provided, it will then proceed to check if it is running in a Docker container,
-    and, if so, whether it has write permissions to ``/proc/1/fd/1``, which is the default TTY path.
-    If so, it will return :py:class:`logging.Filehandler('/proc/1/fd/1') <logging.FileHandler>`.
-    Writing to this path permits an app using :py:mod:`es_client` to read logs by way of:
+    If this is not provided, it will then proceed to check if it is running in a Docker
+    container, and, if so, whether it has write permissions to ``/proc/1/fd/1``, which
+    is the default TTY path. If so, it will return
+    :py:class:`logging.Filehandler('/proc/1/fd/1') <logging.FileHandler>`. Writing to
+    this path permits an app using :py:mod:`es_client` to read logs by way of:
 
       .. code-block:: shell
 
          docker logs CONTAINERNAME
 
     If neither of the prior are true, then it will return
-    :py:class:`logging.StreamHandler(stream=sys.stdout) <logging.StreamHandler>`, and will write to
-    STDOUT.
+    :py:class:`logging.StreamHandler(stream=sys.stdout) <logging.StreamHandler>`, and
+    will write to STDOUT.
     """
     # Priority handling of provided logfile first
     if logfile:
         return logging.FileHandler(logfile)
-    # If no logfile is specified, check to see if we're running in a Docker container next
+    # If no logfile is specified, check to see if we're running in a Docker container
     if is_docker():
         fpath = "/proc/1/fd/1"
         permission = False
@@ -271,28 +277,29 @@ def get_numeric_loglevel(level: str) -> int:
            - Description
          * - NOTSET
            - 0
-           - When set on a logger, indicates that ancestor loggers are to be consulted to
-             determine the effective level. If that still resolves to NOTSET, then all events
-             are logged. When set on a handler, all events are handled.
+           - When set on a logger, indicates that ancestor loggers are to be consulted
+             to determine the effective level. If that still resolves to NOTSET, then
+             all events are logged. When set on a handler, all events are handled.
          * - DEBUG
            - 10
-           - Detailed information, typically only of interest to a developer trying to diagnose
-             a problem.
+           - Detailed information, typically only of interest to a developer trying to
+             diagnose a problem.
          * - INFO
            - 20
            - Confirmation that things are working as expected.
          * - WARNING
            - 30
-           - An indication that something unexpected happened, or that a problem might occur in
-             the near future (e.g. 'disk space low'). The software is still working as expected.
+           - An indication that something unexpected happened, or that a problem might
+             occur in the near future (e.g. 'disk space low'). The software is still
+             working as expected.
          * - ERROR
            - 40
-           - Due to a more serious problem, the software has not been able to perform some
-             function.
+           - Due to a more serious problem, the software has not been able to perform
+             some function.
          * - CRITICAL
            - 50
-           - A serious error, indicating that the program itself may be unable to continue
-             running.
+           - A serious error, indicating that the program itself may be unable to
+             continue running.
 
     Raises a :py:exc:`ValueError` exception if an invalid value for `level` is provided.
     """
@@ -324,7 +331,8 @@ def override_logging(ctx: Context) -> t.Dict:
 
     :returns: Log configuration ready for validation
 
-    Get logging configuration from `ctx.obj['draftcfg']` and override with any command-line options
+    Get logging configuration from `ctx.obj['draftcfg']` and override with any
+    command-line options
     """
     # Check for log settings from config file
     init_logcfg = check_logging_config(ctx.obj["draftcfg"])
@@ -344,16 +352,17 @@ def override_logging(ctx: Context) -> t.Dict:
         if entry in ctx.params:
             if not ctx.params[entry]:
                 continue
-            # Output to stdout if debug is True and we're not overriding a None (default)
-            # and we're not overriding DEBUG with DEBUG ;)
+            # Output to stdout if debug is True and we're not overriding a None
+            # (the default) and we're not overriding DEBUG with DEBUG ;)
             if (
                 debug
                 and init_logcfg[entry] is not None
                 and init_logcfg["loglevel"] != "DEBUG"
             ):
                 clicho(
-                    f"DEBUG: Overriding configuration file setting {entry}={init_logcfg[entry]} "
-                    f"with command-line option {entry}={ctx.params[entry]}"
+                    f"DEBUG: Overriding configuration file setting {entry}="
+                    f"{init_logcfg[entry]} with command-line option {entry}="
+                    f"{ctx.params[entry]}"
                 )
             if entry == "blacklist":
                 init_logcfg[entry] = list(ctx.params[entry])
@@ -386,7 +395,10 @@ def set_logging(options: t.Dict, logger_name: str = "es_client") -> None:
     numeric_log_level = get_numeric_loglevel(log_opts["loglevel"])
 
     if numeric_log_level == 10:  # DEBUG
-        format_string = "%(asctime)s %(levelname)-9s %(name)22s %(funcName)22s:%(lineno)-4d %(message)s"
+        format_string = (
+            "%(asctime)s %(levelname)-9s %(name)22s "
+            "%(funcName)22s:%(lineno)-4d %(message)s"
+        )
     else:
         format_string = "%(asctime)s %(levelname)-9s %(message)s"
 

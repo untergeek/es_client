@@ -6,10 +6,15 @@ from shutil import get_terminal_size
 from dotmap import DotMap  # type: ignore
 from click import Context, secho, option as clickopt
 from elasticsearch8 import Elasticsearch
-from ..builder import Builder
-from ..defaults import CLICK_SETTINGS, ENV_VAR_PREFIX, config_settings
-from ..exceptions import ESClientException, ConfigurationError
-from ..helpers.utils import check_config, get_yaml, prune_nones, verify_url_schema
+from es_client.builder import Builder
+from es_client.defaults import CLICK_SETTINGS, ENV_VAR_PREFIX, config_settings
+from es_client.exceptions import ESClientException, ConfigurationError
+from es_client.helpers.utils import (
+    check_config,
+    get_yaml,
+    prune_nones,
+    verify_url_schema,
+)
 
 
 def cli_opts(
@@ -19,15 +24,19 @@ def cli_opts(
     override: t.Union[t.Dict, None] = None,
 ) -> t.Tuple[t.Tuple[str,], t.Dict]:
     """
-    :param value: The command-line :py:class:`option <click.Option>` name. The key must be present
-        in `settings`, or in :py:const:`CLICK_SETTINGS <es_client.defaults.CLICK_SETTINGS>`
-    :param settings: A dictionary consisting of :py:class:`click.Option` names as keys, with each
-        key having a dictionary consisting of :py:class:`click.Option` parameter names as keys, with
-        their associated settings as the value. If `settings` is not provided, it will be populated
-        by :py:const:`CLICK_SETTINGS <es_client.defaults.CLICK_SETTINGS>`.
-    :param onoff: A dictionary consisting of the keys `on` and `off`, with values used to set up a
-        `Click boolean option`_, .e.g. ``{'on': '', 'off': 'no-'}``. See below for examples.
-    :param override: A dictionary consisting of keys in `settings` with values you wish to override.
+    :param value: The command-line :py:class:`option <click.Option>` name. The key must
+        be present in `settings`, or in :py:const:`CLICK_SETTINGS
+        <es_client.defaults.CLICK_SETTINGS>`
+    :param settings: A dictionary consisting of :py:class:`click.Option` names as keys,
+        with each key having a dictionary consisting of :py:class:`click.Option`
+        parameter names as keys, with their associated settings as the value. If
+        `settings` is not provided, it will be populated by :py:const:`CLICK_SETTINGS
+        <es_client.defaults.CLICK_SETTINGS>`.
+    :param onoff: A dictionary consisting of the keys `on` and `off`, with values used
+        to set up a `Click boolean option`_, .e.g. ``{'on': '', 'off': 'no-'}``. See
+        below for examples.
+    :param override: A dictionary consisting of keys in `settings` with values you wish
+        to override.
 
     :type value: str
     :type settings: dict
@@ -35,26 +44,26 @@ def cli_opts(
     :type override: dict
 
     :rtype: Tuple
-    :returns: A value suitable to use with the :py:func:`click.option` decorator, appearing as a
-        tuple containing a tuple and a dictionary, e.g.
+    :returns: A value suitable to use with the :py:func:`click.option` decorator,
+        appearing as a tuple containing a tuple and a dictionary, e.g.
 
         .. code-block:: python
 
-          (('--OPTION1',),{'key1', 'value1', ...})
+           (('--OPTION1',),{'key1', 'value1', ...})
 
     Click uses decorators to establish :py:class:`options <click.Option>` and
-    :py:class:`arguments <click.Argument>` for a :py:class:`command <click.Command>`. The parameters
-    specified for these decorator functions can be stored as default dictionaries, then expanded and
-    overridden, if desired.
+    :py:class:`arguments <click.Argument>` for a :py:class:`command <click.Command>`.
+    The parameters specified for these decorator functions can be stored as default
+    dictionaries, then expanded and overridden, if desired.
 
     In the `cli_example.py` file, the regular
     :py:func:`click.option decorator function <click.option>` is wrapped by
-    :py:func:`option_wrapper() <es_client.helpers.utils.option_wrapper>`, and is aliased as
-    ``click_opt_wrap``. This wrapped decorator in turn calls this function and utilizes ``*``
-    arg expansion. If `settings` is `None`, default values from
-    :py:const:`CLICK_SETTINGS <es_client.defaults.CLICK_SETTINGS>`, are used to populate `settings`.
-    This function calls :func:`override_settings()` to override keys in `settings` with values from
-    matching keys in `override`.
+    :py:func:`option_wrapper() <es_client.helpers.utils.option_wrapper>`, and is
+    aliased as ``click_opt_wrap``. This wrapped decorator in turn calls this function
+    and utilizes ``*`` arg expansion. If `settings` is `None`, default values from
+    :py:const:`CLICK_SETTINGS <es_client.defaults.CLICK_SETTINGS>`, are used to
+    populate `settings`. This function calls :func:`override_settings()` to override
+    keys in `settings` with values from matching keys in `override`.
 
     In the example file, this looks like this:
 
@@ -64,11 +73,11 @@ def cli_opts(
       from es_client.helpers.utils import option_wrapper
       defaults.ONOFF = {'on': '', 'off': 'no-'}
       click_opt_wrap = option_wrapper()
-
+      # ...
       @click.group(context_settings=context_settings())
       @click_opt_wrap(*cli_opts('OPTION1', settings={KEY: NEWVALUE}))
       @click_opt_wrap(*cli_opts('OPTION2', onoff=tgl))
-      ...
+      # ...
       @click_opt_wrap(*cli_opts('OPTIONX'))
       @click.pass_context
       def run(ctx, OPTION1, OPTION2, ..., OPTIONX):
@@ -76,27 +85,27 @@ def cli_opts(
 
     The default setting KEY of ``OPTION1`` would be overriden by NEWVALUE.
 
-    ``OPTION2`` automatically becomes a `Click boolean option`_, which splits the option into an
-    enabled/disabled dichotomy by option name. In this example, it will be rendered as:
+    ``OPTION2`` automatically becomes a `Click boolean option`_, which splits the
+    option into an enabled/disabled dichotomy by option name. In this example, it will
+    be rendered as:
 
-    .. code-block:: python
+    .. code-block:: shell
 
       '--OPTION2/--no-OPTION2'
 
-    The dictionary structure of `defaults.ONOFF` is what this what this function requires, i.e. an
-    `on` key and an `off` key. The values for `on` and `off` can be whatever you like, e.g.
+    The dictionary structure of `defaults.ONOFF` is what this what this function
+    requires, i.e. an `on` key and an `off` key. The values for `on` and `off` can be
+    whatever you like, e.g.
 
     .. code-block:: python
 
       defaults.ONOFF = {'on': 'enable-', 'off': 'disable-'}
 
-    which would render as:
+    which, based on the above example, would render as:
 
-    .. code-block:: python
+    .. code-block:: shell
 
       '--enable-OPTION2/--disable-OPTION2'
-
-    based on the above example.
 
     It could also be:
 
@@ -106,18 +115,17 @@ def cli_opts(
 
     which would render as:
 
-    .. code-block:: python
+    .. code-block:: shell
 
       '--monty-OPTION2/--python-OPTION2'
 
     but that would be too silly.
 
-    A :py:exc:`ConfigurationError <es_client.exceptions.ConfigurationError>` is raised `value` is
-    not found as a key in `settings`, or if the `onoff` parsing fails.
-    fails.
+    A :py:exc:`ConfigurationError <es_client.exceptions.ConfigurationError>` is raised
+    `value` is not found as a key in `settings`, or if the `onoff` parsing fails.
 
-    .. _Click boolean option: https://click.palletsprojects.com/en/8.1.x/options/#boolean-flags
-
+    .. _Click boolean option:
+      https://click.palletsprojects.com/en/8.1.x/options/#boolean-flags
     """
     if override is None:
         override = {}
@@ -138,8 +146,8 @@ def cli_opts(
 
 def cloud_id_override(args: t.Dict, ctx: Context) -> t.Dict:
     """
-    :param args: A dictionary built from :py:attr:`ctx.params <click.Context.params>` keys and
-        values.
+    :param args: A dictionary built from :py:attr:`ctx.params <click.Context.params>`
+        keys and values.
     :param ctx: The Click command context
 
     :type args: dict
@@ -148,16 +156,18 @@ def cloud_id_override(args: t.Dict, ctx: Context) -> t.Dict:
     :rtype: dict
     :returns: Updated version of `args`
 
-    If ``hosts`` are defined in the YAML configuration file, but ``cloud_id`` is specified at the
-    command-line, we need to remove the ``hosts`` parameter from the configuration dictionary built
-    from the YAML file before merging. Command-line provided arguments always supersede
-    configuration file ones. In this case, ``cloud_id`` and ``hosts`` are mutually exclusive, and
-    the command-line provided ``cloud_id`` must supersede a configuration file provided ``hosts``.
+    If ``hosts`` are defined in the YAML configuration file, but ``cloud_id`` is
+    specified at the command-line, we need to remove the ``hosts`` parameter from the
+    configuration dictionary built from the YAML file before merging. Command-line
+    provided arguments always supersede configuration file ones. In this case,
+    ``cloud_id`` and ``hosts`` are mutually exclusive, and the command-line provided
+    ``cloud_id`` must supersede a configuration file provided ``hosts``.
 
-    This function returns an updated dictionary `args` to be used for the final configuration as
-    well as updates the :py:attr:`ctx.obj['client_args'] <click.Context.obj>` object. It's simply
-    easier to merge dictionaries using a separate object. It would be a pain and unnecessary to
-    make another entry in :py:attr:`ctx.obj <click.Context.obj>` for this.
+    This function returns an updated dictionary `args` to be used for the final
+    configuration as well as updates the :py:attr:`ctx.obj['client_args']
+    <click.Context.obj>` object. It's simply easier to merge dictionaries using a
+    separate object. It would be a pain and unnecessary to make another entry in
+    :py:attr:`ctx.obj <click.Context.obj>` for this.
     """
     logger = logging.getLogger(__name__)
     if "cloud_id" in ctx.params and ctx.params["cloud_id"]:
@@ -211,12 +221,13 @@ def generate_configdict(ctx: Context) -> None:
 
     :rtype: None
 
-    Generate a client configuration dictionary from :py:attr:`ctx.params <click.Context.params>` and
-    :py:attr:`ctx.obj['default_config'] <click.Context.obj>` (if provided), suitable for use as the
-    ``VALUE`` in :py:class:`Builder(configdict=VALUE) <es_client.builder.Builder>`
+    Generate a client configuration dictionary from :py:attr:`ctx.params
+    <click.Context.params>` and :py:attr:`ctx.obj['default_config']
+    <click.Context.obj>` (if provided), suitable for use as the ``VALUE`` in
+    :py:class:`Builder(configdict=VALUE) <es_client.builder.Builder>`
 
-    It is stored as :py:attr:`ctx.obj['default_config'] <click.Context.obj>` and can be referenced
-    after this function returns.
+    It is stored as :py:attr:`ctx.obj['default_config'] <click.Context.obj>` and can be
+    referenced after this function returns.
 
     The flow of this function is as follows:
 
@@ -227,10 +238,11 @@ def generate_configdict(ctx: Context) -> None:
     :func:`get_config()`).
 
     Step 2: Call :func:`override_client_args()` and :func:`override_other_args()`, which
-    will use command-line args from :py:attr:`ctx.params <click.Context.params>` to override any
-    values from the YAML configuration file.
+    will use command-line args from :py:attr:`ctx.params <click.Context.params>` to
+    override any values from the YAML configuration file.
 
-    Step 3: Populate :py:attr:`ctx.obj['configdict'] <click.Context.obj>` from the resulting values.
+    Step 3: Populate :py:attr:`ctx.obj['configdict'] <click.Context.obj>` from the
+    resulting values.
     """
     get_arg_objects(ctx)
     override_client_args(ctx)
@@ -259,8 +271,8 @@ def get_arg_objects(ctx: Context) -> None:
     These will be updated with values returned from
     :func:`check_config(ctx.obj['draftcfg']) <es_client.helpers.utils.check_config>`.
 
-    :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>` was populated when :func:`get_config()` was
-    called.
+    :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>` was populated when
+    :func:`get_config()` was called.
     """
     ctx.obj["client_args"] = DotMap()
     ctx.obj["other_args"] = DotMap()
@@ -290,8 +302,8 @@ def get_client(
 
     If both are provided, `configdict` will be used, and `configfile` ignored.
 
-    Raises :py:exc:`ESClientException <es_client.exceptions.ESClientException>` if unable to
-    connect.
+    Raises :py:exc:`ESClientException <es_client.exceptions.ESClientException>` if
+    unable to connect.
     """
     logger = logging.getLogger(__name__)
     logger.debug("Creating client object and testing connection")
@@ -313,23 +325,24 @@ def get_client(
 def get_config(ctx: Context, quiet: bool = True) -> Context:
     """
     :param ctx: The Click command context
-    :param quiet: If the default configuration file is being used, suppress the ``STDOUT`` message
-        indicating that.
+    :param quiet: If the default configuration file is being used, suppress the
+        ``STDOUT`` message indicating that.
 
     :type ctx: :py:class:`Context <click.Context>`
     :type quiet: bool
 
     :rtype: None
 
-    If :py:attr:`ctx.params['config'] <click.Context.params>` is a valid path, return the validated
-    dictionary from the YAML.
+    If :py:attr:`ctx.params['config'] <click.Context.params>` is a valid path, return
+    the validated dictionary from the YAML.
 
-    If nothing has been provided to :py:attr:`ctx.params['config'] <click.Context.params>`, but
-    :py:attr:`ctx.obj['default_config'] <click.Context.obj>` is populated, use that, and write a
-    line to ``STDOUT`` explaining this, unless `quiet` is `True`.
+    If nothing has been provided to :py:attr:`ctx.params['config']
+    <click.Context.params>`, but :py:attr:`ctx.obj['default_config']
+    <click.Context.obj>` is populated, use that, and write a line to ``STDOUT``
+    explaining this, unless `quiet` is `True`.
 
-    Writing directly to ``STDOUT`` is done here because logging has not yet been configured, nor
-    can it be as the configuration options are just barely being read.
+    Writing directly to ``STDOUT`` is done here because logging has not yet been
+    configured, nor can it be as the configuration options are just barely being read.
 
     Store the result in :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>`
     """
@@ -356,12 +369,13 @@ def get_hosts(ctx: Context) -> t.Union[t.Sequence[str], None]:
     :returns: A list of hosts
     :rtype: list
 
-    Return a list of hosts suitable for :py:attr:`ClientArgs.hosts <es_client.builder.ClientArgs>`
-    from :py:attr:`ctx.params['hosts'] <click.Context.params>`, validating the url schema for
-    Elasticsearch compliance for each host provided.
+    Return a list of hosts suitable for :py:attr:`ClientArgs.hosts
+    <es_client.builder.ClientArgs>` from :py:attr:`ctx.params['hosts']
+    <click.Context.params>`, validating the url schema for Elasticsearch compliance for
+    each host provided.
 
-    Raises a :py:exc:`ConfigurationError <es_client.exceptions.ConfigurationError>` if schema
-    validation fails.
+    Raises a :py:exc:`ConfigurationError <es_client.exceptions.ConfigurationError>` if
+    schema validation fails.
     """
     logger = logging.getLogger(__name__)
     hostslist = []
@@ -392,8 +406,8 @@ def get_width() -> t.Dict:
 
 def hosts_override(args: t.Dict, ctx: Context) -> t.Dict:
     """
-    :param args: A dictionary built from :py:attr:`ctx.params <click.Context.params>` keys and
-        values.
+    :param args: A dictionary built from :py:attr:`ctx.params <click.Context.params>`
+        keys and values.
     :param ctx: The Click command context
 
     :type args: dict
@@ -403,15 +417,17 @@ def hosts_override(args: t.Dict, ctx: Context) -> t.Dict:
     :returns: Updated version of `args`
 
     If `hosts` are provided at the command-line and are present in
-    :py:attr:`ctx.params['hosts'] <click.Context.params>`, but `cloud_id` was in the config file,
-    we need to remove the `cloud_id` key from the configuration dictionary built from the YAML
-    file before merging. Command-line provided arguments always supersede configuration file ones,
-    including `hosts` overriding a file-based `cloud_id`.
+    :py:attr:`ctx.params['hosts'] <click.Context.params>`, but `cloud_id` was in the
+    config file, we need to remove the `cloud_id` key from the configuration dictionary
+    built from the YAML file before merging. Command-line provided arguments always
+    supersede configuration file ones, including `hosts` overriding a file-based
+    `cloud_id`.
 
-    This function returns an updated dictionary `args` to be used for the final configuration as
-    well as updates the :py:attr:`ctx.obj['client_args'] <click.Context.obj>` object. It's simply
-    easier to merge dictionaries using a separate object. It would be a pain and unnecessary to
-    make another entry in :py:attr:`ctx.obj <click.Context.obj>` for this.
+    This function returns an updated dictionary `args` to be used for the final
+    configuration as well as updates the :py:attr:`ctx.obj['client_args']
+    <click.Context.obj>` object. It's simply easier to merge dictionaries using a
+    separate object. It would be a pain and unnecessary to make another entry in
+    :py:attr:`ctx.obj <click.Context.obj>` for this.
     """
     logger = logging.getLogger(__name__)
     if "hosts" in ctx.params and ctx.params["hosts"]:
@@ -427,7 +443,8 @@ def options_from_dict(options_dict) -> t.Callable:
 
     def decorator(func):
         for option in reversed(options_dict):
-            # Shorten our "if" statements by making dct shorthand for options_dict[option]
+            # Shorten our "if" statements by making dct shorthand for
+            # options_dict[option]
             dct = options_dict[option]
             onoff = dct["onoff"] if "onoff" in dct else None
             override = dct["override"] if "override" in dct else None
@@ -456,13 +473,13 @@ def override_client_args(ctx: Context) -> None:
 
     :rtype: None
 
-    Override :py:attr:`ctx.obj['client_args'] <click.Context.obj>` settings with any values found in
-        :py:attr:`ctx.params <click.Context.params>`
+    Override :py:attr:`ctx.obj['client_args'] <click.Context.obj>` settings with any
+        values found in :py:attr:`ctx.params <click.Context.params>`
 
     Update :py:attr:`ctx.obj['client_args'] <click.Context.obj>` with the results.
 
-    In the event that there are neither ``hosts`` nor a ``cloud_id`` after the updates, log to
-    debug that this is the case, and that the default value for ``hosts`` of
+    In the event that there are neither ``hosts`` nor a ``cloud_id`` after the updates,
+    log to debug that this is the case, and that the default value for ``hosts`` of
     ``http://127.0.0.1:9200`` will be used.
     """
     logger = logging.getLogger(__name__)
@@ -482,7 +499,7 @@ def override_client_args(ctx: Context) -> None:
         for arg in args:
             logger.debug("Using value for %s provided as a command-line option", arg)
         ctx.obj["client_args"].update(DotMap(args))
-    # Use a default hosts value of localhost:9200 if there is no host and no cloud_id set
+    # Use a default hosts value of localhost:9200 if there is no host and no cloud_id
     if ctx.obj["client_args"].hosts is None and ctx.obj["client_args"].cloud_id is None:
         logger.debug(
             "No hosts or cloud_id set! Setting default host to http://127.0.0.1:9200"
@@ -498,8 +515,8 @@ def override_other_args(ctx: Context) -> None:
 
     :rtype: None
 
-    Override :py:attr:`ctx.obj['other_args'] <click.Context.obj>` settings with any values found in
-    :py:attr:`ctx.params <click.Context.params>`
+    Override :py:attr:`ctx.obj['other_args'] <click.Context.obj>` settings with any
+    values found in :py:attr:`ctx.params <click.Context.params>`
 
     Update :py:attr:`ctx.obj['other_args'] <click.Context.obj>` with the results.
     """
@@ -546,20 +563,20 @@ def override_settings(settings: t.Dict, override: t.Dict) -> t.Dict:
     :rtype: dict
     :returns: An dictionary based on `settings` updated with values from `override`
 
-    This function is called by :func:`cli_opts()` in order to override settings used in a
-    :py:class:`Click Option <click.Option>`.
+    This function is called by :func:`cli_opts()` in order to override settings used in
+    a :py:class:`Click Option <click.Option>`.
 
     Click uses decorators to establish :py:class:`options <click.Option>` and
-    :py:class:`arguments <click.Argument>` for a :py:class:`command <click.Command>`. The parameters
-    specified for these decorator functions can be stored as default dictionaries, then expanded and
-    overridden, if desired.
+    :py:class:`arguments <click.Argument>` for a :py:class:`command <click.Command>`.
+    The parameters specified for these decorator functions can be stored as default
+    dictionaries, then expanded and overridden, if desired.
 
-    In the `cli_example.py` file, the regular
-    :py:func:`click.option decorator function <click.option>` is wrapped by
-    :py:func:`option_wrapper() <es_client.helpers.utils.option_wrapper>`, and is aliased as
-    ``click_opt_wrap``. This wrapped decorator in turn calls :func:`cli_opts()` and utilizes ``*``
-    arg expansion. :func:`cli_opts()` references defaults, and calls this function to override
-    keys in `settings` with values from matching keys in `override`.
+    In the `cli_example.py` file, the regular :py:func:`click.option decorator function
+    <click.option>` is wrapped by :py:func:`option_wrapper()
+    <es_client.helpers.utils.option_wrapper>`, and is aliased as ``click_opt_wrap``.
+    This wrapped decorator in turn calls :func:`cli_opts()` and utilizes ``*`` arg
+    expansion. :func:`cli_opts()` references defaults, and calls this function to
+    override keys in `settings` with values from matching keys in `override`.
 
     In the example file, this looks like this:
 
@@ -584,7 +601,7 @@ def override_settings(settings: t.Dict, override: t.Dict) -> t.Dict:
     if not isinstance(override, dict):
         raise ConfigurationError(f"override must be of type dict: {type(override)}")
     for key in list(override.keys()):
-        # This formerly checked for the presence of key in settings, but override should add
-        # non-existing keys if desired.
+        # This formerly checked for the presence of key in settings, but override
+        # should add non-existing keys if desired.
         settings[key] = override[key]
     return settings
