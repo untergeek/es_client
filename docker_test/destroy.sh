@@ -13,9 +13,9 @@ echo "$(docker rm ${NAME}) deleted."
 # Delete .env file and curl config file
 echo "Deleting remaining files and directories"
 rm -rf ${REPOLOCAL}
-rm -f ${SCRIPTPATH}/Dockerfile
+rm -f ${SCRIPTPATH}/${REPOJSON}
 rm -f ${ENVCFG}
 rm -f ${CURLCFG}
-rm -f ${TESTPATH}/http_ca.crt
+rm -f ${PROJECT_ROOT}/http_ca.crt
 
 echo "Cleanup complete."

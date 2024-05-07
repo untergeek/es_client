@@ -10,34 +10,35 @@ from pathlib import Path
 import yaml  # type: ignore
 import click
 from elasticsearch8 import Elasticsearch
-from ..defaults import ES_DEFAULT, config_schema
-from ..exceptions import ConfigurationError
-from ..helpers.schemacheck import SchemaCheck
+from es_client.defaults import ES_DEFAULT, config_schema
+from es_client.exceptions import ConfigurationError
+from es_client.helpers.schemacheck import SchemaCheck
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def check_config(config: dict, quiet: bool = False) -> dict:
     """
     :param config: The configuration
 
-    :returns: A validated configuration dictionary for :py:class:`~.es_client.builder.Builder`
+    :returns: A validated configuration dictionary for
+        :py:class:`~.es_client.builder.Builder`
 
-    Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``other_settings`` and
-    ``client`` are contained in `config` before passing it (or empty defaults) to
+    Ensure that the top-level key ``elasticsearch`` and its sub-keys, ``other_settings``
+    and ``client`` are contained in `config` before passing it (or empty defaults) to
     :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
     """
     if not isinstance(config, dict):
-        LOGGER.warning(
+        logger.warning(
             "Elasticsearch client configuration must be provided as a dictionary."
         )
-        LOGGER.warning('You supplied: "%s" which is "%s".', config, type(config))
-        LOGGER.warning("Using default values.")
+        logger.warning('You supplied: "%s" which is "%s".', config, type(config))
+        logger.warning("Using default values.")
         es_settings = ES_DEFAULT
     elif "elasticsearch" not in config:
         # I only need this to be logged when Builder is initializing
         if not quiet:
-            LOGGER.warning(
+            logger.warning(
                 'No "elasticsearch" setting in supplied configuration.  Using defaults.'
             )
         es_settings = ES_DEFAULT
@@ -131,8 +132,8 @@ def get_yaml(path: str) -> t.Dict:
 
 def option_wrapper() -> t.Callable:
     """
-    :py:func:`~.es_client.helpers.utils.passthrough()` the :py:func:`click.option` decorator
-    function.
+    :py:func:`~.es_client.helpers.utils.passthrough()` the :py:func:`click.option`
+    decorator function.
     """
     return passthrough(click.option)
 
@@ -175,7 +176,8 @@ def read_file(myfile: str) -> str:
     :param myfile: A file to read.
 
     Read a file and return the resulting data. Raise an
-    :py:exc:`~.es_client.exceptions.ConfigurationError` exception if the file is unable to be read.
+    :py:exc:`~.es_client.exceptions.ConfigurationError` exception if the file is unable
+    to be read.
     """
     try:
         with open(myfile, "r", encoding="utf-8") as f:
@@ -183,7 +185,7 @@ def read_file(myfile: str) -> str:
         return data
     except IOError as exc:
         msg = f"Unable to read file {myfile}. Exception: {exc}"
-        LOGGER.error(msg)
+        logger.error(msg)
         raise ConfigurationError(msg) from exc
 
 
@@ -214,8 +216,8 @@ def verify_url_schema(url: str) -> str:
 
     Ensure that a valid URL schema (HTTP[S]://URL:PORT) is used
 
-    Raise a :py:exc:`~.es_client.exceptions.ConfigurationError` exception if a URL schema is
-    invalid for any reason.
+    Raise a :py:exc:`~.es_client.exceptions.ConfigurationError` exception if a URL
+    schema is invalid for any reason.
     """
     parts = url.lower().split(":")
     errmsg = f"URL Schema invalid for {url}"

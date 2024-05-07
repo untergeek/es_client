@@ -1,14 +1,28 @@
 """Builder and associated Classes"""
 
-# pylint: disable=too-many-instance-attributes
 import typing as t
 import logging
 from dotmap import DotMap  # type: ignore
 from elastic_transport import ObjectApiResponse
 import elasticsearch8
-from .defaults import VERSION_MIN, VERSION_MAX, CLIENT_SETTINGS, OTHER_SETTINGS
-from .exceptions import ConfigurationError, ESClientException, NotMaster
-from .helpers import utils as u
+from es_client.helpers.schemacheck import password_filter
+from es_client.defaults import VERSION_MIN, VERSION_MAX, CLIENT_SETTINGS, OTHER_SETTINGS
+from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
+from es_client.helpers.utils import (
+    check_config,
+    ensure_list,
+    file_exists,
+    get_version,
+    get_yaml,
+    parse_apikey_token,
+    prune_nones,
+    verify_ssl_paths,
+    verify_url_schema,
+)
+
+logger = logging.getLogger(__name__)
+
+# pylint: disable=R0902
 
 
 class Builder:
@@ -30,7 +44,6 @@ class Builder:
         configfile: t.Union[str, None] = None,
         autoconnect: bool = False,
     ):
-        self.logger = logging.getLogger(__name__)
         #: The DotMap storage for attributes and settings
         self.attributes = DotMap()
         self.set_client_defaults()
@@ -48,7 +61,12 @@ class Builder:
 
     @property
     def master_only(self) -> bool:
-        """Only allow connection to the elected master, if ``True``"""
+        """Only allow connection to the elected master, if ``True``
+
+        :getter: Get the "Only use the elected master?" state
+        :setter: Set the "Only use the elected master?" state
+        :type: bool
+        """
         return self.attributes.master_only
 
     @master_only.setter
@@ -57,7 +75,12 @@ class Builder:
 
     @property
     def is_master(self) -> bool:
-        """Is the node we connected to the elected master?"""
+        """Is the node we connected to the elected master?
+
+        :getter: Get the "Are we the elected master?" state
+        :setter: Set the "Are we the elected master?" state
+        :type: bool
+        """
         return self.attributes.is_master
 
     @is_master.setter
@@ -66,7 +89,13 @@ class Builder:
 
     @property
     def config(self) -> DotMap:
-        """Configuration settings extracted from ``configfile`` or ``configdict``"""
+        """Configuration settings extracted from ``configfile`` or ``configdict``
+
+
+        :getter: Get the configuration settings
+        :setter: Set the configuration settings
+        :type: DotMap
+        """
         return self.attributes.config
 
     @config.setter
@@ -75,7 +104,12 @@ class Builder:
 
     @property
     def client_args(self) -> DotMap:
-        """The storage and workspace for ``client`` settings"""
+        """The storage and workspace for ``client`` settings
+
+        :getter: Get ``client`` values
+        :setter: Set ``client`` values
+        :type: DotMap
+        """
         return self.attributes.client_args
 
     @client_args.setter
@@ -84,7 +118,12 @@ class Builder:
 
     @property
     def other_args(self) -> DotMap:
-        """The storage and workspace for ``other_settings``"""
+        """The storage and workspace for ``other_settings``
+
+        :getter: Get ``other_args`` values
+        :setter: Set ``other_args`` values
+        :type: DotMap
+        """
         return self.attributes.other_args
 
     @other_args.setter
@@ -93,7 +132,11 @@ class Builder:
 
     @property
     def skip_version_test(self) -> bool:
-        """Skip testing for Elasticsearch version compliance?"""
+        """
+        :getter: Get the ``skip_version_test`` value
+        :setter: Set the ``skip_version_test`` value
+        :type: bool
+        """
         return self.attributes.skip_version_test
 
     @skip_version_test.setter
@@ -102,7 +145,11 @@ class Builder:
 
     @property
     def version_min(self) -> t.Tuple:
-        """Minimum acceptable version of Elasticsearch"""
+        """
+        :getter: Get the minimum acceptable Elasticsearch version
+        :setter: Set the minimum acceptable Elasticsearch version
+        :type: t.Tuple
+        """
         return self.attributes.version_min
 
     @version_min.setter
@@ -111,7 +158,11 @@ class Builder:
 
     @property
     def version_max(self) -> t.Tuple:
-        """Maximum acceptable version of Elasticsearch"""
+        """
+        :getter: Get the maximum acceptable Elasticsearch version
+        :setter: Set the maximum acceptable Elasticsearch version
+        :type: t.Tuple
+        """
         return self.attributes.version_max
 
     @version_max.setter
@@ -135,17 +186,17 @@ class Builder:
     ) -> None:
         """Process whether to use a configdict or configfile"""
         if configfile:
-            self.logger.debug("Using values from configfile: %s", configfile)
-            self.config = u.check_config(u.get_yaml(configfile))
+            logger.debug("Using values from configfile: %s", configfile)
+            self.config = check_config(get_yaml(configfile))
         if configdict:
-            self.logger.debug("Using configdict values: %s", configdict)
-            self.config = u.check_config(configdict)
+            logger.debug("Using configdict values: %s", password_filter(configdict))
+            self.config = check_config(configdict)
         if not configfile and not configdict:
             # Empty/Default config.
-            self.logger.debug(
+            logger.debug(
                 "No configuration file or dictionary provided. Using defaults."
             )
-            self.config = u.check_config({"client": {}, "other_settings": {}})
+            self.config = check_config({"client": {}, "other_settings": {}})
 
     def update_config(self) -> None:
         """Update object with values provided"""
@@ -163,14 +214,12 @@ class Builder:
         # Configuration pre-checks
         if self.client_args.hosts is not None:
             verified_hosts = []
-            self.client_args.hosts = u.ensure_list(self.client_args.hosts)
+            self.client_args.hosts = ensure_list(self.client_args.hosts)
             for host in self.client_args.hosts:
                 try:
-                    verified_hosts.append(u.verify_url_schema(host))
+                    verified_hosts.append(verify_url_schema(host))
                 except ConfigurationError as exc:
-                    self.logger.critical(
-                        "Invalid host schema detected: %s -- %s", host, exc
-                    )
+                    logger.critical("Invalid host schema detected: %s -- %s", host, exc)
                     raise ConfigurationError(
                         f"Invalid host schema detected: {host}"
                     ) from exc
@@ -206,14 +255,15 @@ class Builder:
         Create ``api_key`` tuple from :py:attr:`other_args` ``['api_key']`` subkeys
         ``id`` and ``api_key``
 
-        Or if ``api_key`` subkey ``token`` is present, derive ``id`` and ``api_key`` from ``token``
+        Or if ``api_key`` subkey ``token`` is present, derive ``id`` and ``api_key``
+        from ``token``
         """
         if "api_key" in self.other_args:
             # If present, token will override any value in 'id' or 'api_key'
             # pylint: disable=no-member
             if "token" in self.other_args.api_key:
                 (self.other_args.api_key.id, self.other_args.api_key.api_key) = (
-                    u.parse_apikey_token(self.other_args.api_key.token)
+                    parse_apikey_token(self.other_args.api_key.token)
                 )
             if "id" in self.other_args.api_key or "api_key" in self.other_args.api_key:
                 api_id = (
@@ -253,7 +303,7 @@ class Builder:
         Use `certifi <https://github.com/certifi/python-certifi>`_ if using ssl
         and ``ca_certs`` has not been specified.
         """
-        u.verify_ssl_paths(self.client_args)
+        verify_ssl_paths(self.client_args)
         if "cloud_id" in self.client_args and self.client_args.cloud_id is not None:
             scheme = "https"
         elif self.client_args.hosts is None:
@@ -271,9 +321,9 @@ class Builder:
                 keylist = ["ca_certs", "client_cert", "client_key"]
                 for key in keylist:
                     if key in self.client_args and self.client_args[key]:
-                        if not u.file_exists(self.client_args[key]):
+                        if not file_exists(self.client_args[key]):
                             msg = f'"{key}: {self.client_args[key]}" File not found!'
-                            self.logger.critical(msg)
+                            logger.critical(msg)
                             raise ConfigurationError(msg)
 
     def _find_master(self) -> None:
@@ -301,7 +351,7 @@ class Builder:
                         f"specified. Hosts = {self.client_args.hosts}"
                     )
                 if not self.is_master:
-                    self.logger.info(msg)
+                    logger.info(msg)
                     raise NotMaster(msg)
 
     def _check_version(self) -> None:
@@ -309,14 +359,14 @@ class Builder:
         Compare the Elasticsearch cluster version to :py:attr:`min_version` and
         :py:attr:`max_version`
         """
-        v = u.get_version(self.client)
+        v = get_version(self.client)
         if self.skip_version_test:
-            self.logger.warning("Skipping Elasticsearch version checks")
+            logger.warning("Skipping Elasticsearch version checks")
         else:
-            self.logger.debug("Detected version %s", ".".join(map(str, v)))
+            logger.debug("Detected version %s", ".".join(map(str, v)))
             if v >= self.version_max or v < self.version_min:
                 msg = f"Elasticsearch version {'.'.join(map(str, v))} not supported"
-                self.logger.error(msg)
+                logger.error(msg)
                 raise ESClientException(msg)
 
     def _get_client(self) -> None:
@@ -325,10 +375,13 @@ class Builder:
         :py:class:`~.elasticsearch.Elasticsearch` object and populate
         :py:attr:`client`
         """
-        # Eliminate any remaining "None" entries from the client arguments before building
-        client_args = u.prune_nones(self.client_args.toDict())
+        # Eliminate any remaining "None" entries from the client arguments
+        client_args = prune_nones(self.client_args.toDict())
         self.client = elasticsearch8.Elasticsearch(**client_args)
 
     def test_connection(self) -> ObjectApiResponse[t.Any]:
-        """Connect and execute :meth:`Elasticsearch.info() <elasticsearch8.Elasticsearch.info>`"""
+        """
+        Connect and execute :meth:`Elasticsearch.info()
+        <elasticsearch8.Elasticsearch.info>`
+        """
         return self.client.info()

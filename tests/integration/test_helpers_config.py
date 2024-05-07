@@ -1,18 +1,12 @@
 """Test helpers.config"""
 
-from os import environ
 from unittest import TestCase
 from dotmap import DotMap  # type: ignore
 from elasticsearch8 import Elasticsearch
 from es_client.defaults import ES_DEFAULT
 from es_client.exceptions import ESClientException
 from es_client.helpers import config
-
-HOST = environ.get("TEST_ES_SERVER", "https://127.0.0.1:9200")
-USER = environ.get("TEST_USER", "elastic")
-PASS = environ.get("TEST_PASS")
-PATH = environ.get("TEST_PATH")
-CACRT = f"{PATH}/http_ca.crt"
+from . import CACRT, HOST, PASS, USER
 
 CONFIG = {
     "elasticsearch": {

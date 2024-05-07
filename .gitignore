@@ -1,9 +1,8 @@
 # Project Specific Files
 
-docker_test/scripts/Dockerfile
-docker_test/scripts/.kurl
+docker_test/createrepo.json
 docker_test/.kurl
-tests/integration/http_ca.crt
+http_ca.crt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
