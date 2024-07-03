@@ -10,11 +10,9 @@ ESUSR=elastic
 ENVFILE=.env
 CURLFILE=.kurl
 REPODOCKER=/media
-REPOJSON=createrepo.json
-REPONAME=testing
 LIMIT=30
 IMAGE=docker.elastic.co/elasticsearch/elasticsearch
-MEMORY=1GB  # The heap will be half of this
+HEAP=1GB
 
 
 #############################
@@ -60,7 +58,7 @@ get_espw () {
     fi
 
     # Print the spinner to stderr (so it shows up)
-    printf "\r${spin:$s:1} ${seconds}s elapsed (typically 15s - 25s)..." >&2
+    printf "\r${spin:$s:1} ${seconds}s elapsed..." >&2
 
     # wait 1/10th of a second before looping again
     sleep 0.1
@@ -127,7 +125,7 @@ change_espw () {
 xpack_fork () {
 
   echo
-  echo "Getting Elasticsearch credentials from container \"${NAME}\"..."
+  echo "Getting credentials from the ${NAME} Elasticsearch container..."
   echo
 
   # Get the password from the change_espw function. It sets ESPWD
@@ -140,22 +138,16 @@ xpack_fork () {
   fi
 
   # Put envvars in ${ENVCFG}
-  echo "export ESCLIENT_USERNAME=${ESUSR}" >> ${ENVCFG}
   echo "export TEST_USER=${ESUSR}" >> ${ENVCFG}
   # We escape the quotes so we can include them in case of special characters
-  echo "export ESCLIENT_PASSWORD=\"${ESPWD}\"" >> ${ENVCFG}
   echo "export TEST_PASS=\"${ESPWD}\"" >> ${ENVCFG}
-
-
-  # Get the CA certificate and copy it to the PROJECT_ROOT
-  docker cp -q ${NAME}:/usr/share/elasticsearch/config/certs/http_ca.crt ${PROJECT_ROOT}
 
   # Put the credentials into ${CURLCFG}
   echo "-u ${ESUSR}:${ESPWD}" >> ${CURLCFG}
-  echo "--cacert ${CACRT}" >> ${CURLCFG}
+  echo "-k" >> ${CURLCFG}
 
-  # Complete
-  echo "Credentials captured!"
+  # Get the CA certificate and copy it to the TESTPATH
+  docker cp -q ${NAME}:/usr/share/elasticsearch/config/certs/http_ca.crt ${TESTPATH}
 }
 
 # Save original execution path
@@ -184,12 +176,13 @@ else
   TESTPATH=${SCRIPTPATH}
 fi
 
-# Set the CACRT var
-CACRT=${PROJECT_ROOT}/http_ca.crt
-
 # Set the .env file
 ENVCFG=${PROJECT_ROOT}/${ENVFILE}
-rm -rf ${ENVCFG}
+
+# Add TESTPATH to ${ENVCFG}, creating it or overwriting it
+echo "export TEST_PATH=${TESTPATH}" > ${ENVCFG}
+echo "export CA_CRT=${TESTPATH}/http_ca.crt" > ${ENVCFG}
+
 
 # Set the curl config file and ensure we're not reusing an old one
 CURLCFG=${SCRIPTPATH}/${CURLFILE}

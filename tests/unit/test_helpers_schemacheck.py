@@ -1,6 +1,7 @@
 """Test helpers.schemacheck"""
 
 from unittest import TestCase
+import pytest
 from voluptuous import Schema
 from es_client.exceptions import FailedValidation
 from es_client.helpers.schemacheck import SchemaCheck
@@ -20,7 +21,8 @@ class TestSchemaCheck(TestCase):
         """Ensure that a bad port value Raises a FailedValidation"""
         config = {"elasticsearch": {"client": {"port": 70000}}}
         schema = SchemaCheck(config, config_schema(), "elasticsearch", "client")
-        self.assertRaises(FailedValidation, schema.result)
+        with pytest.raises(FailedValidation):
+            schema.result()
 
     def test_entirely_wrong_keys(self):
         """Ensure that unacceptable keys Raises a FailedValidation"""
@@ -32,13 +34,14 @@ class TestSchemaCheck(TestCase):
             "something_else": "foo",
         }
         schema = SchemaCheck(config, config_schema(), "elasticsearch", "client")
-        self.assertRaises(FailedValidation, schema.result)
+        with pytest.raises(FailedValidation):
+            schema.result()
 
     def test_does_not_password_filter_non_dict(self):
         """Ensure that if config is not a dictionary that it doesn't choke"""
         config = None
         schema = SchemaCheck(config, Schema(config), "arbitrary", "anylocation")
-        self.assertIsNone(schema.result(), Schema(None))
+        assert schema.result() is None
 
 
 class TestVersionMinMax(TestCase):
