@@ -2,6 +2,7 @@
 
 from unittest import TestCase
 import certifi
+import click
 import pytest
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError
@@ -14,6 +15,11 @@ YAMLCONFIG = "\n".join(
 )
 
 # pylint: disable=protected-access
+
+
+def process_cmd(key):
+    """Return the key from the click context's object"""
+    return click.get_current_context().obj[key]
 
 
 class TestInit(TestCase):
@@ -32,28 +38,37 @@ class TestInit(TestCase):
         file_obj.teardown()
 
     def test_assign_defaults(self):
-        """Ensure that the default URL is passed to hosts when an empty config dict is passed"""
+        """
+        Ensure that the default URL is passed to hosts when an empty config dict is
+        passed
+        """
         obj = Builder(configdict={})
-        self.assertEqual(obj.client_args.hosts, ["http://127.0.0.1:9200"])
+        assert obj.client_args.hosts == ["http://127.0.0.1:9200"]
 
     def test_raises_for_both_hosts_and_cloud_id(self):
-        """Ensure that ConfigurationError is Raised when both hosts and cloud_id are passed"""
+        """
+        Ensure that ConfigurationError is Raised when both hosts and cloud_id are
+        passed
+        """
         test = {
             "elasticsearch": {
                 "client": {"hosts": ["http://10.1.2.3:4567"], "cloud_id": "foo:bar"}
             }
         }
-        self.assertRaises(ConfigurationError, Builder, configdict=test)
+        with pytest.raises(ConfigurationError):
+            _ = Builder(configdict=test)
 
     def test_remove_default_hosts_when_cloud_id(self):
-        """Ensure that only a default hosts url is removed when cloud_id is also passed"""
+        """
+        Ensure that only a default hosts url is removed when cloud_id is also passed
+        """
         test = {
             "elasticsearch": {
                 "client": {"hosts": ["http://127.0.0.1:9200"], "cloud_id": "foo:bar"}
             }
         }
         obj = Builder(configdict=test)
-        self.assertEqual(None, obj.client_args.hosts)
+        assert obj.client_args.hosts is None
 
     def test_url_schema_validation_fix(self):
         """Ensure that :443 is appended to a host with https and no port"""
@@ -72,17 +87,25 @@ class TestAuth(TestCase):
     """Test authentication methods"""
 
     def test_user_but_no_pass(self):
-        """Ensure ConfigurationError is Raised when username is provided but no password"""
+        """
+        Ensure ConfigurationError is Raised when username is provided but no password
+        """
         obj = Builder(configdict=DEFAULT)
         obj.other_args.username = "test"
-        self.assertRaises(ConfigurationError, obj._check_basic_auth)
+        assert obj.other_args.password is None
+        with pytest.raises(ConfigurationError):
+            obj._check_basic_auth()
 
     def test_pass_but_no_user(self):
-        """Ensure ConfigurationError is Raised when password is provided but no username"""
+        """
+        Ensure ConfigurationError is Raised when password is provided but no username
+        """
         obj = Builder(configdict=DEFAULT)
         obj.client_args.hosts = ["http://127.0.0.1:9200"]
         obj.other_args.password = "test"
-        self.assertRaises(ConfigurationError, obj._check_basic_auth)
+        assert obj.other_args.username is None
+        with pytest.raises(ConfigurationError):
+            obj._check_basic_auth()
 
     def test_id_but_no_api_key(self):
         """Ensure ConfigurationError is Raised when id is passed but no api_key"""
@@ -92,7 +115,8 @@ class TestAuth(TestCase):
                 "client": {"hosts": ["http://127.0.0.1:9200"]},
             }
         }
-        self.assertRaises(ConfigurationError, Builder, configdict=test)
+        with pytest.raises(ConfigurationError):
+            _ = Builder(configdict=test)
 
     def test_api_key_but_no_id(self):
         """Ensure ConfigurationError is Raised when api_key is passed but no id"""
@@ -102,20 +126,24 @@ class TestAuth(TestCase):
                 "client": {"hosts": ["http://127.0.0.1:9200"]},
             }
         }
-        self.assertRaises(ConfigurationError, Builder, configdict=test)
+        with pytest.raises(ConfigurationError):
+            _ = Builder(configdict=test)
 
     def test_no_api_key_values(self):
         """Ensure that API keys remain None"""
         api_id = None
         api_key = None
+        api_token = None
         test = {
             "elasticsearch": {
-                "other_settings": {"api_key": {"id": api_id, "api_key": api_key}},
+                "other_settings": {
+                    "api_key": {"id": api_id, "api_key": api_key, "token": api_token}
+                },
                 "client": {"hosts": ["http://127.0.0.1:9200"]},
             }
         }
         obj = Builder(configdict=test)
-        assert None is obj.client_args.api_key
+        assert obj.client_args.api_key is None
 
     def test_proper_api_key(self):
         """Ensure that API key value is assigned to client_args when properly passed"""
@@ -128,7 +156,7 @@ class TestAuth(TestCase):
             }
         }
         obj = Builder(configdict=test)
-        self.assertEqual(obj.client_args.api_key, (api_id, api_key))
+        assert obj.client_args.api_key == (api_id, api_key)
 
     def test_proper_api_key_token(self):
         """Ensure that API key value is assigned to client_args when token is good"""
@@ -143,7 +171,7 @@ class TestAuth(TestCase):
             }
         }
         obj = Builder(configdict=test)
-        self.assertEqual(obj.client_args.api_key, (api_id, api_key))
+        assert obj.client_args.api_key == (api_id, api_key)
 
     def test_invalid_api_key_token(self):
         """Ensure that ConfigurationError is raise when token is invalid"""
@@ -165,24 +193,30 @@ class TestAuth(TestCase):
         obj.other_args.username = usr
         obj.other_args.password = pwd
         obj._check_basic_auth()
-        self.assertFalse(usr in obj.client_args)
-        self.assertFalse(pwd in obj.client_args)
-        self.assertEqual((usr, pwd), obj.client_args.basic_auth)
+        assert usr not in obj.client_args
+        assert pwd not in obj.client_args
+        assert (usr, pwd) == obj.client_args.basic_auth
 
 
 class TestCheckSSL(TestCase):
     """Ensure that certifi certificates are picked up"""
 
     def test_certifi(self):
-        """Ensure that the certifi.where() output matches what was inserted into client_args"""
+        """
+        Ensure that the certifi.where() output matches what was inserted into
+        client_args
+        """
         https = DEFAULT
         https["elasticsearch"]["client"]["hosts"] = "https://127.0.0.1:9200"
         obj = Builder(configdict=https)
         obj._check_ssl()
-        self.assertEqual(certifi.where(), obj.client_args.ca_certs)
+        assert certifi.where() == obj.client_args.ca_certs
 
     def test_ca_certs_named_but_no_file(self):
-        """Ensure that a ConfigurationError is raised if ca_certs is named but no file found"""
+        """
+        Ensure that a ConfigurationError is raised if ca_certs is named but no file
+        found
+        """
         tmp = FileTestObj()
         tmp.write_config(
             tmp.args["configfile"],
@@ -202,3 +236,28 @@ class TestCheckSSL(TestCase):
         https["elasticsearch"]["client"]["hosts"] = "https://127.0.0.1:9200"
         with pytest.raises(ConfigurationError):
             Builder(configdict=https)
+
+    # def test_context_for_empty_cloud_id(self):
+    #     """Test to see contents of ctx"""
+    #     yamlconfig = "\n".join(
+    #         [
+    #             "---",
+    #             "elasticsearch:",
+    #             "  client:",
+    #             "    hosts:",
+    #             "      - 'http://127.0.0.1:9200'",
+    #             "    cloud_id: ",
+    #         ]
+    #     )
+    #     # Build
+    #     file_obj = FileTestObj()
+    #     file_obj.write_config(file_obj.args["configfile"], yamlconfig)
+    #     # Test
+    #     val = get_yaml(file_obj.args["configfile"])
+    #     key = 'draftcfg'
+    #     ctx = click.Context(click.Command('cmd'), obj={key: val})
+    #     with ctx:
+    #         resp = process_cmd(key)
+    #     assert resp['logging']['logfile'] is None
+    #     # Teardown
+    #     file_obj.teardown()

@@ -1,6 +1,7 @@
 """Test the Builder class"""
 
 from unittest import TestCase
+import pytest
 from es_client.builder import Builder
 from es_client.exceptions import ConfigurationError, ESClientException, NotMaster
 from . import CACRT, HOST, PASS, USER
@@ -35,7 +36,8 @@ class TestCheckMaster(TestCase):
         }
         obj = Builder(configdict=local_conf, autoconnect=False)
         obj._get_client()
-        self.assertRaises(ConfigurationError, obj._check_master)
+        with pytest.raises(ConfigurationError):
+            obj._check_master()
 
     def test_exit_if_not_master(self):
         """Raise NotMaster if node is not master"""
@@ -43,7 +45,8 @@ class TestCheckMaster(TestCase):
         obj.master_only = True
         obj.is_master = False
         obj._get_client()
-        self.assertRaises(NotMaster, obj._check_master)
+        with pytest.raises(NotMaster):
+            obj._check_master()
 
 
 class TestCheckVersion(TestCase):
@@ -54,7 +57,7 @@ class TestCheckVersion(TestCase):
         obj = Builder(configdict=config, autoconnect=False)
         obj.skip_version_test = True
         obj._get_client()
-        self.assertIsNone(obj._check_version())
+        assert obj._check_version() is None
 
     def test_bad_version_raises(self):
         """Raise ESClientException if version is out of bounds"""
@@ -62,7 +65,8 @@ class TestCheckVersion(TestCase):
         obj.version_min = (98, 98, 98)
         obj.version_max = (99, 99, 99)
         obj._get_client()
-        self.assertRaises(ESClientException, obj._check_version)
+        with pytest.raises(ESClientException):
+            obj._check_version()
 
 
 class TestConnection(TestCase):
@@ -71,11 +75,12 @@ class TestConnection(TestCase):
     def test_incomplete_dict_passed(self):
         """Sending a proper dictionary but None value for hosts will raise ValueError"""
         cfg = {"elasticsearch": {"client": {"hosts": None}}}
-        self.assertRaises(ValueError, Builder, configdict=cfg, autoconnect=True)
+        with pytest.raises(ValueError):
+            Builder(configdict=cfg, autoconnect=True)
 
     def test_client_info(self):
         """Proper connection to client makes for a good response"""
         obj = Builder(configdict=config, autoconnect=True)
         client = obj.client
         expected = client.info()
-        self.assertEqual(expected, obj.test_connection())
+        assert expected == obj.test_connection()

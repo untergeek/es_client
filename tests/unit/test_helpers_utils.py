@@ -45,19 +45,21 @@ class TestEnsureList(TestCase):
     """Test the u.ensure_list function"""
 
     def test_utils_ensure_list_returns_lists(self):
-        """Test several examples of lists: existing lists, strings, mixed lists/numbers, etc."""
+        """
+        Test several examples of lists: existing lists, strings, mixed lists/numbers
+        """
         verify = ["a", "b", "c", "d"]
         source = ["a", "b", "c", "d"]
-        self.assertEqual(verify, u.ensure_list(source))
+        assert verify == u.ensure_list(source)
         verify = ["abcd"]
         source = "abcd"
-        self.assertEqual(verify, u.ensure_list(source))
+        assert verify == u.ensure_list(source)
         verify = [["abcd", "defg"], 1, 2, 3]
         source = [["abcd", "defg"], 1, 2, 3]
-        self.assertEqual(verify, u.ensure_list(source))
+        assert verify == u.ensure_list(source)
         verify = [{"a": "b", "c": "d"}]
         source = {"a": "b", "c": "d"}
-        self.assertEqual(verify, u.ensure_list(source))
+        assert verify == u.ensure_list(source)
 
 
 class TestPruneNones(TestCase):
@@ -65,12 +67,12 @@ class TestPruneNones(TestCase):
 
     def test_utils_prune_nones_with(self):
         """Ensure that a dict with a single None value comes back as an empty dict"""
-        self.assertEqual({}, u.prune_nones({"a": None}))
+        assert not u.prune_nones({"a": None})
 
     def test_utils_prune_nones_without(self):
         """Ensure that a dict with no None values comes back unchanged"""
         testval = {"foo": "bar"}
-        self.assertEqual(testval, u.prune_nones(testval))
+        assert testval == u.prune_nones(testval)
 
 
 class TestReadFile:
@@ -133,7 +135,9 @@ class TestEnvVars:
         obj.teardown()
 
     def test_not_present_with_default(self):
-        """Test a non-existent (not-present) envvar. It should set a default value here"""
+        """
+        Test a non-existent (not-present) envvar. It should set a default value here
+        """
         obj = FileTestObj()
         evar = random_envvar(8)
         default = random_envvar(8)
@@ -168,13 +172,17 @@ class TestVerifyURLSchema:
         assert u.verify_url_schema(url) == url
 
     def test_http_schema_no_port(self):
-        """Verify that port 80 is tacked on when no port is specified as a port is required"""
+        """
+        Verify that port 80 is tacked on when no port is specified as a port is required
+        """
         http_port = "80"
         url = "http://127.0.0.1"
         assert u.verify_url_schema(url) == "http://127.0.0.1" + ":" + http_port
 
     def test_https_schema_no_port(self):
-        """Verify that 443 is tacked on when no port is specified but https is the schema"""
+        """
+        Verify that 443 is tacked on when no port is specified but https is the schema
+        """
         https_port = "443"
         url = "https://127.0.0.1"
         assert u.verify_url_schema(url) == "https://127.0.0.1" + ":" + https_port

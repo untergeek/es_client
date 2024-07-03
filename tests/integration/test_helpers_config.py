@@ -1,6 +1,7 @@
 """Test helpers.config"""
 
 from unittest import TestCase
+import pytest
 from dotmap import DotMap  # type: ignore
 from elasticsearch8 import Elasticsearch
 from es_client.defaults import ES_DEFAULT
@@ -21,10 +22,12 @@ class TestGetClient(TestCase):
 
     def test_basic_operation(self):
         """Ensure basic operation"""
-        self.assertTrue(isinstance(config.get_client(configdict=CONFIG), Elasticsearch))
+        assert isinstance(config.get_client(configdict=CONFIG), Elasticsearch)
 
     def test_raises_when_no_connection(self):
-        """Ensures that an exception is raised when it cannot connect to Elasticsearch"""
+        """
+        Ensures that an exception is raised when it cannot connect to Elasticsearch
+        """
         client_args = DotMap()
         other_args = DotMap()
         client_args.update(DotMap(ES_DEFAULT))
@@ -36,4 +39,5 @@ class TestGetClient(TestCase):
                 "other_settings": other_args.toDict(),
             }
         }
-        self.assertRaises(ESClientException, config.get_client, configdict=cnf)
+        with pytest.raises(ESClientException):
+            _ = config.get_client(configdict=cnf)
