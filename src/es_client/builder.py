@@ -262,9 +262,10 @@ class Builder:
             # If present, token will override any value in 'id' or 'api_key'
             # pylint: disable=no-member
             if "token" in self.other_args.api_key:
-                (self.other_args.api_key.id, self.other_args.api_key.api_key) = (
-                    parse_apikey_token(self.other_args.api_key.token)
-                )
+                if self.other_args.api_key.token is not None:
+                    (self.other_args.api_key.id, self.other_args.api_key.api_key) = (
+                        parse_apikey_token(self.other_args.api_key.token)
+                    )
             if "id" in self.other_args.api_key or "api_key" in self.other_args.api_key:
                 api_id = (
                     self.other_args.api_key.id

@@ -3,6 +3,26 @@
 Changelog
 =========
 
+8.14.0 (3 July 2024)
+--------------------
+
+**Changes**
+
+  * Python module version bumps:
+      * ``elasticsearch8==8.14.0``
+      * ``ecs-logging==2.2.0``
+      * ``voluptuous>=0.15.2``
+      * ``certifi>=2024.6.2``
+  * Updated remainint tests to Pytest-style formatting.
+  * Updated ``docker_test`` scripts to most recent updates.
+
+**Bugfix**
+
+  * Fixed an error reported at https://github.com/elastic/curator/issues/1713
+    where providing an empty API ``token`` key would still result in the Builder
+    class method ``_check_api_key`` trying to extract data. Locally tracked at
+    https://github.com/untergeek/es_client/issues/66 
+
 8.13.5 (7 May 2024)
 -------------------
 

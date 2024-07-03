@@ -12,8 +12,10 @@ from es_client.helpers.utils import option_wrapper, prune_nones
 
 ONOFF = {"on": "", "off": "no-"}
 
+DEFAULT_HOST = "http://127.0.0.1:9200"
+
 DEFAULTCFG = "\n".join(
-    ["---", "elasticsearch:", "  client:", '    hosts: ["http://127.0.0.1:9200"]']
+    ["---", "elasticsearch:", "  client:", f"    hosts: [{DEFAULT_HOST}]"]
 )
 
 EMPTYCFG = (
@@ -32,7 +34,7 @@ YAMLCONFIG = (
     "---\n"
     "elasticsearch:\n"
     "  client:\n"
-    '    hosts: ["http://127.0.0.1:9200"]\n'
+    f"    hosts: [{DEFAULT_HOST}]\n"
     "  other_settings:\n"
     "    username: {0}\n"
     "    password: {1}\n"
@@ -92,7 +94,7 @@ class FileTestObj(object):
             f.write(data)
 
 
-# pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
+# pylint: disable=unused-argument, redefined-builtin, too-many-arguments
 @click.command()
 @click_opt_wrap(*cfgfn.cli_opts("config"))
 @click_opt_wrap(*cfgfn.cli_opts("hosts"))
@@ -223,7 +225,6 @@ def default_config_cmd(
     click.echo(f'{ctx.obj["configdict"]}')
 
 
-# pylint: disable=unused-argument, redefined-builtin, too-many-arguments, too-many-locals, line-too-long
 @click.command()
 @click_opt_wrap(*cfgfn.cli_opts("config"))
 @click_opt_wrap(*cfgfn.cli_opts("hosts"))
