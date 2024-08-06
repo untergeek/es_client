@@ -3,6 +3,13 @@
 Changelog
 =========
 
+8.14.2 (6 August 2024)
+----------------------
+
+**Changes**
+ 
+  * Missed one instance of ``six`` module.
+
 8.14.1 (6 August 2024)
 ----------------------
 
