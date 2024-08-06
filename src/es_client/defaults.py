@@ -4,7 +4,6 @@
 import typing as t
 from copy import deepcopy
 from click import Choice, Path
-from six import string_types  # type: ignore
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 
 VERSION_MIN: t.Tuple = (8, 0, 0)
@@ -273,9 +272,9 @@ def config_logging() -> Schema:
                 "CRITICAL",
                 All(Coerce(int), Any(0, 10, 20, 30, 40, 50)),
             ),
-            Optional("logfile", default=None): Any(None, *string_types),
+            Optional("logfile", default=None): Any(None, str),
             Optional("logformat", default="default"): Any(
-                None, All(Any(*string_types), Any("default", "json", "ecs"))
+                None, All(Any(str), Any("default", "json", "ecs"))
             ),
             Optional("blacklist", default=["elastic_transport", "urllib3"]): Any(
                 None, list
@@ -300,36 +299,36 @@ def config_schema() -> Schema:
             Optional("other_settings", default={}): {
                 Optional("master_only", default=False): Boolean(),
                 Optional("skip_version_test", default=False): Boolean(),
-                Optional("username", default=None): Any(None, *string_types),
-                Optional("password", default=None): Any(None, *string_types),
+                Optional("username", default=None): Any(None, str),
+                Optional("password", default=None): Any(None, str),
                 Optional("api_key", default={}): {
-                    Optional("id"): Any(None, *string_types),
-                    Optional("api_key"): Any(None, *string_types),
-                    Optional("token"): Any(None, *string_types),
+                    Optional("id"): Any(None, str),
+                    Optional("api_key"): Any(None, str),
+                    Optional("token"): Any(None, str),
                 },
             },
             Optional("client", default={}): {
-                Optional("hosts", default=None): Any(None, list, *string_types),
-                Optional("cloud_id", default=None): Any(None, *string_types),
+                Optional("hosts", default=None): Any(None, list, str),
+                Optional("cloud_id", default=None): Any(None, str),
                 Optional("api_key"): Any(None, tuple),
                 Optional("basic_auth"): Any(None, tuple),
-                Optional("bearer_auth"): Any(None, *string_types),
-                Optional("opaque_id"): Any(None, *string_types),
+                Optional("bearer_auth"): Any(None, str),
+                Optional("opaque_id"): Any(None, str),
                 Optional("headers"): Any(None, dict),
                 Optional("connections_per_node"): Any(
                     None, All(Coerce(int), Range(min=1, max=100))
                 ),
                 Optional("http_compress"): Boolean(),
                 Optional("verify_certs"): Boolean(),
-                Optional("ca_certs"): Any(None, *string_types),
-                Optional("client_cert"): Any(None, *string_types),
-                Optional("client_key"): Any(None, *string_types),
+                Optional("ca_certs"): Any(None, str),
+                Optional("client_cert"): Any(None, str),
+                Optional("client_key"): Any(None, str),
                 #: Hostname or IP address to verify on the node's certificate.
                 #: This is useful if the certificate contains a different value
                 #: than the one supplied in ``host``. An example of this situation
                 #: is connecting to an IP address instead of a hostname.
                 #: Set to ``False`` to disable certificate hostname verification.
-                Optional("ssl_assert_hostname"): Any(None, *string_types),
+                Optional("ssl_assert_hostname"): Any(None, str),
                 #: SHA-256 fingerprint of the node's certificate. If this value is
                 #: given then root-of-trust verification isn't done and only the
                 #: node's certificate fingerprint is verified.
@@ -338,29 +337,29 @@ def config_schema() -> Schema:
                 #: chain including the Root CA matches this fingerprint. However
                 #: because this requires using private APIs support for this is
                 #: **experimental**.
-                Optional("ssl_assert_fingerprint"): Any(None, *string_types),
+                Optional("ssl_assert_fingerprint"): Any(None, str),
                 Optional("ssl_version"): Any(
-                    None, *string_types
+                    None, str
                 ),  # Minimum acceptable TLS/SSL version
                 #: Pre-configured :class:`ssl.SSLContext` OBJECT. If this value
                 #: is given then no other TLS options (besides
                 #: ``ssl_assert_fingerprint``) can be set on the
                 #: :class:`elastic_transport.NodeConfig`.
-                Optional("ssl_context"): Any(None, *string_types),
+                Optional("ssl_context"): Any(None, str),
                 # Keeping this here in case someone APIs it, but otherwise it's not
                 # likely to be used.
                 Optional("ssl_show_warn"): Boolean(),
-                Optional("transport_class"): Any(None, *string_types),
+                Optional("transport_class"): Any(None, str),
                 Optional("request_timeout"): Any(
                     None, All(Coerce(float), Range(min=0.1, max=86400.0))
                 ),
                 # node_class: Union[str, Type[BaseNode]] = Urllib3HttpNode,
-                Optional("node_class"): Any(None, *string_types),
+                Optional("node_class"): Any(None, str),
                 # node_pool_class: Type[NodePool] = NodePool,
-                Optional("node_pool_class"): Any(None, *string_types),
+                Optional("node_pool_class"): Any(None, str),
                 Optional("randomize_nodes_in_pool"): Boolean(),
                 # node_selector_class: Optional[Union[str, Type[NodeSelector]]] = None,
-                Optional("node_selector_class"): Any(None, *string_types),
+                Optional("node_selector_class"): Any(None, str),
                 Optional("dead_node_backoff_factor"): Any(None, float),
                 Optional("max_dead_node_backoff"): Any(None, float),
                 # One of:
@@ -371,7 +370,7 @@ def config_schema() -> Schema:
                 # "CompatibilityModeJsonSerializer"
                 # "CompatibilityModeNdjsonSerializer"
                 # "MapboxVectorTileSerializer"
-                Optional("serializer"): Any(None, *string_types),  # ???
+                Optional("serializer"): Any(None, str),  # ???
                 # :arg serializers: optional dict of serializer instances that will be
                 # used for deserializing data coming from the server. (key is the
                 # mimetype), e.g.: {'mimetype':'serializer'}
@@ -383,7 +382,7 @@ def config_schema() -> Schema:
                 # "CompatibilityModeNdjsonSerializer"
                 # "MapboxVectorTileSerializer"
                 Optional("serializers"): Any(None, dict),
-                Optional("default_mimetype"): Any(None, *string_types),
+                Optional("default_mimetype"): Any(None, str),
                 Optional("max_retries"): Any(
                     None, All(Coerce(int), Range(min=1, max=100))
                 ),
@@ -405,7 +404,7 @@ def config_schema() -> Schema:
                 #         Union[List[NodeConfig], List[NodeConfig]],
                 #     ]
                 # ] = None,
-                Optional("sniffed_node_callback"): Any(None, *string_types),
+                Optional("sniffed_node_callback"): Any(None, str),
                 Optional("meta_header"): Boolean(),
                 # Cannot specify both 'request_timeout' and 'timeout'
                 # Optional('timeout', default=10.0): All(Coerce(float),
@@ -413,7 +412,7 @@ def config_schema() -> Schema:
                 # Cannot specify both 'randomize_hosts' and 'randomize_nodes_in_pool'
                 # Optional('randomize_hosts', default=True): Boolean(),
                 Optional("host_info_callback"): Any(
-                    None, *string_types
+                    None, str
                 ),  # ??? needs the name of a callback function
                 # Cannot specify both 'sniffer_timeout' and 'min_delay_between_sniffing'
                 # Optional('sniffer_timeout', default=0.5): All(Coerce(float),
@@ -421,9 +420,9 @@ def config_schema() -> Schema:
                 # Cannot specify both 'sniff_on_connection_fail' and
                 #     'sniff_on_node_failure'
                 # Optional('sniff_on_connection_fail', default=False): Boolean(),
-                # Optional('http_auth'): Any(None, *string_types),
+                # Optional('http_auth'): Any(None, str),
                 #     Favor basic_auth instead
-                Optional("_transport"): Any(None, *string_types),  # ???
+                Optional("_transport"): Any(None, str),  # ???
             },
         }
     )
