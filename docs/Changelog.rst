@@ -3,6 +3,14 @@
 Changelog
 =========
 
+8.14.1 (6 August 2024)
+----------------------
+
+**Changes**
+
+  * ``six`` module removed.
+  * Rolled back ``voluptuous`` to be ``>=0.14.2`` to work with Python 3.8
+
 8.14.0 (3 July 2024)
 --------------------
 
@@ -13,7 +21,7 @@ Changelog
       * ``ecs-logging==2.2.0``
       * ``voluptuous>=0.15.2``
       * ``certifi>=2024.6.2``
-  * Updated remainint tests to Pytest-style formatting.
+  * Updated remaining tests to Pytest-style formatting.
   * Updated ``docker_test`` scripts to most recent updates.
 
 **Bugfix**
