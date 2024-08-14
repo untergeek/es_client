@@ -3,6 +3,15 @@
 Changelog
 =========
 
+8.15.0 (13 August 2024)
+-----------------------
+
+**Changes**
+
+  * Python module version bumps:
+    * ``elasticsearch8==8.15.0``
+  * Make execution scripts more consistent and PEP compliant.
+
 8.14.2 (6 August 2024)
 ----------------------
 
