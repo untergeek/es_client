@@ -3,6 +3,7 @@
 # Source the common.bash file from the same path as the script
 source $(dirname "$0")/ansi_clean.bash
 
+#MANUAL_PROJECT_NAME=project_name
 DOCKER_PORT=9200
 LOCAL_PORT=9200
 URL_HOST=127.0.0.1
@@ -10,9 +11,11 @@ ESUSR=elastic
 ENVFILE=.env
 CURLFILE=.kurl
 REPODOCKER=/media
-LIMIT=30
+REPOJSON=createrepo.json
+REPONAME=testing
+LIMIT=30  # How many seconds to wait to obtain the credentials
 IMAGE=docker.elastic.co/elasticsearch/elasticsearch
-HEAP=1GB
+MEMORY=1GB  # The heap will be half of this
 
 
 #############################
@@ -58,7 +61,7 @@ get_espw () {
     fi
 
     # Print the spinner to stderr (so it shows up)
-    printf "\r${spin:$s:1} ${seconds}s elapsed..." >&2
+    printf "\r${spin:$s:1} ${seconds}s elapsed (typically 15s - 25s)..." >&2
 
     # wait 1/10th of a second before looping again
     sleep 0.1
@@ -125,7 +128,7 @@ change_espw () {
 xpack_fork () {
 
   echo
-  echo "Getting credentials from the ${NAME} Elasticsearch container..."
+  echo "Getting Elasticsearch credentials from container \"${NAME}\"..."
   echo
 
   # Get the password from the change_espw function. It sets ESPWD
@@ -138,16 +141,22 @@ xpack_fork () {
   fi
 
   # Put envvars in ${ENVCFG}
+  echo "export ESCLIENT_USERNAME=${ESUSR}" >> ${ENVCFG}
   echo "export TEST_USER=${ESUSR}" >> ${ENVCFG}
   # We escape the quotes so we can include them in case of special characters
+  echo "export ESCLIENT_PASSWORD=\"${ESPWD}\"" >> ${ENVCFG}
   echo "export TEST_PASS=\"${ESPWD}\"" >> ${ENVCFG}
+
+
+  # Get the CA certificate and copy it to the PROJECT_ROOT
+  docker cp -q ${NAME}:/usr/share/elasticsearch/config/certs/http_ca.crt ${PROJECT_ROOT}
 
   # Put the credentials into ${CURLCFG}
   echo "-u ${ESUSR}:${ESPWD}" >> ${CURLCFG}
-  echo "-k" >> ${CURLCFG}
+  echo "--cacert ${CACRT}" >> ${CURLCFG}
 
-  # Get the CA certificate and copy it to the TESTPATH
-  docker cp -q ${NAME}:/usr/share/elasticsearch/config/certs/http_ca.crt ${TESTPATH}
+  # Complete
+  echo "Credentials captured!"
 }
 
 # Save original execution path
@@ -156,8 +165,11 @@ EXECPATH=$(pwd)
 # Extract the path for the script
 SCRIPTPATH="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P)"
 
-# Set the $PROJECT_ROOT/tests/integration path
+# Ensure we are in the script path
 cd ${SCRIPTPATH}
+
+# Get the directory name
+SCRIPTPATH_NAME=$(pwd | awk -F\/ '{print $NF}')
 
 # Go up a level
 cd ../
@@ -165,8 +177,21 @@ cd ../
 # Find out what the last part of this directory is called
 PROJECT_NAME=$(pwd | awk -F\/ '{print $NF}')
 
+# Manually override the project name, if specified
+if [ "x${MANUAL_PROJECT_NAME}" != "x" ]; then
+  PROJECT_NAME=${MANUAL_PROJECT_NAME}
+fi
+
 # We should be at the project root dir now
 PROJECT_ROOT=$(pwd)
+
+if [ "${SCRIPTPATH_NAME}" != "docker_test" ]; then
+  echo "$0 is not in parent directory 'docker_test'"
+  echo "This could cause issues as that is expected."
+  echo "PROJECT_ROOT is now set to ${SCRIPTPATH}"
+  echo "You may want to set MANUAL_PROJECT_NAME in common.bash"
+  PROJECT_ROOT=${SCRIPTPATH}
+fi
 
 # If we have a tests/integration path, then we'll use that
 if [ -d "tests/integration" ]; then
@@ -176,13 +201,12 @@ else
   TESTPATH=${SCRIPTPATH}
 fi
 
+# Set the CACRT var
+CACRT=${PROJECT_ROOT}/http_ca.crt
+
 # Set the .env file
 ENVCFG=${PROJECT_ROOT}/${ENVFILE}
-
-# Add TESTPATH to ${ENVCFG}, creating it or overwriting it
-echo "export TEST_PATH=${TESTPATH}" > ${ENVCFG}
-echo "export CA_CRT=${TESTPATH}/http_ca.crt" > ${ENVCFG}
-
+rm -rf ${ENVCFG}
 
 # Set the curl config file and ensure we're not reusing an old one
 CURLCFG=${SCRIPTPATH}/${CURLFILE}
