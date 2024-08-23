@@ -3,6 +3,20 @@
 Changelog
 =========
 
+8.15.1 (23 August 2024)
+-----------------------
+
+**Changes**
+
+  * Added ``commands.py`` as both a cleaner location for the ``show_all_options``
+    function, as well as a place it could be imported and re-used.
+  * Updated ``docs/example.rst`` and ``docs/tutorial.rst`` to reflect these
+    location changes.
+  * Updated ``pytest.ini`` to automatically look for and use ``.env`` for
+    environment variables for testing.
+  * Using versioned ``docker_test`` scripts now from
+    https://github.com/untergeek/es-docker-test-scripts
+
 8.15.0 (13 August 2024)
 -----------------------
 

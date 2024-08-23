@@ -3,4 +3,4 @@
 from .builder import Builder
 
 __all__ = ["Builder"]
-__version__ = "8.15.0"
+__version__ = "8.15.1"

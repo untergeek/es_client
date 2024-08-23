@@ -15,21 +15,25 @@ Now that we see the power of the command-line that is ready for the taking, what
 How do you make your own app work with ``es_client``?
 
 As StackOverflow as it may sound, feel free to clone the :ref:`example file <example_file>` and
-start there. I've done the ground work so you don't have to.
+:ref:`included commands <included_commands>` and start there. I've done the ground work so you
+don't have to.
 
 .. important:: All of these examples assume you have a simple Elasticsearch instance running at
-   localhost:9200 that needs no username or password. This can, in fact, be done using the 
-   ``docker_test`` scripts included in the Github repository.
+   localhost:9200 that may or may not require a username or password. This can, in fact, be
+   done using the  ``docker_test`` scripts included in the Github repository.
    
    Run ``docker_test/create.sh 8.13.2`` to create such an image locally (substitute the 
    version of your choice), and ``docker_test/destroy.sh`` to remove them when you're done. These
    Docker images will export necessary settings to a ``.env`` file in the root directory of your
-   git fork of ``es_client``, and the CA certificate will be put in
-   ``tests/integration/http_ca.crt``. The tests, as presently constituted, are already configured
+   git fork of ``es_client``, and the CA certificate will be put alongside it, named
+   ``http_ca.crt``. The tests, as presently constituted, are already configured
    to use these settings and values. After running ``docker_test/create.sh 8.13.2``, simply run
    ``pytest`` to see it work. Don't forget to run ``docker_test/destroy.sh`` after you've run the
    tests--for now, anyway. I will probably have pytest run the ``create.sh`` and ``destroy.sh`` in
    the future as part of test setup and teardown (at the ``scope='session'`` level).
+
+   Once this ``.env`` file is created, to run these tests, you should only need to run:
+   ``source .env`` from the root directory of your project.
 
    If you do not have Docker, or choose to use a different cluster, you're responsible for adding
    whatever configuration options/flags are needed to connect. And I am not at all responsible if
@@ -49,11 +53,11 @@ To make things really simple, we can just add a new command. We already have 2 c
      show-all-options  Show all configuration options
      test-connection   Test connection to Elasticsearch
 
-A look at the code shows us where that name came from:
+A look at the code in :ref:`commands.py <included_commands>` shows us where that name came from:
 
 .. code-block:: python
 
-   @run.command()
+   @click.command()
    @click.pass_context
    def test_connection(ctx):
        """
@@ -68,18 +72,43 @@ A look at the code shows us where that name came from:
        click.secho(f'{client.info()}\n')
 
 Yeah, it really is that simple. The name of the function becomes the name of the command. Also note
-that ``@run.command()`` decorator above the ``@click.pass_context`` decorator. These are both
-absolutely necessary. The ``@run.command()`` decorator gets its ``run`` from the initial function.
-All you really need to know is that this decorator means, "add this function name as a command to 
-the existing, decorated function ``run``". You probably scrolled back and noticed all of the
-decorators above the ``run`` function and recognized that's where all of the options come from.
-That's it! It's actually easier than it looks.
+that ``@click.command()`` decorator above the ``@click.pass_context`` decorator. These are both
+absolutely necessary. You probably scrolled through :ref:`cli_example.py <example_file>` and noticed
+all of the decorators above the ``run`` function and recognized that's where all of the options
+come from. That's it! It's actually easier than it looks.
 
-So let's copy the entire ``test_connection`` function and make a few changes:
+The ``@click.command()`` decorator simply says that this function should be recognized as a viable
+``click`` command. There's an additional step required to add a command as a choice at run time:
+
+In :ref:`cli_example.py <example_file>`, we find:
 
 .. code-block:: python
 
-   @run.command()
+   # Near the top:
+   from es_client.commands import show_all_options, test_connection
+
+   # Around line 62:
+   @click.group(context_settings=cfg.context_settings())
+   @cfg.options_from_dict(OPTION_DEFAULTS)
+   @click.version_option(None, "-v", "--version", prog_name="cli_example")
+   @click.pass_context
+   def run():
+   # The rest of the definition of run follows...
+
+   # Then near the bottom:
+   run.add_command(show_all_options)
+   run.add_command(test_connection)
+
+These lines means we're adding the ``@click.command()`` definitions decorating
+functions ``show_all_options`` and ``test_connection`` to the ``@click.group()``
+attached to function ``run``.
+
+So let's copy the entire ``test_connection`` function to ``commands.py`` and make
+a few changes:
+
+.. code-block:: python
+
+   @click.command()
    @click.pass_context
    def delete_index(ctx):
        """
@@ -93,9 +122,24 @@ So let's copy the entire ``test_connection`` function and make a few changes:
        click.secho('\nConnection result: ', bold=True)
        click.secho(f'{client.info()}\n')
 
-So what's different now? We renamed our copied function to ``delete_index``. We also changed the
-Python docstring--that's the part in between the triple quotes underneath the function name. Let's
-see what this looks like when we run the basic help output:
+So what's different now? We renamed our copied function to ``delete_index``. We
+also changed the Python docstring--that's the part in between the triple quotes
+underneath the function name. 
+
+Now in ``cli_example.py``, we need to add this function name to our import list
+(near the top):
+
+.. code-block:: python
+
+   from es_client.commands import show_all_options, test_connection, delete_index
+
+And add a new ``run.add_command()`` line as well (near the bottom):
+
+.. code-block:: python
+
+   run.add_command(delete_index)
+
+Let's see what this looks like when we run the basic help output:
 
 .. code-block:: console
 
@@ -126,7 +170,7 @@ While our function is named differently and has a different description, it's id
 
 .. code-block:: python
 
-   @run.command()
+   @click.command()
    @click.option('--index', help='An index name', type=str)
    @click.pass_context
    def delete_index(ctx, index):
@@ -189,7 +233,7 @@ logging:
 
 .. code-block:: python
 
-   @run.command()
+   @click.command()
    @click.option('--index', help='An index name', type=str)
    @click.pass_context
    def delete_index(ctx, index):
@@ -236,7 +280,7 @@ logic and see what happens:
 
 .. code-block:: python
 
-   @run.command()
+   @click.command()
    @click.option('--index', help='An index name', type=str)
    @click.pass_context
    def delete_index(ctx, index):
@@ -286,7 +330,7 @@ Begin the COPY PASTE! GO!
 
 .. code-block:: python
 
-   @run.command()
+   @click.command()
    @click.option('--index', help='An index name', type=str)
    @click.pass_context
    def create_index(ctx, index):
@@ -314,6 +358,20 @@ You'll note very few differences here in this copy/paste:
     be found, so a ``NotFoundError`` doesn't make much sense here. Instead, if we try to create an
     index that's already existing, that would be a bad request.
   * Our final log message is indicating a ``creation`` result.
+
+After adding our new function to our import line in ``cli_example.py``:
+
+.. code-block:: python
+
+   from es_client.commands import (
+       show_all_options, test_connection, delete_index, create_index
+   )
+
+And another new ``run.add_command()`` line as well (add it after the others):
+
+.. code-block:: python
+
+   run.add_command(create_index)
 
 Let's see our main usage/help page tail now:
 
@@ -387,7 +445,7 @@ With the ``confirmation_option()`` decorator, Like this:
 
 .. code-block:: python
 
-   @run.command()
+   @click.command()
    @click.option('--index', help='An index name', type=str)
    @click.confirmation_option()
    @click.pass_context
