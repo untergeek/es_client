@@ -307,3 +307,15 @@ This file is part of the source code and is at ``./es_client/cli_example.py``.
 
 .. literalinclude:: ../src/es_client/cli_example.py
   :language: python
+
+.. _included_commands:
+
+Included Commands
+=================
+
+This module is referenced by ``./es_client/cli_example.py`` and includes the
+``show-all-options`` and ``test-connection`` functions/commands available when
+running from the CLI.
+
+.. literalinclude:: ../src/es_client/commands.py
+  :language: python
