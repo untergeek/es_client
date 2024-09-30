@@ -157,6 +157,7 @@ if [ "$response" != "$expected" ]; then
   echo "ERROR! Unable to create snapshot repository"
 else
   echo "Snapshot repository \"${REPONAME}\" created."
+  rm -f ${REPOJSON}
 fi
 
 
