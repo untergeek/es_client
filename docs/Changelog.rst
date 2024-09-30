@@ -3,6 +3,17 @@
 Changelog
 =========
 
+8.15.2 (30 September 2024)
+--------------------------
+
+**Changes**
+
+  * Python module version bumps:
+    * ``elasticsearch8==8.15.1``
+    * ``pyyaml==6.0.2``
+    * ``certifi>=2024.8.30``
+
+
 8.15.1 (23 August 2024)
 -----------------------
 
