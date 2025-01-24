@@ -3,6 +3,31 @@
 Changelog
 =========
 
+8.17.1 (24 Janary 2025)
+-----------------------
+
+**Announcements**
+
+  * Python 3.13 support...but with a caveat.
+    * HUGE (potential) caveat, though. The Python 3.13 SSL implementation now has
+      ``X509_V_FLAG_X509_STRICT`` set by default. This unfortunately means that
+      self-signed certificates created by Elasticsearch's ``certutil`` will not
+      work with Python 3.13 as they do not yet include the key usage extension.
+      If you are using ``es_client`` in any way with one of these certificates,
+      I highly recommend that you not use Python 3.13 until this is resolved.
+    * 3.13 is excluded from the Hatch test matrix for this reason.
+    * 3.13 will still be tested manually with each release.
+  
+**Changes**
+
+  * Python module version bumps:
+    * ``elasticsearch8==8.17.1``
+    * ``click==8.1.8``
+    * ``certifi>=2024.12.14``
+  * Refactored ``master_only`` functions and tests. I discovered some loopholes
+    in my code when I was testing Python 3.13 against an Elastic Cloud instance,
+    so I fixed them. This also necessitated a change in the integration tests.
+
 8.15.2 (30 September 2024)
 --------------------------
 
