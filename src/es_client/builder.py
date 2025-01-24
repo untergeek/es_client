@@ -203,7 +203,7 @@ class Builder:
         self.client_args.update(self.config.client)
         self.other_args.update(self.config.other_settings)
         self.master_only = self.other_args.master_only
-        self.is_master = None  # Preset, until we populate this later
+        self.is_master = False  # Preset, until we populate this later
         if "skip_version_test" in self.other_args:
             self.skip_version_test = self.other_args.skip_version_test
         else:
@@ -235,7 +235,10 @@ class Builder:
         self._get_client()
         # Post checks
         self._check_version()
-        self._check_master()
+        if self.master_only:
+            self._check_multiple_hosts()
+            self._find_master()
+            self._check_if_master()
 
     def _check_basic_auth(self) -> None:
         """Create ``basic_auth`` tuple from username and password"""
@@ -333,27 +336,27 @@ class Builder:
         master_node_id = self.client.cluster.state(metric="master_node")["master_node"]
         self.is_master = my_node_id == master_node_id
 
-    def _check_master(self) -> None:
+    def _check_multiple_hosts(self) -> None:
+        """Check for multiple hosts when master_only"""
+        if "hosts" in self.client_args and isinstance(self.client_args.hosts, list):
+            if len(self.client_args.hosts) > 1:
+                raise ConfigurationError(
+                    f'"master_only" cannot be True if more than one host is '
+                    f"specified. Hosts = {self.client_args.hosts}"
+                )
+
+    def _check_if_master(self) -> None:
         """
-        If :py:attr:`master_only` is ``True`` and we are not connected to the elected
-        master node, raise :py:exc:`~es_client.exceptions.NotMaster`
+        If we are not connected to the elected master node, raise
+        :py:exc:`~es_client.exceptions.NotMaster`
         """
-        if self.is_master is None:
-            self._find_master()
-        if self.master_only:
+        if not self.is_master:
             msg = (
                 "The master_only flag is set to True, but the client is  "
                 "currently connected to a non-master node."
             )
-            if "hosts" in self.client_args and isinstance(self.client_args.hosts, list):
-                if len(self.client_args.hosts) > 1:
-                    raise ConfigurationError(
-                        f'"master_only" cannot be True if more than one host is '
-                        f"specified. Hosts = {self.client_args.hosts}"
-                    )
-                if not self.is_master:
-                    logger.info(msg)
-                    raise NotMaster(msg)
+            logger.info(msg)
+            raise NotMaster(msg)
 
     def _check_version(self) -> None:
         """
