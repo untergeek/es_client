@@ -19,6 +19,7 @@ classifiers = [
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
 ]
 keywords = [
     'elasticsearch',
@@ -27,19 +28,19 @@ keywords = [
     'command-line'
 ]
 dependencies = [
-    'elasticsearch8==8.15.1',
+    'elasticsearch8==8.17.1',
     'ecs-logging==2.2.0',
     'dotmap==1.3.30',
-    'click==8.1.7',
+    'click==8.1.8',
     'pyyaml==6.0.2',
     'voluptuous>=0.14.2',
-    'certifi>=2024.8.30'
+    'certifi>=2024.12.14'
 ]
 
 [project.optional-dependencies]
 test = [
     'requests',
-    'pytest >=7.2.1',
+    'pytest>=7.2.1',
     'pytest-cov',
     'pytest-dotenv',
 ]

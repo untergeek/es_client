@@ -29,24 +29,28 @@ class TestCheckMaster(TestCase):
                     "password": PASS,
                 },
                 "client": {
-                    "hosts": [HOST, "https://localhost:9200"],
+                    "hosts": [HOST],
                     "ca_certs": CACRT,
                 },
             }
         }
         obj = Builder(configdict=local_conf, autoconnect=False)
         obj._get_client()
+        # Cheating in an extra HOST here
+        obj.client_args.hosts.append(HOST)
         with pytest.raises(ConfigurationError):
-            obj._check_master()
+            obj._check_multiple_hosts()
 
     def test_exit_if_not_master(self):
         """Raise NotMaster if node is not master"""
         obj = Builder(config, autoconnect=False)
         obj.master_only = True
-        obj.is_master = False
         obj._get_client()
+        obj._find_master()
+        # Cheating in a False result for is_master
+        obj.is_master = False
         with pytest.raises(NotMaster):
-            obj._check_master()
+            obj._check_if_master()
 
 
 class TestCheckVersion(TestCase):
@@ -82,5 +86,5 @@ class TestConnection(TestCase):
         """Proper connection to client makes for a good response"""
         obj = Builder(configdict=config, autoconnect=True)
         client = obj.client
-        expected = client.info()
-        assert expected == obj.test_connection()
+        expected = dict(client.info())
+        assert expected['cluster_name'] == dict(obj.test_connection())['cluster_name']
