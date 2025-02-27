@@ -3,6 +3,14 @@
 Changelog
 =========
 
+7.x Fork (26 February 2025)
+---------------------------
+
+**Announcement**
+
+  * This fork is initially a fork of the 8.x branch. I will backport to gain
+    compatibility with Elasticsearch 7.x.
+
 8.17.2 (26 February 2025)
 -------------------------
 
