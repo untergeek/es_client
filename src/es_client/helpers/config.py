@@ -7,7 +7,13 @@ from dotmap import DotMap  # type: ignore
 from click import Context, secho, option as clickopt
 from elasticsearch8 import Elasticsearch
 from es_client.builder import Builder
-from es_client.defaults import CLICK_SETTINGS, ENV_VAR_PREFIX, config_settings
+from es_client.defaults import (
+    CLICK_SETTINGS,
+    ENV_VAR_PREFIX,
+    VERSION_MIN,
+    VERSION_MAX,
+    config_settings,
+)
 from es_client.exceptions import ESClientException, ConfigurationError
 from es_client.helpers.utils import (
     check_config,
@@ -285,6 +291,8 @@ def get_client(
     configdict: t.Union[t.Dict, None] = None,
     configfile: t.Union[str, None] = None,
     autoconnect: bool = False,
+    version_min: t.Tuple = VERSION_MIN,
+    version_max: t.Tuple = VERSION_MAX,
 ) -> Elasticsearch:
     """
     :param configdict: A configuration dictionary
@@ -309,7 +317,11 @@ def get_client(
     logger.debug("Creating client object and testing connection")
 
     builder = Builder(
-        configdict=configdict, configfile=configfile, autoconnect=autoconnect
+        configdict=configdict,
+        configfile=configfile,
+        autoconnect=autoconnect,
+        version_max=version_max,
+        version_min=version_min,
     )
 
     try:

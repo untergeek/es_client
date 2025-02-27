@@ -43,6 +43,8 @@ class Builder:
         configdict: t.Union[t.Dict, None] = None,
         configfile: t.Union[str, None] = None,
         autoconnect: bool = False,
+        version_min: t.Tuple = VERSION_MIN,
+        version_max: t.Tuple = VERSION_MAX,
     ):
         #: The DotMap storage for attributes and settings
         self.attributes = DotMap()
@@ -51,8 +53,8 @@ class Builder:
         #: The :py:class:`~.elasticsearch.Elasticsearch` client connection object
         self.client = elasticsearch8.Elasticsearch(hosts="http://127.0.0.1:9200")
         self.process_config_opts(configdict, configfile)
-        self.version_max = VERSION_MAX
-        self.version_min = VERSION_MIN
+        self.version_max = version_max
+        self.version_min = version_min
         self.update_config()
         self.validate()
         if autoconnect:
