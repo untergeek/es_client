@@ -3,6 +3,27 @@
 Changelog
 =========
 
+8.17.2 (26 February 2025)
+-------------------------
+
+**Announcement**
+
+  * Attempting to allow the 8.x client to work with 7.x Elasticsearch servers by
+    making ``min_version`` and ``max_version`` configurable at the time of
+    ``Builder`` instantiation.
+    The default values are still limited to 8.x versions, but preliminary testing
+    shows that the 8.x client works just fine for Curator against 7.14.x through
+    7.17.x servers with these changes.
+    
+**Changes**
+
+  * The ``Builder`` class can now override the default minimum and/or maximum version:
+    ``Builder(config, min_version=7.0.0, max_version=8.99.99)``.
+  * The ``helpers.config.get_client()`` function can also take these arguments:
+    ``helpers.config.get_client(config, min_version=7.0.0, max_version=8.99.99)``.
+  * Updated the date and copyright holder in ``LICENSE``.
+
+
 8.17.1 (24 Janary 2025)
 -----------------------
 
