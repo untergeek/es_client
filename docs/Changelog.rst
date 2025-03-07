@@ -3,6 +3,49 @@
 Changelog
 =========
 
+8.17.3 (6 March 2025)
+---------------------
+
+**Announcement**
+
+Logging changes
+***************
+
+If you specify a log file in your configuration, it will now be used, and nothing
+should appear different for you. If, however, you do not specify a log file, the
+default behavior is to log to both STDOUT `and` STDERR, with the streams split.
+This is the new behavior. If you do not want this, you must specify a log file
+in your configuration.
+
+.. code-block:: shell
+
+    $ python run_script.py --loglevel DEBUG test-stderr 1>stdout.log 2>stderr.log
+
+This will log all output to ``stdout.log`` and all errors to ``stderr.log``. 
+
+.. code-block:: shell
+
+    $ cat stdout.log                                                                                                                                                         ─╯
+    DEBUG: Overriding configuration file setting loglevel=INFO with command-line option loglevel=DEBUG
+    2025-03-06 17:53:01,038 DEBUG         es_client.commands            test_stderr:131  This is a debug message
+    2025-03-06 17:53:01,038 INFO          es_client.commands            test_stderr:132  This is an info message
+
+    Logging test complete.
+
+    $ cat stderr.log
+    2025-03-06 17:53:01,038 WARNING       es_client.commands            test_stderr:133  This is a warning message
+    2025-03-06 17:53:01,038 ERROR         es_client.commands            test_stderr:134  This is an error message
+    2025-03-06 17:53:01,038 CRITICAL      es_client.commands            test_stderr:135  This is a critical message
+
+
+**Changes**
+
+  * Changes in the ``logging.py`` file to handle the new logging behavior. Also added
+    ``test-stderr`` to ``commands.py`` and ``cli_example.py`` to demonstrate the new
+    behavior.
+  * Updated ``defaults.py`` to have a default ``LOGFORMAT`` of ``default``.
+
+
 8.17.2 (26 February 2025)
 -------------------------
 
