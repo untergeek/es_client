@@ -2,6 +2,7 @@
 Click commands to follow the top-level
 """
 
+import logging
 import click
 from es_client.helpers import config as cfg
 from es_client.defaults import SHOW_EVERYTHING
@@ -118,3 +119,18 @@ def test_connection(ctx):
     # If we're here, we'll see the output from GET http(s)://hostname.tld:PORT
     click.secho("\nConnection result: ", bold=True)
     click.secho(f"{client.info()}\n")
+
+
+@click.command()
+@click.pass_context
+def test_stderr(ctx):
+    """
+    Test STDERR logging
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug("This is a debug message")
+    logger.info("This is an info message")
+    logger.warning("This is a warning message")
+    logger.error("This is an error message")
+    logger.critical("This is a critical message")
+    click.secho("\nLogging test complete.\n")
