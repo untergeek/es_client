@@ -147,7 +147,7 @@ LOGLEVEL: None = None
 LOGFILE: None = None
 """Default value for logfile"""
 
-LOGFORMAT: None = None
+LOGFORMAT: t.Literal['default', 'ecs', 'json'] = 'default'
 """Default value for logformat"""
 
 BLACKLIST: None = None

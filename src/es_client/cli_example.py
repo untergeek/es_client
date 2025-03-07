@@ -7,7 +7,7 @@ from elasticsearch8.exceptions import BadRequestError, NotFoundError
 from es_client.helpers import config as cfg
 from es_client.defaults import OPTION_DEFAULTS
 from es_client.helpers.logging import configure_logging
-from es_client.commands import show_all_options, test_connection
+from es_client.commands import show_all_options, test_connection, test_stderr
 
 # Since this file will not be imported, we use this to squash the F401 error
 __all__ = ["BadRequestError", "NotFoundError"]
@@ -127,6 +127,7 @@ def run(
 
 run.add_command(show_all_options)
 run.add_command(test_connection)
+run.add_command(test_stderr)
 
 if __name__ == "__main__":
     run()

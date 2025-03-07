@@ -5,9 +5,9 @@ from __future__ import annotations
 import typing as t
 import sys
 import json
-import logging
 import time
-from pathlib import Path
+import logging
+from logging import FileHandler, StreamHandler
 from voluptuous import Schema
 from click import Context, echo as clicho
 import ecs_logging
@@ -15,6 +15,8 @@ from es_client.exceptions import LoggingException
 from es_client.defaults import config_logging, LOGDEFAULTS
 from es_client.helpers.schemacheck import SchemaCheck
 from es_client.helpers.utils import ensure_list, prune_nones
+
+# from pathlib import Path  # used in the is_docker() function
 
 # pylint: disable=R0903
 
@@ -77,9 +79,9 @@ class JSONFormatter(logging.Formatter):
         :rtype: :py:meth:`json.dumps`
         """
         self.converter = time.gmtime
-        timestamp = (
-            f"{self.formatTime(record, datefmt='%Y-%m-%dT%H:%M:%S')}.{record.msecs:03}Z"
-        )
+        fmt = "%Y-%m-%dT%H:%M:%S"
+        mil = str(record.msecs).split(".", maxsplit=1)[0]
+        timestamp = f"{self.formatTime(record, datefmt=fmt)}.{mil}Z"
         result = {"@timestamp": timestamp}
         available = record.__dict__
         # This is cleverness because 'message' is NOT a member key of
@@ -208,54 +210,85 @@ def deepmerge(source: t.Dict, destination: t.Dict) -> t.Dict:
     return destination
 
 
-def get_handler(logfile: t.Union[str, None]) -> logging.Handler:
+def get_format_string(nll: int) -> str:
     """
-    :param logfile: The path of a log file
+    :param nll: The numeric log level
 
-    :type logfile: str
+    :type nll: int
 
-    :rtype: Either :py:class:`~.logging.FileHandler` or
-        :py:class:`~.logging.StreamHandler`
-    :returns: A logging handler
-
-    This function checks first to see if a file path has been provided via `logfile`. If
-    so, it will return :py:class:`logging.Filehandler(logfile) <logging.FileHandler>`
-
-    If this is not provided, it will then proceed to check if it is running in a Docker
-    container, and, if so, whether it has write permissions to ``/proc/1/fd/1``, which
-    is the default TTY path. If so, it will return
-    :py:class:`logging.Filehandler('/proc/1/fd/1') <logging.FileHandler>`. Writing to
-    this path permits an app using :py:mod:`es_client` to read logs by way of:
-
-      .. code-block:: shell
-
-         docker logs CONTAINERNAME
-
-    If neither of the prior are true, then it will return
-    :py:class:`logging.StreamHandler(stream=sys.stdout) <logging.StreamHandler>`, and
-    will write to STDOUT.
+    :rtype: str
+    :returns: The format string based on the numeric log level
     """
-    # Priority handling of provided logfile first
+    return (
+        "%(asctime)s %(levelname)-9s %(name)22s "
+        "%(funcName)22s:%(lineno)-4d %(message)s"
+        if nll == 10
+        else "%(asctime)s %(levelname)-9s %(message)s"
+    )
+
+
+def get_logger(log_opts: t.Dict, logger_name: str = 'es_client') -> logging.Logger:
+    """Get the root logger with the appropriate handler(s) attached
+
+    If a log file is provided in `log_opts`, a :py:class:`~.logging.FileHandler` is
+    returned. If not, it will split logs into stdout and stderr, with the former
+    handling messages up to INFO level, and the latter handling messages above that
+    level.
+
+    :param
+        log_opts: Logging configuration data
+        logger_name: Default logger name to use in :py:func:`logging.getLogger()`
+    :type
+        log_opts: dict
+        logger_name: str
+    :rtype
+        logging.Logger
+    :returns
+        The root logger with the appropriate handler(s) attached
+    """
+    logfile = log_opts.get("logfile", None)
+    kind = log_opts.get("logformat", "default")
+    nll = get_numeric_loglevel(log_opts.get("loglevel", "INFO"))
+
+    # Set the root logger
+    log = logging.getLogger(logger_name)
+    log.setLevel(nll)
+
+    handler_map = {
+        # We can't set FileHandler to a null pointer/None
+        "logfile": FileHandler(logfile if logfile else "/dev/null"),
+        "stdout": StreamHandler(stream=sys.stdout),
+        "stderr": StreamHandler(stream=sys.stderr),
+    }
+    format_map = {
+        "default": logging.Formatter(get_format_string(nll)),
+        "json": JSONFormatter(),
+        "ecs": ecs_logging.StdlibFormatter(),
+    }
+
+    def add_handler(source: t.Literal['logfile', 'stdout', 'stderr']) -> None:
+        handler = handler_map[source]
+        handler.setFormatter(format_map[kind])
+        handler.setLevel(nll)
+        if source == 'stdout':
+            handler.addFilter(lambda record: record.levelno <= logging.INFO)
+        if source == 'stderr':
+            # Establish our upper bound filter for stderr, in case it's set to
+            # ERROR or CRITICAL, and filter them.
+            handler.setLevel(logging.WARNING)
+            fltr = max(logging.WARNING, nll)
+            handler.addFilter(lambda record: record.levelno >= fltr)
+            for entry in ensure_list(log_opts["blacklist"]):
+                handler.addFilter(Blacklist(entry))
+        logging.root.addHandler(handler)  # Add the handler to the root logger
+
+    # if we have a logfile, then use that
     if logfile:
-        return logging.FileHandler(logfile)
-    # If no logfile is specified, check to see if we're running in a Docker container
-    if is_docker():
-        fpath = "/proc/1/fd/1"
-        permission = False
-        try:
-            with open(fpath, "wb+", buffering=0) as fhdl:
-                # And we've verified that the path is a tty
-                if fhdl.isatty():
-                    # And verified that we have write permissions to that path
-                    fhdl.write("...\n".encode())
-                    permission = True
-        except PermissionError:
-            clicho(
-                f"Docker container does not appear to have a writable tty at {fpath}."
-            )
-        if permission:
-            return logging.FileHandler(fpath)
-    return logging.StreamHandler(stream=sys.stdout)  # Default
+        add_handler('logfile')
+    else:
+        add_handler('stdout')
+        add_handler('stderr')
+    return log
 
 
 def get_numeric_loglevel(level: str) -> int:
@@ -310,17 +343,17 @@ def get_numeric_loglevel(level: str) -> int:
     return numeric_log_level
 
 
-def is_docker() -> bool:
-    """
-    :rtype: bool
-    :returns: Boolean result of whether we are runinng in a Docker container or not
-    """
-    cgroup = Path("/proc/self/cgroup")
-    return (
-        Path("/.dockerenv").is_file()
-        or cgroup.is_file()
-        and "docker" in cgroup.read_text(encoding="utf8")
-    )
+# def is_docker() -> bool:
+#     """
+#     :rtype: bool
+#     :returns: Boolean result of whether we are runinng in a Docker container or not
+#     """
+#     cgroup = Path("/proc/self/cgroup")
+#     return (
+#         Path("/.dockerenv").is_file()
+#         or cgroup.is_file()
+#         and "docker" in cgroup.read_text(encoding="utf8")
+#     )
 
 
 def override_logging(ctx: Context) -> t.Dict:
@@ -391,28 +424,8 @@ def set_logging(options: t.Dict, logger_name: str = "es_client") -> None:
     Configure global logging options from `options` and set a default `logger_name`
     """
     log_opts = check_log_opts(options)
-    handler = get_handler(log_opts["logfile"])
-    numeric_log_level = get_numeric_loglevel(log_opts["loglevel"])
+    _ = get_logger(log_opts, logger_name)
 
-    if numeric_log_level == 10:  # DEBUG
-        format_string = (
-            "%(asctime)s %(levelname)-9s %(name)22s "
-            "%(funcName)22s:%(lineno)-4d %(message)s"
-        )
-    else:
-        format_string = "%(asctime)s %(levelname)-9s %(message)s"
-
-    if log_opts["logformat"] == "json":
-        handler.setFormatter(JSONFormatter())
-    elif log_opts["logformat"] == "ecs":
-        handler.setFormatter(ecs_logging.StdlibFormatter())
-    else:
-        handler.setFormatter(logging.Formatter(format_string))
-
-    logging.root.addHandler(handler)
-    logging.root.setLevel(numeric_log_level)
-
-    _ = logging.getLogger(logger_name)
     # Set up NullHandler() to handle nested elasticsearch8.trace Logger
     # instance in elasticsearch python client
     logging.getLogger("elasticsearch8.trace").addHandler(logging.NullHandler())
