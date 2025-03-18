@@ -3,6 +3,20 @@
 Changelog
 =========
 
+8.17.4 (18 March 2025)
+----------------------
+
+**Bugfix**
+
+  * Fixed a logging configuration bug to only assign a file handler if a log file
+    is specified. Also fixed to ensure configuration goes to the root logger.
+
+**Changes**
+
+  * Dependency version bumps in this release:
+      * ``elasticsearch8==8.17.2``
+      * ``certifi>=2025.3.31``
+
 8.17.3 (6 March 2025)
 ---------------------
 
