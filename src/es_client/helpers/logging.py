@@ -20,6 +20,8 @@ from es_client.helpers.utils import ensure_list, prune_nones
 
 # pylint: disable=R0903
 
+logger = logging.getLogger('')  # Get the root logger for this module
+
 
 class Whitelist(logging.Filter):
     """
@@ -227,7 +229,7 @@ def get_format_string(nll: int) -> str:
     )
 
 
-def get_logger(log_opts: t.Dict, logger_name: str = 'es_client') -> logging.Logger:
+def get_logger(log_opts: t.Dict) -> None:
     """Get the root logger with the appropriate handler(s) attached
 
     If a log file is provided in `log_opts`, a :py:class:`~.logging.FileHandler` is
@@ -250,13 +252,12 @@ def get_logger(log_opts: t.Dict, logger_name: str = 'es_client') -> logging.Logg
     kind = log_opts.get("logformat", "default")
     nll = get_numeric_loglevel(log_opts.get("loglevel", "INFO"))
 
-    # Set the root logger
-    log = logging.getLogger(logger_name)
-    log.setLevel(nll)
+    # Set the level for the root logger
+    logger.setLevel(nll)
 
     handler_map = {
         # We can't set FileHandler to a null pointer/None
-        "logfile": FileHandler(logfile if logfile else "/dev/null"),
+        "logfile": FileHandler(logfile) if logfile else None,
         "stdout": StreamHandler(stream=sys.stdout),
         "stderr": StreamHandler(stream=sys.stderr),
     }
@@ -280,7 +281,8 @@ def get_logger(log_opts: t.Dict, logger_name: str = 'es_client') -> logging.Logg
             handler.addFilter(lambda record: record.levelno >= fltr)
             for entry in ensure_list(log_opts["blacklist"]):
                 handler.addFilter(Blacklist(entry))
-        logging.root.addHandler(handler)  # Add the handler to the root logger
+
+        logger.addHandler(handler)  # Add to the root logger
 
     # if we have a logfile, then use that
     if logfile:
@@ -288,7 +290,6 @@ def get_logger(log_opts: t.Dict, logger_name: str = 'es_client') -> logging.Logg
     else:
         add_handler('stdout')
         add_handler('stderr')
-    return log
 
 
 def get_numeric_loglevel(level: str) -> int:
@@ -416,7 +417,7 @@ def check_log_opts(log_opts: t.Dict) -> t.Dict:
     return log_opts
 
 
-def set_logging(options: t.Dict, logger_name: str = "es_client") -> None:
+def set_logging(options: t.Dict) -> None:
     """
     :param options: Logging configuration data
     :param logger_name: Default logger name to use in :py:func:`logging.getLogger()`
@@ -424,7 +425,7 @@ def set_logging(options: t.Dict, logger_name: str = "es_client") -> None:
     Configure global logging options from `options` and set a default `logger_name`
     """
     log_opts = check_log_opts(options)
-    _ = get_logger(log_opts, logger_name)
+    get_logger(log_opts)
 
     # Set up NullHandler() to handle nested elasticsearch8.trace Logger
     # instance in elasticsearch python client
