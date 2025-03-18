@@ -131,7 +131,8 @@ class TestLoggerSetup(unittest.TestCase):
                 'logformat': 'default',
                 'blacklist': [],
             }
-            logger = get_logger(log_opts)
+            get_logger(log_opts)
+            logger = logging.getLogger('test_logger_with_logfile')
             logger.info('Test message')
             with open(tmpfile.name, 'r', encoding='utf8') as f:
                 content = f.read()
@@ -140,7 +141,8 @@ class TestLoggerSetup(unittest.TestCase):
     def test_get_logger_without_logfile(self):
         """Test get_logger without a logfile, using stream handlers."""
         log_opts = {'loglevel': 'INFO', 'logformat': 'default', 'blacklist': []}
-        logger = get_logger(log_opts)
+        get_logger(log_opts)
+        logger = logging.getLogger('test_logger_without_logfile')
         stdout = StringIO()
         stderr = StringIO()
         handler_stdout = logging.StreamHandler(stdout)
