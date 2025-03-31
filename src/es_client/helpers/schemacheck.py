@@ -1,13 +1,16 @@
 """SchemaCheck class and associated functions"""
 
-# pylint: disable=protected-access, broad-except
+# pylint: disable=E1101,protected-access, broad-except
 import typing as t
 import logging
 from re import sub
 from copy import deepcopy
 from voluptuous import Schema
+import tiered_debug as debug
 from es_client.defaults import KEYS_TO_REDACT
 from es_client.exceptions import FailedValidation
+
+logger = logging.getLogger(__name__)
 
 
 def password_filter(data: t.Dict) -> t.Dict:
@@ -55,13 +58,13 @@ class SchemaCheck:
     """
 
     def __init__(self, config: t.Dict, schema: Schema, test_what: str, location: str):
-        self.logger = logging.getLogger(__name__)
         # Set the Schema for validation...
-        self.logger.debug("Schema: %s", schema)
+        debug.lv2('Starting function...')
+        debug.lv5(f'Schema: {schema}')
         if isinstance(config, dict):
-            self.logger.debug('"%s" config: %s', test_what, password_filter(config))
+            debug.lv5(f'"{test_what} config: {password_filter(config)}"')
         else:
-            self.logger.debug('"%s" config: %s', test_what, config)
+            debug.lv5(f'"{test_what} config: {config}"')
         #: Object attribute that gets the value of param `config`
         self.config = config
         #: Object attribute that gets the value of param `schema`
@@ -79,26 +82,32 @@ class SchemaCheck:
         """
         Report the error, and try to report the bad key or value as well.
         """
+        debug.lv2('Starting function...')
 
         def get_badvalue(data_string, data):
+            debug.lv5('Starting nested function...')
             elements = sub(r"[\'\]]", "", data_string).split("[")
             elements.pop(0)  # Get rid of data as the first element
             value = None
             for k in elements:
                 try:
+                    debug.lv4('TRY: parsing key')
                     key = int(k)
                 except ValueError:
                     key = k
                 if value is None:
                     value = data[key]
                     # if this fails, it's caught below
+            debug.lv5(f'Exiting nested function, returning {value}')
             return value
 
         try:
+            debug.lv4('TRY: parsing error')
             self.badvalue = get_badvalue(str(self.error).split()[-1], self.config)
         except Exception as exc:
-            self.logger.error("Unable to extract value: %s", exc)
+            logger.error(f'Unable to extract value: {exc}')
             self.badvalue = "(could not determine)"
+        debug.lv3('Exiting function')
 
     def result(self) -> Schema:
         """
@@ -113,17 +122,22 @@ class SchemaCheck:
         :py:exc:`FailedValidation <es_client.exceptions.FailedValidation>` exception.
         """
         try:
+            debug.lv4('TRY: validating configuration...')
             return self.schema(self.config)
         except Exception as exc:
             try:
-                # pylint: disable=E1101
+                debug.lv4('TRY: parsing exception...')
                 self.error = exc.errors[0]
             except Exception as err:
-                self.logger.error("Could not parse exception: %s", err)
+                logger.error(f'Could not parse exception: {err}')
                 self.error = f"{exc}"
             self.parse_error()
-            self.logger.error("Schema error: %s", self.error)
-            raise FailedValidation(
+            logger.error(f'Schema error: {self.error}')
+            msg = (
                 f"Configuration: {self.test_what}: Location: {self.location}: "
                 f'Bad Value: "{self.badvalue}", {self.error}. Check configuration file.'
-            ) from exc
+            )
+            debug.lv3('Exiting function, raising exception')
+            debug.lv5(f'Value = "{exc}"')
+            logger.error(msg)
+            raise FailedValidation(msg) from exc

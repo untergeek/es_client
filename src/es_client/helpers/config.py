@@ -5,6 +5,7 @@ import logging
 from shutil import get_terminal_size
 from dotmap import DotMap  # type: ignore
 from click import Context, secho, option as clickopt
+import tiered_debug as debug
 from elasticsearch8 import Elasticsearch
 from es_client.builder import Builder
 from es_client.defaults import (
@@ -21,6 +22,8 @@ from es_client.helpers.utils import (
     prune_nones,
     verify_url_schema,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def cli_opts(
@@ -138,14 +141,19 @@ def cli_opts(
     if settings is None:
         settings = CLICK_SETTINGS
     if not isinstance(settings, dict):
-        raise ConfigurationError(f'"settings" is not a dictionary: {type(settings)}')
+        msg = f'"settings" is not a dictionary: {type(settings)}'
+        secho(f'Error: {msg}', bold=True)
+        raise ConfigurationError(msg)
     if value not in settings:
+        msg = f'"{value}" not in settings'
+        secho(f'Error: {msg}', bold=True)
         raise ConfigurationError(f"{value} not in settings")
     argval = f"--{value}"
     if isinstance(onoff, dict):
         try:
             argval = f'--{onoff["on"]}{value}/--{onoff["off"]}{value}'
         except KeyError as exc:
+            secho(f'Error: Unable to parse --on/--off option: {exc}', bold=True)
             raise ConfigurationError from exc
     return (argval,), override_settings(settings[value], override)
 
@@ -175,13 +183,13 @@ def cloud_id_override(args: t.Dict, ctx: Context) -> t.Dict:
     separate object. It would be a pain and unnecessary to make another entry in
     :py:attr:`ctx.obj <click.Context.obj>` for this.
     """
-    logger = logging.getLogger(__name__)
+    debug.lv2('Starting function...')
     if "cloud_id" in ctx.params and ctx.params["cloud_id"]:
-        logger.debug(
-            "cloud_id from command-line superseding configuration file settings"
-        )
+        debug.lv1("cloud_id from command-line superseding configuration file settings")
         ctx.obj["client_args"].hosts = None
         args.pop("hosts", None)
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = {args}')
     return args
 
 
@@ -216,7 +224,8 @@ def context_settings() -> t.Dict:
     objdef = {"obj": {"default_config": None}}
     prefix = {"auto_envvar_prefix": ENV_VAR_PREFIX}
     help_options = {"help_option_names": ["-h", "--help"]}
-    return {**get_width(), **help_options, **objdef, **prefix}
+    retval = {**get_width(), **help_options, **objdef, **prefix}
+    return retval
 
 
 def generate_configdict(ctx: Context) -> None:
@@ -250,6 +259,7 @@ def generate_configdict(ctx: Context) -> None:
     Step 3: Populate :py:attr:`ctx.obj['configdict'] <click.Context.obj>` from the
     resulting values.
     """
+    debug.lv2('Starting function...')
     get_arg_objects(ctx)
     override_client_args(ctx)
     override_other_args(ctx)
@@ -259,6 +269,7 @@ def generate_configdict(ctx: Context) -> None:
             "other_settings": prune_nones(ctx.obj["other_args"].toDict()),
         }
     }
+    debug.lv3('Exiting function')
 
 
 def get_arg_objects(ctx: Context) -> None:
@@ -280,11 +291,13 @@ def get_arg_objects(ctx: Context) -> None:
     :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>` was populated when
     :func:`get_config()` was called.
     """
+    debug.lv2('Starting function...')
     ctx.obj["client_args"] = DotMap()
     ctx.obj["other_args"] = DotMap()
     validated_config = check_config(ctx.obj["draftcfg"], quiet=True)
     ctx.obj["client_args"].update(DotMap(validated_config["client"]))
     ctx.obj["other_args"].update(DotMap(validated_config["other_settings"]))
+    debug.lv3('Exiting function')
 
 
 def get_client(
@@ -313,8 +326,8 @@ def get_client(
     Raises :py:exc:`ESClientException <es_client.exceptions.ESClientException>` if
     unable to connect.
     """
-    logger = logging.getLogger(__name__)
-    logger.debug("Creating client object and testing connection")
+    debug.lv2("Starting function...")
+    debug.lv1("Creating client object and testing connection")
 
     builder = Builder(
         configdict=configdict,
@@ -325,12 +338,15 @@ def get_client(
     )
 
     try:
+        debug.lv4('TRY: Connecting to Elasticsearch')
         builder.connect()
     except Exception as exc:
+        debug.lv3('Exiting function, raising exception')
         logger.critical("Unable to establish client connection to Elasticsearch!")
-        logger.critical("Exception encountered: %s", exc)
+        logger.critical(f"Exception encountered: {exc}")
         raise ESClientException from exc
-
+    debug.lv3('Exiting function, returning value')
+    debug.lv5('Value = (Elasticsearch Client object)')
     return builder.client
 
 
@@ -389,18 +405,24 @@ def get_hosts(ctx: Context) -> t.Union[t.Sequence[str], None]:
     Raises a :py:exc:`ConfigurationError <es_client.exceptions.ConfigurationError>` if
     schema validation fails.
     """
-    logger = logging.getLogger(__name__)
+    debug.lv2('Starting function...')
     hostslist = []
     if "hosts" in ctx.params and ctx.params["hosts"]:
         for host in list(ctx.params["hosts"]):
             try:
+                debug.lv4('TRY: validating host URL schema')
                 hostslist.append(verify_url_schema(host))
             except ConfigurationError as err:
-                logger.error("Incorrect URL Schema: %s", err)
-                raise ConfigurationError from err
+                msg = f'Invalid URL schema: "{host}"'
+                debug.lv3('Exiting function, raising exception')
+                logger.error(f'{msg}, Exception: {err}')
+                raise ConfigurationError(msg) from err
+        retval = hostslist
     else:
-        return None
-    return hostslist
+        retval = None
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = {", ".join(hostslist)}')
+    return retval
 
 
 def get_width() -> t.Dict:
@@ -441,12 +463,14 @@ def hosts_override(args: t.Dict, ctx: Context) -> t.Dict:
     separate object. It would be a pain and unnecessary to make another entry in
     :py:attr:`ctx.obj <click.Context.obj>` for this.
     """
-    logger = logging.getLogger(__name__)
+    debug.lv2('Starting function...')
     if "hosts" in ctx.params and ctx.params["hosts"]:
-        logger.debug("hosts from command-line superseding configuration file settings")
+        debug.lv1("hosts from command-line superseding configuration file settings")
         ctx.obj["client_args"].hosts = None
         ctx.obj["client_args"].cloud_id = None
         args.pop("cloud_id", None)
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = {args}')
     return args
 
 
@@ -468,6 +492,7 @@ def options_from_dict(options_dict) -> t.Callable:
                 try:
                     argval = f'--{onoff["on"]}{option}/--{onoff["off"]}{option}'
                 except KeyError as exc:
+                    secho(f'Error: Unable to parse --on/--off option: {exc}', bold=True)
                     raise ConfigurationError from exc
             param_decls = (argval, option.replace("-", "_"))
             attrs = override_settings(settings, override) if override else settings
@@ -494,7 +519,7 @@ def override_client_args(ctx: Context) -> None:
     log to debug that this is the case, and that the default value for ``hosts`` of
     ``http://127.0.0.1:9200`` will be used.
     """
-    logger = logging.getLogger(__name__)
+    debug.lv2('Starting function...')
     args = {}
     # Populate args from ctx.params
     for key, value in ctx.params.items():
@@ -509,14 +534,15 @@ def override_client_args(ctx: Context) -> None:
     # Update the object if we have settings to override after pruning None values
     if args:
         for arg in args:
-            logger.debug("Using value for %s provided as a command-line option", arg)
+            debug.lv1(f'Using value for {arg} provided as a command-line option')
         ctx.obj["client_args"].update(DotMap(args))
     # Use a default hosts value of localhost:9200 if there is no host and no cloud_id
     if ctx.obj["client_args"].hosts is None and ctx.obj["client_args"].cloud_id is None:
-        logger.debug(
+        debug.lv1(
             "No hosts or cloud_id set! Setting default host to http://127.0.0.1:9200"
         )
         ctx.obj["client_args"].hosts = ["http://127.0.0.1:9200"]
+    debug.lv3('Exiting function')
 
 
 def override_other_args(ctx: Context) -> None:
@@ -532,7 +558,7 @@ def override_other_args(ctx: Context) -> None:
 
     Update :py:attr:`ctx.obj['other_args'] <click.Context.obj>` with the results.
     """
-    logger = logging.getLogger(__name__)
+    debug.lv2('Starting function...')
     apikey = prune_nones(
         {
             "id": ctx.params["id"],
@@ -560,8 +586,9 @@ def override_other_args(ctx: Context) -> None:
 
     if args:
         for arg in args:
-            logger.debug("Using value for %s provided as a command-line option", arg)
+            debug.lv1(f'Using value for {arg} provided as a command-line option')
         ctx.obj["other_args"].update(DotMap(args))
+    debug.lv3('Exiting function')
 
 
 def override_settings(settings: t.Dict, override: t.Dict) -> t.Dict:
@@ -610,10 +637,14 @@ def override_settings(settings: t.Dict, override: t.Dict) -> t.Dict:
 
     The default setting KEY of ``OPTION2`` would be overriden by NEWVALUE.
     """
+    debug.lv2('Starting function...')
     if not isinstance(override, dict):
+        secho(f'Error: override must be of type dict: {type(override)}', bold=True)
         raise ConfigurationError(f"override must be of type dict: {type(override)}")
     for key in list(override.keys()):
         # This formerly checked for the presence of key in settings, but override
         # should add non-existing keys if desired.
         settings[key] = override[key]
+    debug.lv3('Exiting function, returning value')
+    debug.lv5('Value = <REDACTED>')
     return settings

@@ -1,8 +1,10 @@
 """Builder and associated Classes"""
 
+# pylint: disable=R0902,R0913,R0917
 import typing as t
 import logging
 from dotmap import DotMap  # type: ignore
+import tiered_debug as debug
 from elastic_transport import ObjectApiResponse
 import elasticsearch8
 from es_client.helpers.schemacheck import password_filter
@@ -21,8 +23,6 @@ from es_client.helpers.utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-# pylint: disable=R0902
 
 
 class Builder:
@@ -46,6 +46,7 @@ class Builder:
         version_min: t.Tuple = VERSION_MIN,
         version_max: t.Tuple = VERSION_MAX,
     ):
+        debug.lv2('Initializing Builder object...')
         #: The DotMap storage for attributes and settings
         self.attributes = DotMap()
         self.set_client_defaults()
@@ -60,6 +61,7 @@ class Builder:
         if autoconnect:
             self.connect()
             self.test_connection()
+        debug.lv3('Builder object initialized')
 
     @property
     def master_only(self) -> bool:
@@ -173,35 +175,40 @@ class Builder:
 
     def set_client_defaults(self) -> None:
         """Set defaults for the client_args property"""
+        debug.lv2("Starting method...")
         self.client_args = DotMap()
         for key in CLIENT_SETTINGS:
             self.client_args[key] = None
+        debug.lv3('Exiting method')
 
     def set_other_defaults(self) -> None:
         """Set defaults for the other_args property"""
+        debug.lv2("Starting method...")
         self.other_args = DotMap()
         for key in OTHER_SETTINGS:
             self.other_args[key] = None
+        debug.lv3('Exiting method')
 
     def process_config_opts(
         self, configdict: t.Union[t.Dict, None], configfile: t.Union[str, None]
     ) -> None:
         """Process whether to use a configdict or configfile"""
+        debug.lv2("Starting method...")
         if configfile:
-            logger.debug("Using values from configfile: %s", configfile)
+            debug.lv2(f'Using values from file: {configfile}')
             self.config = check_config(get_yaml(configfile))
         if configdict:
-            logger.debug("Using configdict values: %s", password_filter(configdict))
+            debug.lv2(f'Using values from dict: {password_filter(configdict)}')
             self.config = check_config(configdict)
         if not configfile and not configdict:
             # Empty/Default config.
-            logger.debug(
-                "No configuration file or dictionary provided. Using defaults."
-            )
+            debug.lv2("No configuration file or dictionary provided. Using defaults.")
             self.config = check_config({"client": {}, "other_settings": {}})
+        debug.lv3('Exiting method')
 
     def update_config(self) -> None:
         """Update object with values provided"""
+        debug.lv2("Starting method...")
         self.client_args.update(self.config.client)
         self.other_args.update(self.config.other_settings)
         self.master_only = self.other_args.master_only
@@ -210,18 +217,23 @@ class Builder:
             self.skip_version_test = self.other_args.skip_version_test
         else:
             self.skip_version_test = False
+        debug.lv3('Exiting method')
 
     def validate(self) -> None:
         """Validate that what has been supplied is acceptable to attempt a connection"""
+        debug.lv2("Starting method...")
         # Configuration pre-checks
         if self.client_args.hosts is not None:
             verified_hosts = []
             self.client_args.hosts = ensure_list(self.client_args.hosts)
             for host in self.client_args.hosts:
                 try:
+                    debug.lv4(f'TRY: add {host} to verified_hosts')
                     verified_hosts.append(verify_url_schema(host))
                 except ConfigurationError as exc:
-                    logger.critical("Invalid host schema detected: %s -- %s", host, exc)
+                    logger.critical(f"Invalid host schema detected: {host} -- {exc}")
+                    debug.lv3('Exiting method, raising exception')
+                    debug.lv5(f'Exception = "{exc}"')
                     raise ConfigurationError(
                         f"Invalid host schema detected: {host}"
                     ) from exc
@@ -230,9 +242,11 @@ class Builder:
         self._check_api_key()
         self._check_cloud_id()
         self._check_ssl()
+        debug.lv3('Exiting method')
 
     def connect(self) -> None:
         """Attempt connection and do post-connection checks"""
+        debug.lv2("Starting method...")
         # Get the client
         self._get_client()
         # Post checks
@@ -241,9 +255,11 @@ class Builder:
             self._check_multiple_hosts()
             self._find_master()
             self._check_if_master()
+        debug.lv3('Exiting method')
 
     def _check_basic_auth(self) -> None:
         """Create ``basic_auth`` tuple from username and password"""
+        debug.lv2("Starting method...")
         if "username" in self.other_args or "password" in self.other_args:
             usr = self.other_args.username if "username" in self.other_args else None
             pwd = self.other_args.password if "password" in self.other_args else None
@@ -251,9 +267,12 @@ class Builder:
                 pass
             elif usr is None or pwd is None:
                 msg = "Must populate both username and password, or leave both empty"
+                debug.lv3('Exiting method, raising exception')
+                debug.lv5(f'Exception = "{msg}"')
                 raise ConfigurationError(msg)
             else:
                 self.client_args.basic_auth = (usr, pwd)
+        debug.lv3('Exiting method')
 
     def _check_api_key(self) -> None:
         """
@@ -263,6 +282,7 @@ class Builder:
         Or if ``api_key`` subkey ``token`` is present, derive ``id`` and ``api_key``
         from ``token``
         """
+        debug.lv2("Starting method...")
         if "api_key" in self.other_args:
             # If present, token will override any value in 'id' or 'api_key'
             # pylint: disable=no-member
@@ -291,9 +311,11 @@ class Builder:
                     raise ConfigurationError(msg)
                 else:
                     self.client_args.api_key = (api_id, api_key)
+        debug.lv3('Exiting method')
 
     def _check_cloud_id(self) -> None:
         """Remove ``hosts`` key if ``cloud_id`` provided"""
+        debug.lv2("Starting method...")
         if "cloud_id" in self.client_args and self.client_args.cloud_id is not None:
             # We can remove the default if that's all there is
             if (
@@ -302,13 +324,19 @@ class Builder:
             ):
                 self.client_args.hosts = None
             if self.client_args.hosts is not None:
+                debug.lv3('Exiting method, raising exception')
+                logger.error(
+                    'ConfigurationError: "Cannot populate both hosts and cloud_id"'
+                )
                 raise ConfigurationError('Cannot populate both "hosts" and "cloud_id"')
+        debug.lv3('Exiting method')
 
     def _check_ssl(self) -> None:
         """
         Use `certifi <https://github.com/certifi/python-certifi>`_ if using ssl
         and ``ca_certs`` has not been specified.
         """
+        debug.lv2("Starting method...")
         verify_ssl_paths(self.client_args)
         if "cloud_id" in self.client_args and self.client_args.cloud_id is not None:
             scheme = "https"
@@ -330,50 +358,66 @@ class Builder:
                         if not file_exists(self.client_args[key]):
                             msg = f'"{key}: {self.client_args[key]}" File not found!'
                             logger.critical(msg)
+                            debug.lv3('Exiting method, raising exception')
+                            debug.lv5(f'Exception = "{msg}"')
                             raise ConfigurationError(msg)
+        debug.lv3('Exiting method')
 
     def _find_master(self) -> None:
         """Find out if we are connected to the elected master node"""
+        debug.lv2("Starting method...")
         my_node_id = list(self.client.nodes.info(node_id="_local")["nodes"])[0]
         master_node_id = self.client.cluster.state(metric="master_node")["master_node"]
         self.is_master = my_node_id == master_node_id
+        debug.lv3('Exiting method')
 
     def _check_multiple_hosts(self) -> None:
         """Check for multiple hosts when master_only"""
+        debug.lv2("Starting method...")
         if "hosts" in self.client_args and isinstance(self.client_args.hosts, list):
             if len(self.client_args.hosts) > 1:
-                raise ConfigurationError(
-                    f'"master_only" cannot be True if more than one host is '
+                debug.lv3('Exiting method, raising exception')
+                msg = (
+                    '"master_only" cannot be True if more than one host is '
                     f"specified. Hosts = {self.client_args.hosts}"
                 )
+                logger.error(msg)
+                raise ConfigurationError(msg)
+        debug.lv3('Exiting method')
 
     def _check_if_master(self) -> None:
         """
         If we are not connected to the elected master node, raise
         :py:exc:`~es_client.exceptions.NotMaster`
         """
+        debug.lv2("Starting method...")
         if not self.is_master:
             msg = (
                 "The master_only flag is set to True, but the client is  "
                 "currently connected to a non-master node."
             )
-            logger.info(msg)
+            debug.lv3('Exiting method, raising exception')
+            logger.error(msg)
             raise NotMaster(msg)
+        debug.lv3('Exiting method')
 
     def _check_version(self) -> None:
         """
         Compare the Elasticsearch cluster version to :py:attr:`min_version` and
         :py:attr:`max_version`
         """
+        debug.lv2("Starting method...")
         v = get_version(self.client)
         if self.skip_version_test:
             logger.warning("Skipping Elasticsearch version checks")
         else:
-            logger.debug("Detected version %s", ".".join(map(str, v)))
+            debug.lv2(f'Version detected: {".".join(map(str, v))}')
             if v >= self.version_max or v < self.version_min:
                 msg = f"Elasticsearch version {'.'.join(map(str, v))} not supported"
+                debug.lv3('Exiting method, raising exception')
                 logger.error(msg)
                 raise ESClientException(msg)
+        debug.lv3('Exiting method')
 
     def _get_client(self) -> None:
         """
@@ -381,6 +425,7 @@ class Builder:
         :py:class:`~.elasticsearch.Elasticsearch` object and populate
         :py:attr:`client`
         """
+        debug.lv2('Starting method...')
         # Eliminate any remaining "None" entries from the client arguments
         client_args = prune_nones(self.client_args.toDict())
         self.client = elasticsearch8.Elasticsearch(**client_args)
@@ -390,4 +435,8 @@ class Builder:
         Connect and execute :meth:`Elasticsearch.info()
         <elasticsearch8.Elasticsearch.info>`
         """
-        return self.client.info()
+        debug.lv2('Starting method...')
+        retval = self.client.info()
+        debug.lv3('Exiting method, returning value')
+        debug.lv5(f'Value = "{retval}"')
+        return retval
