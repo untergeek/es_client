@@ -222,8 +222,8 @@ def get_format_string(nll: int) -> str:
     :returns: The format string based on the numeric log level
     """
     return (
-        "%(asctime)s %(levelname)-9s %(name)22s "
-        "%(funcName)22s:%(lineno)-4d %(message)s"
+        "%(asctime)s %(levelname)-9s %(name)30s "
+        "%(funcName)23s:%(lineno)-4d %(message)s"
         if nll == 10
         else "%(asctime)s %(levelname)-9s %(message)s"
     )
