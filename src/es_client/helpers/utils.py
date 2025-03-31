@@ -9,10 +9,11 @@ import binascii
 from pathlib import Path
 import yaml  # type: ignore
 import click
+import tiered_debug as debug
 from elasticsearch8 import Elasticsearch
 from es_client.defaults import ES_DEFAULT, config_schema
 from es_client.exceptions import ConfigurationError
-from es_client.helpers.schemacheck import SchemaCheck
+from es_client.helpers.schemacheck import SchemaCheck, password_filter
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ def check_config(config: dict, quiet: bool = False) -> dict:
     and ``client`` are contained in `config` before passing it (or empty defaults) to
     :class:`~es_client.helpers.schemacheck.SchemaCheck` for value validation.
     """
+    debug.lv2('Starting function...')
     if not isinstance(config, dict):
         logger.warning(
             "Elasticsearch client configuration must be provided as a dictionary."
@@ -51,12 +53,15 @@ def check_config(config: dict, quiet: bool = False) -> dict:
             es_settings["elasticsearch"][key] = prune_nones(
                 es_settings["elasticsearch"][key]
             )
-    return SchemaCheck(
+    retval = SchemaCheck(
         es_settings["elasticsearch"],
         config_schema(),
         "Elasticsearch Configuration",
         "elasticsearch",
     ).result()
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = "{password_filter(retval)}"')
+    return retval
 
 
 def ensure_list(data) -> list:
@@ -65,8 +70,11 @@ def ensure_list(data) -> list:
 
     Return a :py:class:`list`, even if `data` is a single value
     """
+    debug.lv2('Starting function...')
     if not isinstance(data, list):  # in case of a single value passed
         data = [data]
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = "{data}"')
     return data
 
 
@@ -76,7 +84,11 @@ def file_exists(file: str) -> bool:
 
     Verify `file` exists
     """
-    return Path(file).is_file()
+    debug.lv2('Starting function...')
+    retval = Path(file).is_file()
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = "{retval}"')
+    return retval
 
 
 def get_version(client: Elasticsearch) -> t.Tuple:
@@ -88,6 +100,7 @@ def get_version(client: Elasticsearch) -> t.Tuple:
 
     Get the Elasticsearch version of the connected node
     """
+    debug.lv2('Starting function...')
     version = client.info()["version"]["number"]
     # Split off any -dev, -beta, or -rc tags
     version = version.split("-")[0]
@@ -96,7 +109,10 @@ def get_version(client: Elasticsearch) -> t.Tuple:
         version = version.split(".")[:-1]
     else:
         version = version.split(".")
-    return tuple(map(int, version))
+    retval = tuple(map(int, version))
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = "{retval}"')
+    return retval
 
 
 def get_yaml(path: str) -> t.Dict:
@@ -107,6 +123,7 @@ def get_yaml(path: str) -> t.Dict:
 
     Read the file identified by `path` and import its YAML contents.
     """
+    debug.lv2('Starting function...')
     # Set the stage here to parse single scalar value environment vars from
     # the YAML file being read
     single = re.compile(r"^\$\{(.*)\}$")
@@ -125,9 +142,13 @@ def get_yaml(path: str) -> t.Dict:
     yaml.add_constructor("!single", single_constructor)
 
     try:
-        return yaml.load(read_file(path), Loader=yaml.FullLoader)
+        debug.lv4('TRY: yaml.load()')
+        retval = yaml.load(read_file(path), Loader=yaml.FullLoader)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as exc:
         raise ConfigurationError(f"Unable to parse YAML file. Error: {exc}") from exc
+    debug.lv3('Exiting function, returning value')
+    debug.lv5('Value = "<REDACTED YAML>"')
+    return retval
 
 
 def option_wrapper() -> t.Callable:
@@ -146,14 +167,25 @@ def parse_apikey_token(token: str) -> t.Tuple:
 
     Split a base64 encoded API Key Token into id and api_key
     """
+    debug.lv2('Starting function...')
     try:
+        debug.lv4('TRY: base64.b64decode()')
         decoded = base64.b64decode(token).decode("utf-8")
         split = decoded.split(":")
     except (binascii.Error, IndexError, UnicodeDecodeError) as exc:
+        debug.lv3('Exiting function, raising exception')
+        debug.lv5(f'Value = "{exc}"')
+        logger.error(
+            "Unable to parse base64 API Key Token.  Ensure you are using the correct "
+            "format: <id>:<api_key>"
+        )
         raise ConfigurationError(
             f"Unable to parse base64 API Key Token: {exc}"
         ) from exc
-    return (split[0], split[1])
+    retval = (split[0], split[1])
+    debug.lv3('Exiting function, returning value')
+    debug.lv5('Value = "<REDACTED API Key>"')
+    return retval
 
 
 def passthrough(func) -> t.Callable:
@@ -167,8 +199,12 @@ def prune_nones(mydict: t.Dict) -> t.Dict:
 
     Remove keys from `mydict` whose values are `None`
     """
+    debug.lv2('Starting function...')
     # Test for `None` instead of existence or zero values will be caught
-    return dict([(k, v) for k, v in mydict.items() if v is not None and v != "None"])
+    retval = dict([(k, v) for k, v in mydict.items() if v is not None and v != "None"])
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = "{password_filter(retval)}"')
+    return retval
 
 
 def read_file(myfile: str) -> str:
@@ -179,12 +215,17 @@ def read_file(myfile: str) -> str:
     :py:exc:`~.es_client.exceptions.ConfigurationError` exception if the file is unable
     to be read.
     """
+    debug.lv2('Starting function...')
     try:
+        debug.lv4('TRY: open() and read() file...')
         with open(myfile, "r", encoding="utf-8") as f:
             data = f.read()
+        debug.lv3('Exiting function, returning value')
+        debug.lv5('Value = "<REDACTED FILE>"')
         return data
     except IOError as exc:
         msg = f"Unable to read file {myfile}. Exception: {exc}"
+        debug.lv3('Exiting function, raising exception')
         logger.error(msg)
         raise ConfigurationError(msg) from exc
 
@@ -197,6 +238,7 @@ def verify_ssl_paths(args: t.Dict) -> None:
     :py:func:`~.es_client.helpers.utils.read_file` function will raise a
     :py:exc:`~.es_client.exceptions.ConfigurationError` if a file fails to be read.
     """
+    debug.lv2('Starting function...')
     # Test whether certificate is a valid file path
     if "ca_certs" in args and args["ca_certs"] is not None:
         read_file(args["ca_certs"])
@@ -206,6 +248,7 @@ def verify_ssl_paths(args: t.Dict) -> None:
     # Test whether client_key is a valid file path
     if "client_key" in args and args["client_key"] is not None:
         read_file(args["client_key"])
+    debug.lv3('Exiting function')
 
 
 def verify_url_schema(url: str) -> str:
@@ -219,6 +262,7 @@ def verify_url_schema(url: str) -> str:
     Raise a :py:exc:`~.es_client.exceptions.ConfigurationError` exception if a URL
     schema is invalid for any reason.
     """
+    debug.lv2('Starting function...')
     parts = url.lower().split(":")
     errmsg = f"URL Schema invalid for {url}"
     if len(parts) < 3:
@@ -228,11 +272,23 @@ def verify_url_schema(url: str) -> str:
         elif parts[0] == "http":
             port = "80"
         else:
+            debug.lv3('Exiting function, raising exception')
+            debug.lv5(f'Value = "{errmsg}"')
+            logger.error(f'Invalid URL schema: "{url}". Missing port?')
             raise ConfigurationError(errmsg)
     elif len(parts) == 3:
         if (parts[0] != "http") and (parts[0] != "https"):
+            debug.lv3('Exiting function, raising exception')
+            debug.lv5(f'Value = "{errmsg}"')
+            logger.error(f'Invalid URL schema: "{url}"')
             raise ConfigurationError(errmsg)
         port = parts[2]
     else:
+        debug.lv3('Exiting function, raising exception')
+        debug.lv5(f'Value = "{errmsg}"')
+        logger.error(f'Invalid URL schema: "{url}"')
         raise ConfigurationError(errmsg)
-    return parts[0] + ":" + parts[1] + ":" + port
+    retval = parts[0] + ":" + parts[1] + ":" + port
+    debug.lv3('Exiting function, returning value')
+    debug.lv5(f'Value = "{retval}"')
+    return retval

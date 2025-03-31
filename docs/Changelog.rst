@@ -3,6 +3,20 @@
 Changelog
 =========
 
+8.17.5 (31 March 2025)
+----------------------
+
+**Announcement**
+
+  * Adapted to use the ``tiered_debug`` logging helper module.
+    * Lots of replacements added to use tiered debug logging instead of logger.debug
+    * With the tiered debug logging options, more verbose logging was added that
+      will not be seen unless set to show more. See the ``tiered_debug`` module
+      for more information.
+  * Version bumped to ``8.17.5``.
+  * Updated tests to catch the new tiered debug logging.
+  * All tests passing.
+
 8.17.4 (18 March 2025)
 ----------------------
 
