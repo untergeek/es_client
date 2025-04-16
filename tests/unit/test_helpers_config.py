@@ -7,8 +7,8 @@ import click
 from click.testing import CliRunner
 from es_client.defaults import CLICK_SETTINGS, ES_DEFAULT
 from es_client.exceptions import ConfigurationError
-from es_client.helpers import config as cfgfn
-from es_client.helpers.utils import option_wrapper
+from es_client import config as cfgfn
+from es_client.utils import option_wrapper
 from . import (
     DEFAULTCFG,
     DEFAULT_HOST,

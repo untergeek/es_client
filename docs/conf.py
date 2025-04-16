@@ -66,7 +66,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3.12", None),
-    "elasticsearch8": ("https://elasticsearch-py.readthedocs.io/en/v8.17.2", None),
+    "elasticsearch8": ("https://elasticsearch-py.readthedocs.io/en/v8.18.0", None),
     "elastic-transport": (
         "https://elastic-transport-python.readthedocs.io/en/stable",
         None,

@@ -6,9 +6,12 @@ import shutil
 import string
 import tempfile
 import click
+from es_client.debug import debug
 from es_client.defaults import LOGGING_SETTINGS
-from es_client.helpers import config as cfgfn
-from es_client.helpers.utils import option_wrapper, prune_nones
+from es_client import config as cfgfn
+from es_client.utils import option_wrapper, prune_nones
+
+debug.level = 5
 
 ONOFF = {"on": "", "off": "no-"}
 
