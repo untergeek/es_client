@@ -6,7 +6,7 @@ from dotmap import DotMap  # type: ignore
 from elasticsearch8 import Elasticsearch
 from es_client.defaults import ES_DEFAULT
 from es_client.exceptions import ESClientException
-from es_client.helpers import config
+from es_client import config
 from . import CACRT, HOST, PASS, USER
 
 CONFIG = {

@@ -7,7 +7,7 @@ import re
 import tempfile
 import unittest
 from unittest.mock import MagicMock
-from es_client.helpers.logging import (
+from es_client.logging import (
     Whitelist,
     Blacklist,
     JSONFormatter,

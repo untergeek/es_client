@@ -3,8 +3,8 @@
 from unittest import TestCase
 import pytest
 import click
-from es_client.helpers.logging import check_logging_config, get_numeric_loglevel
-from es_client.helpers.utils import get_yaml
+from es_client.logging import check_logging_config, get_numeric_loglevel
+from es_client.utils import get_yaml
 from . import FileTestObj
 
 

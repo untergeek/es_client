@@ -4,8 +4,8 @@ Click commands to follow the top-level
 
 import logging
 import click
-from es_client.helpers import config as cfg
-from es_client.defaults import SHOW_EVERYTHING
+from . import config as cfg
+from .defaults import SHOW_EVERYTHING
 
 # pylint: disable=R0913,R0914,W0613,W0622
 

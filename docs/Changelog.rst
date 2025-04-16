@@ -3,16 +3,45 @@
 Changelog
 =========
 
+8.18.0 (15 April 2025)
+----------------------
+
+**Announcement**
+
+Release of 8.18.0
+
+**Changes**
+
+  * Version bumped to ``8.18.0``.
+  * Dependencies bumped:
+     * ``elasticsearch8==8.18.0``
+     * ``tiered_debug==1.1.0``
+  * Updated code to take advantage of ``tiered_debug``. Use the new local ``debug.py``
+    module to get the ``debug`` logging object for the entire module.
+  * To shorten module names when logging, the ``helpers`` subdirector/submodule
+    was deprecated. A DeprecationWarning will be raised if you try to import from
+    ``es_client.helpers``, but it will still work. The modules that were formerly
+    in ``helpers``, namely
+
+     * ``config``
+     * ``logging``
+     * ``schemacheck``
+     * ``utils``
+
+    are now at the root level under ``es_client``. 
+    
+  * All tests passing.
+
 8.17.5 (31 March 2025)
 ----------------------
 
 **Announcement**
 
   * Adapted to use the ``tiered_debug`` logging helper module.
-    * Lots of replacements added to use tiered debug logging instead of logger.debug
-    * With the tiered debug logging options, more verbose logging was added that
-      will not be seen unless set to show more. See the ``tiered_debug`` module
-      for more information.
+     * Lots of replacements added to use tiered debug logging instead of logger.debug
+     * With the tiered debug logging options, more verbose logging was added that
+       will not be seen unless set to show more. See the ``tiered_debug`` module
+       for more information.
   * Version bumped to ``8.17.5``.
   * Updated tests to catch the new tiered debug logging.
   * All tests passing.
@@ -101,14 +130,14 @@ This will log all output to ``stdout.log`` and all errors to ``stderr.log``.
 **Announcements**
 
   * Python 3.13 support...but with a caveat.
-    * HUGE (potential) caveat, though. The Python 3.13 SSL implementation now has
-      ``X509_V_FLAG_X509_STRICT`` set by default. This unfortunately means that
-      self-signed certificates created by Elasticsearch's ``certutil`` will not
-      work with Python 3.13 as they do not yet include the key usage extension.
-      If you are using ``es_client`` in any way with one of these certificates,
-      I highly recommend that you not use Python 3.13 until this is resolved.
-    * 3.13 is excluded from the Hatch test matrix for this reason.
-    * 3.13 will still be tested manually with each release.
+     * HUGE (potential) caveat, though. The Python 3.13 SSL implementation now has
+       ``X509_V_FLAG_X509_STRICT`` set by default. This unfortunately means that
+       self-signed certificates created by Elasticsearch's ``certutil`` will not
+       work with Python 3.13 as they do not yet include the key usage extension.
+       If you are using ``es_client`` in any way with one of these certificates,
+       I highly recommend that you not use Python 3.13 until this is resolved.
+     * 3.13 is excluded from the Hatch test matrix for this reason.
+     * 3.13 will still be tested manually with each release.
   
 **Changes**
 
