@@ -4,7 +4,7 @@ from unittest import TestCase
 import pytest
 from voluptuous import Schema
 from es_client.exceptions import FailedValidation
-from es_client.helpers.schemacheck import SchemaCheck
+from es_client.schemacheck import SchemaCheck
 from es_client.defaults import (
     config_schema,
     VERSION_MIN,

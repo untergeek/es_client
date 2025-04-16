@@ -1,4 +1,4 @@
-elasticsearch8==8.17.1
+elasticsearch8==8.18.0
 voluptuous>=0.14.2
 pyyaml==6.0.2
 pint>=0.19.2

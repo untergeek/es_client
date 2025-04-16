@@ -8,7 +8,7 @@ Helpers
 Config
 ======
 
-.. automodule:: es_client.helpers.config
+.. automodule:: es_client.config
    :members:
    :private-members:
    :undoc-members:
@@ -19,7 +19,7 @@ Config
 Logging
 =======
 
-.. automodule:: es_client.helpers.logging
+.. automodule:: es_client.logging
    :members:
    :private-members:
    :undoc-members:
@@ -31,7 +31,7 @@ Logging
 SchemaCheck
 ===========
 
-.. automodule:: es_client.helpers.schemacheck
+.. automodule:: es_client.schemacheck
    :members:
    :private-members:
    :undoc-members:
@@ -43,7 +43,7 @@ SchemaCheck
 Utils
 =====
 
-.. automodule:: es_client.helpers.utils
+.. automodule:: es_client.utils
    :members:
    :private-members:
    :undoc-members:
