@@ -1,6 +1,18 @@
-"""SchemaCheck class and associated functions"""
+"""Schema validation and redaction utilities
 
-# pylint: disable=E1101,protected-access, broad-except
+This module provides the :class:`SchemaCheck` class to validate configuration
+dictionaries against a :class:`voluptuous.Schema` and a function to redact sensitive
+data for secure logging. It supports configuration validation for
+:class:`~es_client.builder.Builder` and logging in :mod:`~es_client.logging`.
+
+Classes:
+    SchemaCheck: Validates a configuration dictionary against a schema.
+
+Functions:
+    password_filter: Redact sensitive values from a configuration dictionary.
+"""
+
+# pylint: disable=E1101,W0718
 import typing as t
 import logging
 from re import sub
@@ -15,15 +27,26 @@ logger = logging.getLogger(__name__)
 
 def password_filter(data: t.Dict) -> t.Dict:
     """
-    :param data: Configuration data
+    Redact sensitive values from a configuration dictionary.
 
-    :returns: A :py:class:`~.copy.deepcopy` of `data` with the value obscured by
-        ``REDACTED`` if the key is one of
-        :py:const:`~.es_client.defaults.KEYS_TO_REDACT`.
+    Args:
+        data (dict): Configuration dictionary to process.
 
-    Recursively look through all nested structures of `data` for keys from
-    :py:const:`~.es_client.defaults.KEYS_TO_REDACT` and redact the value with
-    ``REDACTED``
+    Returns:
+        dict: A deep copy of `data` with sensitive values (keys in
+            :data:`~es_client.defaults.KEYS_TO_REDACT`) replaced with 'REDACTED'.
+
+    Recursively traverses `data`, replacing values of keys listed in
+    :data:`~es_client.defaults.KEYS_TO_REDACT` (e.g., 'password', 'api_key') with
+    'REDACTED' for secure logging.
+
+    Example:
+        >>> data = {'user': 'test', 'password': 'secret', 'nested': {'api_key': 'key'}}
+        >>> filtered = password_filter(data)
+        >>> filtered
+        {'user': 'test', 'password': 'REDACTED', 'nested': {'api_key': 'REDACTED'}}
+        >>> data['password']  # Original unchanged
+        'secret'
     """
 
     def iterdict(mydict):
@@ -39,55 +62,82 @@ def password_filter(data: t.Dict) -> t.Dict:
 
 class SchemaCheck:
     """
-    :param config: A configuration dictionary.
-    :param schema: A voluptuous schema definition
-    :param test_what: which configuration block is being validated
-    :param location: An string to report which configuration sub-block is being tested.
+    Validate a configuration dictionary against a voluptuous schema.
 
-    :type config: dict
-    :type schema: :py:class:`~.voluptuous.schema_builder.Schema`
-    :type test_what: str
-    :type location: str
+    Args:
+        config (dict): Configuration dictionary to validate.
+        schema (:class:`voluptuous.Schema`): Schema to validate against.
+        test_what (str): Description of the configuration block (e.g., 'Client Config').
+        location (str): Context of the configuration (e.g., 'elasticsearch.client').
 
-    Validate `config` with the provided :py:class:`~.voluptuous.schema_builder.Schema`.
-    :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.test_what` and
-    :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.location` are used for
-    reporting in case of failure.  If validation is successful, the
-    :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.result` method returns
-    :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`.
+    Attributes:
+        config (dict): The configuration dictionary.
+        schema (:class:`voluptuous.Schema`): The validation schema.
+        test_what (str): Description of the configuration block.
+        location (str): Context of the configuration.
+        badvalue (str): Invalid value causing validation failure, or 'no bad value yet'.
+        error (str): Validation error message, or 'No error yet'.
+
+    Raises:
+        :exc:`~es_client.exceptions.FailedValidation`: If validation fails.
+
+    Example:
+        >>> from voluptuous import Schema
+        >>> schema = Schema({'host': str})
+        >>> config = {'host': 'localhost'}
+        >>> check = SchemaCheck(config, schema, 'Test Config', 'test')
+        >>> check.result()
+        {'host': 'localhost'}
+        >>> config = {'host': 123}
+        >>> check = SchemaCheck(config, schema, 'Test Config', 'test')
+        >>> check.result()
+        Traceback (most recent call last):
+            ...
+        es_client.exceptions.FailedValidation: Configuration: Test Config: Location:
+        test: Bad Value: "123", expected str @ data['host']. Check configuration file.
     """
 
     def __init__(self, config: t.Dict, schema: Schema, test_what: str, location: str):
-        # Set the Schema for validation...
         debug.lv2('Starting function...')
         debug.lv5(f'Schema: {schema}')
         if isinstance(config, dict):
             debug.lv5(f'"{test_what} config: {password_filter(config)}"')
         else:
             debug.lv5(f'"{test_what} config: {config}"')
-        #: Object attribute that gets the value of param `config`
         self.config = config
-        #: Object attribute that gets the value of param `schema`
         self.schema = schema
-        #: Object attribute that gets the value of param `test_what`
         self.test_what = test_what
-        #: Object attribute that gets the value of param `location`
         self.location = location
-        #: Object attribute that is initialized with the value ``no bad value yet``
         self.badvalue = "no bad value yet"
-        #: Object attribute that is initialized with the value ``No error yet``
         self.error = "No error yet"
 
     @begin_end()
     def parse_error(self) -> t.Any:
         """
-        Report the error, and try to report the bad key or value as well.
+        Extract and report the invalid value causing a validation error.
+
+        Attempts to parse the error message to identify the bad value, updating
+        :attr:`badvalue`. Logs errors if parsing fails.
+
+        Returns:
+            None: Updates :attr:`badvalue` and logs the result.
+
+        Example:
+            >>> from voluptuous import Schema
+            >>> schema = Schema({'host': str})
+            >>> config = {'host': 123}
+            >>> check = SchemaCheck(config, schema, 'Test Config', 'test')
+            >>> try:
+            ...     check.result()
+            ... except FailedValidation:
+            ...     check.badvalue
+            '123'
         """
 
         def get_badvalue(data_string, data):
             debug.lv5('Starting nested function...')
             elements = sub(r"[\'\]]", "", data_string).split("[")
-            elements.pop(0)  # Get rid of data as the first element
+            elements.pop(0)  # Remove 'data' prefix
             value = None
             for k in elements:
                 try:
@@ -97,7 +147,6 @@ class SchemaCheck:
                     key = k
                 if value is None:
                     value = data[key]
-                    # if this fails, it's caught below
             debug.lv5(f'Exiting nested function, returning {value}')
             return value
 
@@ -111,15 +160,25 @@ class SchemaCheck:
     @begin_end()
     def result(self) -> Schema:
         """
-        :rtype: Schema
-        :returns: :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`
+        Validate the configuration and return the result.
 
-        If validation is successful, return the value of
-        :py:attr:`~.es_client.helpers.schemacheck.SchemaCheck.config`
+        Returns:
+            :class:`voluptuous.Schema`: Validated configuration from
+                :attr:`config` if successful.
 
-        If unsuccessful, try to parse the error in
-        :py:meth:`~.es_client.helpers.schemacheck.SchemaCheck.parse_error` and raise a
-        :py:exc:`FailedValidation <es_client.exceptions.FailedValidation>` exception.
+        Raises:
+            :exc:`~es_client.exceptions.FailedValidation`: If validation fails,
+                including error details and bad value.
+
+        Calls :meth:`parse_error` to extract the invalid value if validation fails.
+
+        Example:
+            >>> from voluptuous import Schema
+            >>> schema = Schema({'host': str})
+            >>> config = {'host': 'localhost'}
+            >>> check = SchemaCheck(config, schema, 'Test Config', 'test')
+            >>> check.result()
+            {'host': 'localhost'}
         """
         try:
             debug.lv4('TRY: validating configuration...')
@@ -141,3 +200,20 @@ class SchemaCheck:
             debug.lv5(f'Value = "{exc}"')
             logger.error(msg)
             raise FailedValidation(msg) from exc
+
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the SchemaCheck instance.
+
+        Returns:
+            str: Description of the configuration being validated.
+
+        Example:
+            >>> from voluptuous import Schema
+            >>> check = SchemaCheck(
+                {'host': 'localhost'}, Schema({'host': str}), 'Test Config', 'test'
+            )
+            >>> repr(check)
+            "<SchemaCheck test_what='Test Config' location='test'>"
+        """
+        return f"<SchemaCheck test_what='{self.test_what}' location='{self.location}'>"

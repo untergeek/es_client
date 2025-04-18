@@ -12,20 +12,21 @@ VERSION_MIN: t.Tuple = (8, 0, 0)
 VERSION_MAX: t.Tuple = (8, 99, 99)
 """Maximum compatible Elasticsearch version"""
 
-KEYS_TO_REDACT: t.Sequence[str] = [
+KEYS_TO_REDACT: t.List[str] = [
     "password",
     "basic_auth",
     "bearer_auth",
     "api_key",
     "id",
     "opaque_id",
+    "token",
 ]
 """
 When doing configuration Schema validation, redact the value from any listed dictionary
 key. This only happens if logging is at DEBUG level.
 """
 
-CLIENT_SETTINGS: t.Sequence[str] = [
+CLIENT_SETTINGS: t.List[str] = [
     "hosts",
     "cloud_id",
     "api_key",
@@ -73,7 +74,7 @@ Valid argument/option names for :py:class:`~.elasticsearch8.Elasticsearch`. Too 
 to show
 """
 
-OTHER_SETTINGS: t.Sequence[str] = [
+OTHER_SETTINGS: t.List[str] = [
     "master_only",
     "skip_version_test",
     "username",
@@ -438,12 +439,12 @@ def version_min() -> t.Tuple:
     return VERSION_MIN
 
 
-def client_settings() -> t.Sequence[str]:
+def client_settings() -> t.List[str]:
     """Return the client settings"""
     return CLIENT_SETTINGS
 
 
-def config_settings() -> t.Sequence[str]:
+def config_settings() -> t.List[str]:
     """
     Return only the client settings likely to be used in a config file or at the
     command-line.
@@ -460,6 +461,6 @@ def config_settings() -> t.Sequence[str]:
     return settings
 
 
-def other_settings() -> t.Sequence[str]:
+def other_settings() -> t.List[str]:
     """Return the other settings"""
     return OTHER_SETTINGS

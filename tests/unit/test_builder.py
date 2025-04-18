@@ -1,6 +1,7 @@
 """Test helpers.schemacheck"""
 
 from unittest import TestCase
+from copy import deepcopy
 import certifi
 import click
 import pytest
@@ -33,7 +34,8 @@ class TestInit(TestCase):
         file_obj.write_config(file_obj.args["configfile"], YAMLCONFIG.format(es_url))
         # Test
         build_obj = Builder(configfile=file_obj.args["configfile"])
-        assert build_obj.client_args.hosts[0] == es_url
+        result = list(build_obj.client_args.hosts)
+        assert result[0] == es_url
         # Teardown
         file_obj.teardown()
 
@@ -74,7 +76,8 @@ class TestInit(TestCase):
         """Ensure that :443 is appended to a host with https and no port"""
         test = {"elasticsearch": {"client": {"hosts": ["https://127.0.0.1"]}}}
         obj = Builder(configdict=test)
-        assert "https://127.0.0.1:443" == obj.client_args.hosts[0]
+        result = list(obj.client_args.hosts)
+        assert "https://127.0.0.1:443" == result[0]
 
     def test_url_schema_validation_raises(self):
         """Ensure that ConfigurationError is raised with an invalid host URL schema"""
@@ -100,12 +103,12 @@ class TestAuth(TestCase):
         """
         Ensure ConfigurationError is Raised when password is provided but no username
         """
-        obj = Builder(configdict=DEFAULT)
-        obj.client_args.hosts = ["http://127.0.0.1:9200"]
-        obj.other_args.password = "test"
-        assert obj.other_args.username is None
+        pwd = "test"
+        cfg = deepcopy(DEFAULT)
+        cfg["elasticsearch"]["other_settings"] = {}
+        cfg["elasticsearch"]["other_settings"]["password"] = pwd
         with pytest.raises(ConfigurationError):
-            obj._check_basic_auth()
+            _ = Builder(configdict=cfg)
 
     def test_id_but_no_api_key(self):
         """Ensure ConfigurationError is Raised when id is passed but no api_key"""
@@ -156,7 +159,11 @@ class TestAuth(TestCase):
             }
         }
         obj = Builder(configdict=test)
-        assert obj.client_args.api_key == (api_id, api_key)
+        assert tuple(obj._secrets.get_secret('api_key')) == (api_id, api_key)
+        assert obj.other_args.api_key.id is None
+        assert obj.other_args.api_key.api_key is None
+        assert obj.config.other_settings.api_key.id is None
+        assert obj.config.other_settings.api_key.api_key is None
 
     def test_proper_api_key_token(self):
         """Ensure that API key value is assigned to client_args when token is good"""
@@ -171,7 +178,9 @@ class TestAuth(TestCase):
             }
         }
         obj = Builder(configdict=test)
-        assert obj.client_args.api_key == (api_id, api_key)
+        assert tuple(obj._secrets.get_secret('api_key')) == (api_id, api_key)
+        assert obj.other_args.api_key.token is None
+        assert obj.config.other_settings.api_key.token is None
 
     def test_invalid_api_key_token(self):
         """Ensure that ConfigurationError is raise when token is invalid"""
@@ -189,13 +198,15 @@ class TestAuth(TestCase):
         """Test basic_auth is set properly"""
         usr = "username"
         pwd = "password"
-        obj = Builder(configdict=DEFAULT)
-        obj.other_args.username = usr
-        obj.other_args.password = pwd
+        cfg = deepcopy(DEFAULT)
+        cfg["elasticsearch"]["other_settings"] = {}
+        cfg["elasticsearch"]["other_settings"]["username"] = usr
+        cfg["elasticsearch"]["other_settings"]["password"] = pwd
+        obj = Builder(configdict=cfg)
         obj._check_basic_auth()
         assert usr not in obj.client_args
         assert pwd not in obj.client_args
-        assert (usr, pwd) == obj.client_args.basic_auth
+        assert (usr, pwd) == tuple(obj._secrets.get_secret("basic_auth"))
 
 
 class TestCheckSSL(TestCase):
