@@ -3,17 +3,9 @@
 Exceptions
 ----------
 
-.. autoexception:: es_client.exceptions.ESClientException
-   :members:
+.. currentmodule:: es_client.exceptions
 
-.. autoexception:: es_client.exceptions.ConfigurationError
+.. automodule:: es_client.exceptions
    :members:
-
-.. autoexception:: es_client.exceptions.MissingArgument
-   :members:
-
-.. autoexception:: es_client.exceptions.NotMaster
-   :members:
-
-.. autoexception:: es_client.exceptions.LoggingException
-   :members:
+   :undoc-members:
+   :show-inheritance:

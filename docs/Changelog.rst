@@ -3,6 +3,51 @@
 Changelog
 =========
 
+[8.18.1] - 2025-04-17
+---------------------
+
+**Added**
+
+- ``SecretStore`` class to ``builder.py`` for secure storage of sensitive data,
+  including ``password``, ``bearer_auth``, ``api_key``, and ``opaque_id``. This
+  class is integrated into the ``Builder`` class, ensuring sensitive data is not
+  exposed in logs or exceptions, and is redacted in ``__repr__`` outputs, and are
+  removed from the in-memory DotMap representations of the config.
+- Adding ``SecretStore`` required the additional dependency of ``"cryptography>=44.0.2"``
+- Comprehensive reStructuredText (reST) docstrings for all modules, classes, and
+  functions in ``builder.py``, ``logging.py``, ``config.py``, ``schemacheck.py``,
+  ``utils.py``, ``exceptions.py``, and ``commands.py``, detailing inputs, outputs,
+  raises, and examples.
+- Doctests for testable functions and classes across all modules, ensuring
+  functionality verification without external dependencies (e.g., mocked
+  ``click.Context``, ``Elasticsearch`` client).
+- Custom ``__repr__`` methods for classes in ``builder.py`` (``Builder``,
+  ``SecretStore``), ``logging.py`` (``Whitelist``, ``Blacklist``, ``JSONFormatter``),
+  ``schemacheck.py`` (``SchemaCheck``), and ``exceptions.py`` (all exception classes),
+  enhancing debugging with secure, redacted outputs.
+- Cloned the ``password_filter`` function from ``schemacheck.py`` into
+  ``exceptions.py`` to avoid circular import, maintaining redaction for sensitive data
+  in exception messages.
+
+**Changed**
+
+- Enhanced security by ensuring no sensitive data (e.g., passwords, API keys)
+  appears in docstrings, doctests, or ``__repr__`` outputs, leveraging
+  ``password_filter`` for redaction.
+- Updated ``test_builder.py`` to align with ``builder.py``’s ``SecretStore``
+  integration, fixing failing tests (``test_pass_but_no_user``, ``test_proper_api_key``,
+  ``test_proper_api_key_token``) by checking ``_secrets.get_secret`` and verifying
+  sensitive data cleanup.
+- Preserved all existing functionality, imports, comments, and pylint directives
+  in all modules, adding only documentation and minor formatting for line length
+  compliance.
+- Adjusted ``commands.py`` to include all three commands (``show_all_options``,
+  ``test_connection``, ``test_stderr``) with detailed docstrings and doctests,
+  retaining extensive comments on ``SHOW_EVERYTHING`` usage.
+- Bumped version of ``tiered-debug`` to ``1.2.1`` in ``pyproject.toml`` and
+  ``requirements.txt``.
+
+
 8.18.0 (15 April 2025)
 ----------------------
 
