@@ -1,68 +1,99 @@
 """Sphinx Documentation Configuration"""
 
-# -*- coding: utf-8 -*-
-#  Licensed to Elasticsearch B.V. under one or more contributor
-#  license agreements. See the NOTICE file distributed with
-#  this work for additional information regarding copyright
-#  ownership. Elasticsearch B.V. licenses this file to you under
-#  the Apache License, Version 2.0 (the "License"); you may
-#  not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-# 	http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing,
-#  software distributed under the License is distributed on an
-#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#  KIND, either express or implied.  See the License for the
-#  specific language governing permissions and limitations
-#  under the License.
+# pylint: disable=C0103,C0114,E0401,W0611,W0622
 
-# pylint: disable=redefined-builtin, invalid-name
+# Configuration file for the Sphinx documentation builder.
+#
+# This file only contains a selection of the most common options. For a full
+# list see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+
 import sys
 import os
 from datetime import datetime
-from es_client import __version__ as ver
 
 COPYRIGHT_YEARS = f"2022-{datetime.now().year}"
+
+# Extract the version from the __init__.py file
+
+path = "../src/es_client/__init__.py"
+myinit = os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+
+ver = ""
+with open(myinit, "r", encoding="utf-8") as file:
+    lines = file.readlines()
+
+for line in lines:
+    if line.startswith("__version__"):
+        ver = line.split('"')[1]
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath("../"))
 
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphinx"]
+# -- Project information -----------------------------------------------------
 
-autoclass_content = "both"
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
-
-# The suffix of source filenames.
-source_suffix = ".rst"
-
-# The master toctree document.
-master_doc = "index"
-
-# General information about the project.
 project = "es_client"
 author = "Aaron Mildenstein"
-copyright = f"{COPYRIGHT_YEARS}, Aaron Mildenstein"
-
+copyright = f"{COPYRIGHT_YEARS}, {author}"
 release = ver
 version = ".".join(release.split(".")[:2])
 
+# -- General configuration ---------------------------------------------------
+
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+]
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+
+templates_path = ["_templates"]
 exclude_patterns = ["_build"]
+source_suffix = ".rst"
+master_doc = "index"
+
+# -- General configuration ---------------------------------------------------
+
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+]
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+
+templates_path = ["_templates"]
+exclude_patterns = ["_build"]
+source_suffix = ".rst"
+master_doc = "index"
+
+# -- Options for HTML output -------------------------------------------------
 
 pygments_style = "sphinx"
 
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 if not on_rtd:  # only import and set the theme if we're building docs locally
-    import sphinx_rtd_theme
-
     html_theme = "sphinx_rtd_theme"
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+# -- Autodoc configuration ---------------------------------------------------
+
+
+autoclass_content = "both"
+autodoc_member_order = "bysource"
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3.12", None),

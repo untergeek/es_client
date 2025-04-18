@@ -1,6 +1,29 @@
-"""Logging Helpers"""
+"""Logging configuration for es_client
 
-# The __future__ annotations line allows support for Python 3.8 and 3.9 to continue
+This module provides utilities for configuring logging in es_client, including filters
+(:class:`Whitelist`, :class:`Blacklist`) and a JSON formatter (:class:`JSONFormatter`).
+It supports log level conversion, logger name normalization, and setup for CLI and
+configuration file inputs, integrating with :py:class:`click.Context`.
+
+Classes:
+    Whitelist: Logging filter to allow specific logger names.
+    Blacklist: Logging filter to block specific logger names.
+    JSONFormatter: Custom formatter for JSON log output.
+
+Functions:
+    check_logging_config: Validate logging configuration using SchemaCheck.
+    configure_logging: Configure logging from a click context.
+    de_dot: Replace dots in logger names with underscores.
+    deepmerge: Recursively merge dictionaries for JSON formatting.
+    get_format_string: Return a log format string based on log level.
+    get_logger: Set up the root logger with handlers and filters.
+    get_numeric_loglevel: Convert a string log level to a logging constant.
+    override_logging: Merge CLI and config file logging settings.
+    check_log_opts: Apply default logging options.
+    set_logging: Configure global logging with handlers and filters.
+"""
+
+# The __future__ annotations line allows support for Python 3.8 and 3.9
 from __future__ import annotations
 import typing as t
 import sys
@@ -16,107 +39,39 @@ from .defaults import config_logging, LOGDEFAULTS
 from .schemacheck import SchemaCheck
 from .utils import ensure_list, prune_nones
 
-# from pathlib import Path  # used in the is_docker() function
-
 # pylint: disable=R0903
 
-logger = logging.getLogger('')  # Get the root logger for this module
-
-
-class Whitelist(logging.Filter):
-    """
-    Child class inheriting :py:class:`logging.Filter`, patched to permit only
-    specifically named :py:func:`loggers <logging.getLogger()>` to write logs.
-    """
-
-    # pylint: disable=super-init-not-called
-    def __init__(self, *whitelist: list):
-        """
-        :param whitelist: List of names defined by :py:func:`logging.getLogger()`
-            e.g.
-
-              .. code-block: python
-
-                ['es_client.helpers.config', 'es_client.builder']
-        """
-        self.whitelist = [logging.Filter(name) for name in whitelist]
-
-    def filter(self, record):
-        return any(f.filter(record) for f in self.whitelist)
-
-
-class Blacklist(Whitelist):
-    """
-    Child class inheriting :py:class:`Whitelist`, patched to permit all but
-    specifically named :py:func:`loggers <logging.getLogger()>` to write logs.
-
-    A monkey-patched inversion of Whitelist, i.e.
-
-    .. code-block: python
-
-      return not Whitelist.filter(self, record)
-    """
-
-    def filter(self, record):
-        return not Whitelist.filter(self, record)
-
-
-class JSONFormatter(logging.Formatter):
-    """JSON message formatting"""
-
-    # The LogRecord attributes we want to carry over to the JSON message,
-    # mapped to the corresponding output key.
-    WANTED_ATTRS = {
-        "levelname": "loglevel",
-        "funcName": "function",
-        "lineno": "linenum",
-        "message": "message",
-        "name": "name",
-    }
-
-    def format(self, record: logging.LogRecord) -> str:
-        """
-        :param record: The incoming log message
-
-        :rtype: :py:meth:`json.dumps`
-        """
-        self.converter = time.gmtime
-        fmt = "%Y-%m-%dT%H:%M:%S"
-        mil = str(record.msecs).split(".", maxsplit=1)[0]
-        timestamp = f"{self.formatTime(record, datefmt=fmt)}.{mil}Z"
-        result = {"@timestamp": timestamp}
-        available = record.__dict__
-        # This is cleverness because 'message' is NOT a member key of
-        # ``record.__dict__`` the ``getMessage()`` method is effectively ``msg % args``
-        # (actual keys) By manually adding 'message' to ``available``, it simplifies
-        # the code
-        available["message"] = record.getMessage()
-        for attribute in set(self.WANTED_ATTRS).intersection(available):
-            result = deepmerge(
-                de_dot(self.WANTED_ATTRS[attribute], getattr(record, attribute)), result
-            )
-        # The following is mostly for mimicking the ecs format. You can't have 2x
-        # 'message' keys in WANTED_ATTRS, so we set the value to 'log.original' for
-        # ecs, and this code block guarantees it still appears as 'message' too.
-        if "message" not in result.items():
-            result["message"] = available["message"]
-        return json.dumps(result, sort_keys=True)
+logger = logging.getLogger('')  # Root logger for this module
 
 
 def check_logging_config(config: t.Dict) -> Schema:
     """
-    :param config: Logging configuration data
+    Validate logging configuration using SchemaCheck.
 
-    :type config: dict
+    Args:
+        config (dict): Logging configuration data.
 
-    :returns: :py:class:`~.es_client.helpers.schemacheck.SchemaCheck` validated logging
-        configuration.
+    Returns:
+        :class:`voluptuous.Schema`: Validated logging configuration from
+            :class:`~es_client.schemacheck.SchemaCheck`.
 
-    Ensure that the top-level key ``logging`` is in `config`. Set empty default
-    dictionary if key ``logging`` is not in `config`.
+    Ensures the top-level key ``logging`` is in `config`. Sets an empty default
+    dictionary if ``logging`` is absent. Passes the result to
+    :class:`~es_client.schemacheck.SchemaCheck` for validation against
+    :func:`~es_client.defaults.config_logging`.
 
-    Pass the result to
-    :py:class:`~.es_client.helpers.schemacheck.SchemaCheck` for full validation.
+    Raises:
+        :exc:`TypeError`: If `config` is not a dictionary.
+
+    Example:
+        >>> config = {'logging': {'loglevel': 'INFO'}}
+        >>> result = check_logging_config(config)
+        >>> result['loglevel']
+        'INFO'
+        >>> config = {}
+        >>> result = check_logging_config(config)
+        >>> result
+        {}
     """
     if not isinstance(config, dict):
         clicho(
@@ -140,36 +95,50 @@ def check_logging_config(config: t.Dict) -> Schema:
 
 def configure_logging(ctx: Context) -> None:
     """
-    :param ctx: The Click command context
+    Configure logging based on a click context.
 
-    :type params: :py:class:`~.click.Context`
+    Merges logging settings from :attr:`ctx.obj['draftcfg'] <click.Context.obj>` and
+    :attr:`ctx.params <click.Context.params>`, with CLI parameters taking precedence.
+    Validates and applies the merged settings using :func:`set_logging`.
 
-    :rtype: None
+    Args:
+        ctx (:class:`click.Context`): Click command context containing logging config.
 
-    Configure logging based on a combination of :py:attr:`ctx.obj['draftcfg']
-    <click.Context.obj>` and :py:attr:`ctx.params <click.Context.params>`.
-
-    Values in :py:attr:`ctx.params <click.Context.params>` will override anything set in
-    :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>`
+    Example:
+        >>> from click import Context, Command
+        >>> cfg = {
+            'logging': {'loglevel': 'INFO', 'logfile': None, 'logformat': 'default'}
+        }
+        >>> ctx = Context(Command('cmd'), obj={'draftcfg': cfg}, params={})
+        >>> configure_logging(ctx)
+        >>> logging.getLogger('').level
+        20
     """
     logcfg = override_logging(ctx)
-    # Now enable logging with the merged settings, verifying the settings are still good
     set_logging(logcfg)
 
 
-def de_dot(dot_string: str, msg: str) -> t.Union[t.Dict[str, str], None]:
+def de_dot(dot_string: str, msg: str) -> t.Dict[str, t.Any]:
     """
-    :param dot_string: The dotted string
-    :param msg: The message
+    Convert a dotted string and message into a nested dictionary.
 
-    :type dot_string: str
-    :type msg: str
+    Args:
+        dot_string (str): Dotted string (e.g., 'es_client.utils').
+        msg (str): Message to nest under the final key.
 
-    :rtype: dict
-    :returns: A nested dictionary of keys with the final value being the message
+    Returns:
+        dict: Nested dictionary with `msg` as the leaf value.
 
-    Turn `message` and `dot_string` into a nested dictionary. Used by
-    :py:class:`JSONFormatter`
+    Raises:
+        :exc:`~es_client.exceptions.LoggingException`: If dictionary creation fails.
+
+    Used by :class:`JSONFormatter` to structure log data.
+
+    Example:
+        >>> de_dot('es_client.utils', 'test')
+        {'es_client': {'utils': 'test'}}
+        >>> de_dot('simple', 'test')
+        {'simple': 'test'}
     """
     arr = dot_string.split(".")
     arr.append(msg)
@@ -191,17 +160,22 @@ def de_dot(dot_string: str, msg: str) -> t.Union[t.Dict[str, str], None]:
 
 def deepmerge(source: t.Dict, destination: t.Dict) -> t.Dict:
     """
-    :param source: Source dictionary
-    :param destination: Destination dictionary
+    Recursively merge a source dictionary into a destination dictionary.
 
-    :type source: dict
-    :type destination: dict
+    Args:
+        source (dict): Source dictionary to merge.
+        destination (dict): Destination dictionary to update.
 
-    :returns: destination
-    :rtype: dict
+    Returns:
+        dict: Updated `destination` dictionary.
 
-    Recursively merge deeply nested dictionary structure `source` into `destination`.
-    Used by :py:class:`JSONFormatter`
+    Used by :class:`JSONFormatter` to combine log attributes.
+
+    Example:
+        >>> source = {'a': {'b': 1}, 'c': 2}
+        >>> destination = {'a': {'d': 3}, 'e': 4}
+        >>> deepmerge(source, destination)
+        {'a': {'b': 1, 'd': 3}, 'e': 4, 'c': 2}
     """
     for key, value in source.items():
         if isinstance(value, dict):
@@ -214,12 +188,19 @@ def deepmerge(source: t.Dict, destination: t.Dict) -> t.Dict:
 
 def get_format_string(nll: int) -> str:
     """
-    :param nll: The numeric log level
+    Return a log format string based on the numeric log level.
 
-    :type nll: int
+    Args:
+        nll (int): Numeric log level (e.g., 10 for DEBUG, 20 for INFO).
 
-    :rtype: str
-    :returns: The format string based on the numeric log level
+    Returns:
+        str: Format string for :class:`logging.Formatter`.
+
+    Example:
+        >>> get_format_string(10)  # DEBUG
+        '%(asctime)s %(levelname)-9s %(name)30s %(funcName)23s:%(lineno)-4d %(message)s'
+        >>> get_format_string(20)  # INFO
+        '%(asctime)s %(levelname)-9s %(message)s'
     """
     return (
         "%(asctime)s %(levelname)-9s %(name)30s "
@@ -230,33 +211,40 @@ def get_format_string(nll: int) -> str:
 
 
 def get_logger(log_opts: t.Dict) -> None:
-    """Get the root logger with the appropriate handler(s) attached
+    """
+    Configure the root logger with appropriate handlers.
 
-    If a log file is provided in `log_opts`, a :py:class:`~.logging.FileHandler` is
-    returned. If not, it will split logs into stdout and stderr, with the former
-    handling messages up to INFO level, and the latter handling messages above that
-    level.
+    If `logfile` is provided in `log_opts`, uses a :class:`logging.FileHandler`.
+    Otherwise, splits logs into :class:`logging.StreamHandler` instances for stdout
+    (up to INFO) and stderr (WARNING and above). Applies formatters and filters based
+    on `logformat` and `blacklist`.
 
-    :param
-        log_opts: Logging configuration data
-        logger_name: Default logger name to use in :py:func:`logging.getLogger()`
-    :type
-        log_opts: dict
-        logger_name: str
-    :rtype
-        logging.Logger
-    :returns
-        The root logger with the appropriate handler(s) attached
+    Args:
+        log_opts (dict): Logging configuration with keys: loglevel, logfile, logformat,
+            blacklist.
+
+    Raises:
+        OSError: If `logfile` cannot be opened.
+        ValueError: If `loglevel` is invalid.
+
+    Example:
+        >>> log_opts = {
+            'loglevel': 'INFO',
+            'logfile': None,
+            'logformat': 'default',
+            'blacklist': []
+        }
+        >>> get_logger(log_opts)
+        >>> len(logging.getLogger('').handlers) >= 1
+        True
     """
     logfile = log_opts.get("logfile", None)
     kind = log_opts.get("logformat", "default")
     nll = get_numeric_loglevel(log_opts.get("loglevel", "INFO"))
 
-    # Set the level for the root logger
     logger.setLevel(nll)
 
     handler_map = {
-        # We can't set FileHandler to a null pointer/None
         "logfile": FileHandler(logfile) if logfile else None,
         "stdout": StreamHandler(stream=sys.stdout),
         "stderr": StreamHandler(stream=sys.stderr),
@@ -274,17 +262,14 @@ def get_logger(log_opts: t.Dict) -> None:
         if source == 'stdout':
             handler.addFilter(lambda record: record.levelno <= logging.INFO)
         if source == 'stderr':
-            # Establish our upper bound filter for stderr, in case it's set to
-            # ERROR or CRITICAL, and filter them.
             handler.setLevel(logging.WARNING)
             fltr = max(logging.WARNING, nll)
             handler.addFilter(lambda record: record.levelno >= fltr)
             for entry in ensure_list(log_opts["blacklist"]):
                 handler.addFilter(Blacklist(entry))
 
-        logger.addHandler(handler)  # Add to the root logger
+        logger.addHandler(handler)
 
-    # if we have a logfile, then use that
     if logfile:
         add_handler('logfile')
     else:
@@ -294,100 +279,96 @@ def get_logger(log_opts: t.Dict) -> None:
 
 def get_numeric_loglevel(level: str) -> int:
     """
-    :param level: The log level
+    Convert a string log level to a logging module constant.
 
-    :type level: str
+    Args:
+        level (str): Log level name (e.g., 'DEBUG', 'INFO').
 
-    :rtype: int
+    Returns:
+        int: Corresponding logging constant (e.g., :data:`logging.DEBUG`).
 
-    :returns: A numeric value mapped from `level`. The mapping is as follows:
+    Raises:
+        ValueError: If the level is not a valid log level.
 
-      .. list-table:: Log Levels
-         :widths: 10 5 85
-         :header-rows: 1
+    The mapping is:
 
-         * - Level
-           - #
-           - Description
-         * - NOTSET
-           - 0
-           - When set on a logger, indicates that ancestor loggers are to be consulted
-             to determine the effective level. If that still resolves to NOTSET, then
-             all events are logged. When set on a handler, all events are handled.
-         * - DEBUG
-           - 10
-           - Detailed information, typically only of interest to a developer trying to
-             diagnose a problem.
-         * - INFO
-           - 20
-           - Confirmation that things are working as expected.
-         * - WARNING
-           - 30
-           - An indication that something unexpected happened, or that a problem might
-             occur in the near future (e.g. 'disk space low'). The software is still
-             working as expected.
-         * - ERROR
-           - 40
-           - Due to a more serious problem, the software has not been able to perform
-             some function.
-         * - CRITICAL
-           - 50
-           - A serious error, indicating that the program itself may be unable to
-             continue running.
+    .. list-table:: Log Levels
+       :widths: 10 5 85
+       :header-rows: 1
 
-    Raises a :py:exc:`ValueError` exception if an invalid value for `level` is provided.
+       * - Level
+         - #
+         - Description
+       * - NOTSET
+         - 0
+         - When set on a logger, ancestor loggers determine the effective level.
+           If NOTSET, all events are logged. On a handler, all events are handled.
+       * - DEBUG
+         - 10
+         - Detailed information for diagnosing problems.
+       * - INFO
+         - 20
+         - Confirmation that things are working as expected.
+       * - WARNING
+         - 30
+         - Indicates an unexpected issue or potential problem (e.g., 'disk space low').
+       * - ERROR
+         - 40
+         - A serious problem preventing some functionality.
+       * - CRITICAL
+         - 50
+         - A severe error, possibly halting the program.
+
+    Example:
+        >>> get_numeric_loglevel('DEBUG')
+        10
+        >>> get_numeric_loglevel('INFO')
+        20
+        >>> get_numeric_loglevel('INVALID')
+        Traceback (most recent call last):
+            ...
+        ValueError: Invalid log level: INVALID
     """
     numeric_log_level = getattr(logging, level.upper(), None)
-
     if not isinstance(numeric_log_level, int):
         raise ValueError(f"Invalid log level: {level}")
     return numeric_log_level
 
 
-# def is_docker() -> bool:
-#     """
-#     :rtype: bool
-#     :returns: Boolean result of whether we are runinng in a Docker container or not
-#     """
-#     cgroup = Path("/proc/self/cgroup")
-#     return (
-#         Path("/.dockerenv").is_file()
-#         or cgroup.is_file()
-#         and "docker" in cgroup.read_text(encoding="utf8")
-#     )
-
-
 def override_logging(ctx: Context) -> t.Dict:
     """
-    :param ctx: The Click command context
+    Merge CLI and config file logging settings.
 
-    :type params: :py:class:`~.click.Context`
+    Retrieves logging configuration from :attr:`ctx.obj['draftcfg'] <click.Context.obj>`
+    and overrides with :attr:`ctx.params <click.Context.params>`, with CLI taking
+    precedence. Validates the config using :func:`check_logging_config`.
 
-    :returns: Log configuration ready for validation
+    Args:
+        ctx (:class:`click.Context`): Click command context.
 
-    Get logging configuration from `ctx.obj['draftcfg']` and override with any
-    command-line options
+    Returns:
+        dict: Merged and validated logging configuration.
+
+    Example:
+        >>> from click import Context, Command
+        >>> cfg = {'logging': {'loglevel': 'INFO'}}
+        >>> ctx = Context(
+            Command('cmd'), obj={'draftcfg': cfg}, params={'loglevel': 'DEBUG'}
+        )
+        >>> result = override_logging(ctx)
+        >>> result['loglevel']
+        'DEBUG'
     """
-    # Check for log settings from config file
     init_logcfg = check_logging_config(ctx.obj["draftcfg"])
-
-    # Set debug to True if config file says loglevel is DEBUG
     debug = "loglevel" in init_logcfg and init_logcfg["loglevel"] == "DEBUG"
-    # if 'loglevel' is not None
     if "loglevel" in ctx.params and ctx.params["loglevel"] is not None:
-        # Set debug to True if command-line options says loglevel is DEBUG,
-        # otherwise set debug to False (overriding what was set by config file)
         debug = ctx.params["loglevel"] == "DEBUG"
 
-    # Override anything with options from the command-line
     paramlist = ["loglevel", "logfile", "logformat", "blacklist"]
-
     for entry in paramlist:
         if entry in ctx.params:
             if not ctx.params[entry]:
                 continue
-            # Output to stdout if debug is True and we're not overriding a None
-            # (the default) and we're not overriding DEBUG with DEBUG ;)
             if (
                 debug
                 and init_logcfg[entry] is not None
@@ -402,15 +383,27 @@ def override_logging(ctx: Context) -> t.Dict:
                 init_logcfg[entry] = list(ctx.params[entry])
             else:
                 init_logcfg[entry] = ctx.params[entry]
-
     return init_logcfg
 
 
 def check_log_opts(log_opts: t.Dict) -> t.Dict:
     """
-    :param log_opts: Logging configuration data
+    Apply default logging options to unset keys.
 
-    :returns: Updated `log_opts` dictionary with default values where unset
+    Args:
+        log_opts (dict): Logging configuration data.
+
+    Returns:
+        dict: Updated `log_opts` with defaults from
+            :data:`~es_client.defaults.LOGDEFAULTS`.
+
+    Example:
+        >>> log_opts = {'loglevel': 'INFO'}
+        >>> result = check_log_opts(log_opts)
+        >>> result['loglevel']
+        'INFO'
+        >>> 'logfile' in result
+        True
     """
     for k, v in LOGDEFAULTS.items():
         log_opts[k] = v if k not in log_opts else log_opts[k]
@@ -419,18 +412,154 @@ def check_log_opts(log_opts: t.Dict) -> t.Dict:
 
 def set_logging(options: t.Dict) -> None:
     """
-    :param options: Logging configuration data
-    :param logger_name: Default logger name to use in :py:func:`logging.getLogger()`
+    Configure global logging options.
 
-    Configure global logging options from `options` and set a default `logger_name`
+    Applies settings from `options` to the root logger, attaching handlers and filters.
+    Adds a :class:`logging.NullHandler` for the 'elasticsearch8.trace' logger
+    to suppress trace logs.
+
+    Args:
+        options (dict): Logging configuration with keys: loglevel, logfile, logformat,
+            blacklist.
+
+    Raises:
+        OSError: If `logfile` cannot be opened.
+        ValueError: If `loglevel` is invalid.
+
+    Example:
+        >>> options = {
+            'loglevel': 'INFO',
+            'logfile': None,
+            'logformat': 'default',
+            'blacklist': []
+        }
+        >>> set_logging(options)
+        >>> len(logging.getLogger('').handlers) >= 1
+        True
     """
     log_opts = check_log_opts(options)
     get_logger(log_opts)
-
-    # Set up NullHandler() to handle nested elasticsearch8.trace Logger
-    # instance in elasticsearch python client
     logging.getLogger("elasticsearch8.trace").addHandler(logging.NullHandler())
     if log_opts["blacklist"]:
         for entry in ensure_list(log_opts["blacklist"]):
             for handler in logging.root.handlers:
                 handler.addFilter(Blacklist(entry))
+
+
+class Whitelist(logging.Filter):
+    """
+    Logging filter to allow only specified logger names.
+
+    Args:
+        *whitelist (list): Logger names to allow (e.g., ['es_client']).
+
+    Attributes:
+        whitelist (list): List of :class:`logging.Filter` objects for allowed names.
+
+    Example:
+        >>> import logging
+        >>> record = logging.makeLogRecord({'name': 'es_client.test', 'msg': 'Test'})
+        >>> whitelist = Whitelist(['es_client'])
+        >>> whitelist.filter(record)
+        True
+        >>> record = logging.makeLogRecord({'name': 'other.test', 'msg': 'Test'})
+        >>> whitelist.filter(record)
+        False
+    """
+
+    def __init__(self, *whitelist: t.List[str]):
+        super().__init__()
+        self.whitelist = [logging.Filter(name) for name in whitelist]
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter log records based on logger name."""
+        return any(f.filter(record) for f in self.whitelist)
+
+    def __repr__(self) -> str:
+        """Return a string representation of the filter."""
+        return f"<Whitelist names={[f.name for f in self.whitelist]}>"
+
+
+class Blacklist(Whitelist):
+    """
+    Logging filter to block specified logger names.
+
+    Inherits from :class:`Whitelist`, inverting the filter logic to block listed names.
+
+    Args:
+        *blacklist (list): Logger names to block (e.g., ['es_client.utils']).
+
+    Attributes:
+        whitelist (list): List of :class:`logging.Filter` objects for blocked names.
+
+    Example:
+        >>> import logging
+        >>> record = logging.makeLogRecord({'name': 'es_client.test', 'msg': 'Test'})
+        >>> blacklist = Blacklist(['es_client.test'])
+        >>> blacklist.filter(record)
+        False
+        >>> record = logging.makeLogRecord({'name': 'other.test', 'msg': 'Test'})
+        >>> blacklist.filter(record)
+        True
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter log records based on logger name."""
+        return not super().filter(record)
+
+    def __repr__(self) -> str:
+        """Return a string representation of the filter."""
+        return f"<Blacklist names={[f.name for f in self.whitelist]}>"
+
+
+class JSONFormatter(logging.Formatter):
+    """
+    Custom logging formatter for JSON output.
+
+    Formats log records as JSON objects with timestamp, log level, logger name,
+    function, line number, and message.
+
+    Attributes:
+        WANTED_ATTRS (dict): Mapping of LogRecord attributes to JSON keys.
+
+    Example:
+        >>> import logging
+        >>> record = logging.makeLogRecord({
+        ...     'name': 'test', 'levelname': 'INFO', 'msg': 'Test message',
+        ...     'funcName': 'test_func', 'lineno': 42, 'created': 1625097600.0,
+        ...     'msecs': 123.456
+        ... })
+        >>> formatter = JSONFormatter()
+        >>> formatted = formatter.format(record)
+        >>> 'test' in formatted and 'INFO' in formatted
+        True
+    """
+
+    WANTED_ATTRS = {
+        "levelname": "loglevel",
+        "funcName": "function",
+        "lineno": "linenum",
+        "message": "message",
+        "name": "name",
+    }
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format a log record as a JSON string."""
+        self.converter = time.gmtime
+        fmt = "%Y-%m-%dT%H:%M:%S"
+        mil = str(record.msecs).split(".", maxsplit=1)[0]
+        timestamp = f"{self.formatTime(record, datefmt=fmt)}.{mil}Z"
+        result = {"@timestamp": timestamp}
+        available = record.__dict__
+        available["message"] = record.getMessage()
+        for attribute in set(self.WANTED_ATTRS).intersection(available):
+            result = deepmerge(
+                de_dot(self.WANTED_ATTRS[attribute], getattr(record, attribute)), result
+            )
+        if "message" not in result:
+            result["message"] = available["message"]
+        return json.dumps(result, sort_keys=True)
+
+    def __repr__(self) -> str:
+        """Return a string representation of the formatter."""
+        return "<JSONFormatter>"
