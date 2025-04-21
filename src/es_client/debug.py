@@ -1,86 +1,89 @@
 """Module for tiered debugging with a global TieredDebug instance.
 
-This module defines a global `debug` instance of `TieredDebug` and a `begin_end`
-decorator to log function call boundaries at specified debug levels. Copy this
-file into your project to enable project-wide debugging. Import `debug` and `begin_end`
-in any module with `from .debug import debug, begin_end`.
+Provides a global `TieredDebug` instance and a `begin_end` decorator to
+log function entry and exit at specified debug levels. Designed for use
+in projects like ElasticKeeper and ElasticCheckpoint to trace function
+execution with configurable stack levels.
+
+Examples:
+    >>> from tiered_debug.debug import debug, begin_end
+    >>> debug.level = 3
+    >>> import logging
+    >>> debug.add_handler(logging.StreamHandler())
+    >>> @begin_end(debug, begin=2, end=3, stacklevel=2, extra={"func": "test"})
+    ... def example():
+    ...     return "Test"
+    >>> example()
+    'Test'
 """
 
-import typing as t
 from functools import wraps
-from tiered_debug import TieredDebug, DebugLevel
+from typing import Any, Dict, Optional
 
-DEFAULT_BEGIN: DebugLevel = 2
-"""Default debug level for begin message in begin_end decorator."""
+from tiered_debug import TieredDebug
 
-DEFAULT_END: DebugLevel = 3
-"""Default debug level for end message in begin_end decorator."""
+DEFAULT_BEGIN = 2
+"""Default debug level for BEGIN messages."""
 
-debug = TieredDebug()
-"""Global TieredDebug instance for project-wide debugging."""
+DEFAULT_END = 3
+"""Default debug level for END messages."""
+
+debug = TieredDebug(level=1, stacklevel=3)
+"""Global TieredDebug instance with default level 1 and stacklevel 3."""
 
 
 def begin_end(
-    begin: t.Optional[DebugLevel] = DEFAULT_BEGIN,
-    end: t.Optional[DebugLevel] = DEFAULT_END,
-    debug_obj: t.Optional[TieredDebug] = None,
-    stklvl: t.Optional[int] = None,
-) -> t.Callable:
-    """Decorator to log the beginning and end of a function call.
+    debug_obj: Optional[TieredDebug] = None,
+    begin: int = DEFAULT_BEGIN,
+    end: int = DEFAULT_END,
+    stacklevel: int = 2,
+    extra: Optional[Dict[str, Any]] = None,
+):
+    """Decorator to log function entry and exit at specified debug levels.
 
-    Logs the start and end of a function at the specified debug levels using the
-    provided or global `debug` instance. If `begin` or `end` is invalid (not 1-5),
-    logs an error and uses default levels (2 for begin, 3 for end). The stack level
-    defaults to one level beyond the global `debug.stacklevel` to report the caller's
-    context.
+    Logs "BEGIN CALL" at the `begin` level and "END CALL" at the `end`
+    level using the provided or global debug instance. Adjusts the
+    stacklevel by 1 to report the correct caller.
 
-    :param begin: Debug level (1-5) for the begin message. Defaults to 2.
-    :type begin: Optional[DebugLevel]
-    :param end: Debug level (1-5) for the end message. Defaults to 3.
-    :type end: Optional[DebugLevel]
-    :param debug_obj: TieredDebug instance to use for logging. Defaults to global
-        `debug`.
-    :type debug_obj: Optional[TieredDebug]
-    :param stklvl: Stack level for caller reporting. Defaults to debug.stacklevel + 1.
-    :type stklvl: Optional[int]
-    :return: Decorated function.
-    :rtype: Callable
+    Args:
+        debug_obj: TieredDebug instance to use (default: global debug).
+        begin: Debug level for BEGIN message (1-5, default 2). (int)
+        end: Debug level for END message (1-5, default 3). (int)
+        stacklevel: Stack level for reporting (1-9, default 2). (int)
+        extra: Extra metadata dictionary (default None). (Dict[str, Any])
+
+    Returns:
+        Callable: Decorated function with logging.
+
+    Examples:
+        >>> debug.level = 3
+        >>> import logging
+        >>> debug.add_handler(logging.StreamHandler())
+        >>> @begin_end(debug, begin=2, end=3)
+        ... def test_func():
+        ...     return "Result"
+        >>> test_func()
+        'Result'
     """
-    if debug_obj is None:
-        debug_obj = globals()["debug"]
+    debug_instance = debug_obj if debug_obj is not None else debug
 
-    effective_begin = begin
-    effective_end = end
-
-    if begin not in (1, 2, 3, 4, 5):
-        debug_obj.logger.error(
-            f"Invalid begin level: {begin}. Using default: {DEFAULT_BEGIN}"
-        )
-        effective_begin = DEFAULT_BEGIN
-    if end not in (1, 2, 3, 4, 5):
-        debug_obj.logger.error(
-            f"Invalid end level: {end}. Using default: {DEFAULT_END}"
-        )
-        effective_end = DEFAULT_END
-
-    mmap = {
-        1: debug_obj.lv1,
-        2: debug_obj.lv2,
-        3: debug_obj.lv3,
-        4: debug_obj.lv4,
-        5: debug_obj.lv5,
-    }
-
-    def decorator(func: t.Callable) -> t.Callable:
+    def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            common = f"CALL: {func.__name__}()"
-            effective_stklvl = (
-                stklvl if stklvl is not None else debug_obj.stacklevel + 1
+            effective_stacklevel = stacklevel + 1
+            debug_instance.log(
+                begin,
+                f"BEGIN CALL: {func.__name__}()",
+                stacklevel=effective_stacklevel,
+                extra=extra,
             )
-            mmap[effective_begin](f"BEGIN {common}", stklvl=effective_stklvl)
             result = func(*args, **kwargs)
-            mmap[effective_end](f"END {common}", stklvl=effective_stklvl)
+            debug_instance.log(
+                end,
+                f"END CALL: {func.__name__}()",
+                stacklevel=effective_stacklevel,
+                extra=extra,
+            )
             return result
 
         return wrapper
