@@ -1,71 +1,54 @@
-"""Sphinx Documentation Configuration"""
+"""Sphinx configuration for es_client documentation.
 
-# pylint: disable=C0103,C0114,E0401,W0611,W0622
+Configures Sphinx to generate documentation for the es_client package,
+using autodoc, Napoleon, doctest, viewcode, and intersphinx extensions.
+Imports metadata (__version__, __author__, __copyright__) from
+es_client, leveraging module installation for ReadTheDocs. Sets up
+GitHub integration for "Edit Source" links and supports Python 3.8-3.13.
 
-# Configuration file for the Sphinx documentation builder.
-#
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+Attributes:
+    project: Project name ("es_client"). (str)
+    author: Author name from es_client.__author__. (str)
+    version: Major.minor version (e.g., "1.3"). (str)
+    release: Full version (e.g., "1.3.0"). (str)
+    html_theme: Theme for HTML output, defaults to "sphinx_rtd_theme". (str)
 
-import sys
-import os
-from datetime import datetime
+Examples:
+    >>> project
+    'es_client'
+    >>> author
+    'Aaron Mildenstein'
+    >>> version
+    '1.3'
+    >>> 'autodoc' in [ext.split('.')[-1] for ext in extensions]
+    True
+"""
 
-COPYRIGHT_YEARS = f"2022-{datetime.now().year}"
+# pylint: disable=C0103,E0401,W0622
 
-# Extract the version from the __init__.py file
-
-path = "../src/es_client/__init__.py"
-myinit = os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
-
-ver = ""
-with open(myinit, "r", encoding="utf-8") as file:
-    lines = file.readlines()
-
-for line in lines:
-    if line.startswith("__version__"):
-        ver = line.split('"')[1]
-
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath("../"))
+# -- Imports and setup -----------------------------------------------------
+from os import environ
+from es_client import __author__, __copyright__, __version__
 
 # -- Project information -----------------------------------------------------
 
 project = "es_client"
-author = "Aaron Mildenstein"
-copyright = f"{COPYRIGHT_YEARS}, {author}"
-release = ver
+github_user = "untergeek"
+github_repo = "es_client"
+github_branch = "BRANCH"
+author = __author__
+copyright = __copyright__
+release = __version__
 version = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-]
-napoleon_google_docstring = True
-napoleon_numpy_docstring = False
-
-templates_path = ["_templates"]
-exclude_patterns = ["_build"]
-source_suffix = ".rst"
-master_doc = "index"
-
-# -- General configuration ---------------------------------------------------
-
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
 ]
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
@@ -78,11 +61,16 @@ master_doc = "index"
 # -- Options for HTML output -------------------------------------------------
 
 pygments_style = "sphinx"
+html_theme = "sphinx_rtd_theme" if environ.get("READTHEDOCS") != "True" else None
 
-on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-
-if not on_rtd:  # only import and set the theme if we're building docs locally
-    html_theme = "sphinx_rtd_theme"
+# Add "Edit Source" links into the template
+html_context = {
+    "display_github": True,
+    "github_user": f"{github_user}",
+    "github_repo": f"{github_repo}",
+    "github_version": f"{github_branch}",
+    "conf_py_path": "/docs/",  # Path in the checkout to the docs root
+}
 
 # -- Autodoc configuration ---------------------------------------------------
 
@@ -94,6 +82,8 @@ autodoc_default_options = {
     "undoc-members": True,
     "show-inheritance": True,
 }
+
+# -- Intersphinx configuration -----------------------------------------------
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3.12", None),
