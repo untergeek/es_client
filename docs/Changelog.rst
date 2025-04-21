@@ -3,6 +3,16 @@
 Changelog
 =========
 
+[8.18.2] - 2025-04-21
+---------------------
+
+**Changes**
+
+- Updated ``tiered-debug`` dependency to ``>=1.3.0`` to allow newer patch releases while maintaining compatibility.
+- Added ``pint>=0.19.2`` to documentation dependencies for enhanced unit handling in documentation.
+- Released version ``8.18.2`` as a stable update.
+
+
 [8.18.1] - 2025-04-17
 ---------------------
 
