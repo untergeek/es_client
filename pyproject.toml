@@ -46,7 +46,7 @@ test = [
     "pytest-cov",
     "pytest-dotenv",
 ]
-doc = ["sphinx", "sphinx_rtd_theme"]
+doc = ["furo>=2024.8.6"]
 
 [project.urls]
 "Homepage" = "https://github.com/untergeek/es_client"

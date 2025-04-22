@@ -1,3 +1,1 @@
-sphinx>=4.0
-sphinx-rtd-theme>=1.0
-pint>=0.19.2
+furo>=2024.8.6
