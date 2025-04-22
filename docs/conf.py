@@ -44,11 +44,13 @@ version = ".".join(release.split(".")[:2])
 # -- General configuration ---------------------------------------------------
 
 extensions = [
+    "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.githubpages",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinx.ext.doctest",
-    "sphinx.ext.intersphinx",
 ]
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
@@ -73,14 +75,15 @@ html_context = {
 
 # -- Autodoc configuration ---------------------------------------------------
 
-
 autoclass_content = "both"
-autodoc_member_order = "bysource"
+autodoc_class_signature = "separated"
 autodoc_default_options = {
     "members": True,
     "undoc-members": True,
     "show-inheritance": True,
 }
+autodoc_member_order = "bysource"
+autodoc_typehints = "description"
 
 # -- Intersphinx configuration -----------------------------------------------
 
