@@ -27,7 +27,7 @@ Examples:
 # pylint: disable=C0103,E0401,W0622
 
 # -- Imports and setup -----------------------------------------------------
-from os import environ
+
 from es_client import __author__, __copyright__, __version__
 
 # -- Project information -----------------------------------------------------
@@ -35,7 +35,7 @@ from es_client import __author__, __copyright__, __version__
 project = "es_client"
 github_user = "untergeek"
 github_repo = "es_client"
-github_branch = "BRANCH"
+github_branch = "master"
 author = __author__
 copyright = __copyright__
 release = __version__
@@ -60,8 +60,7 @@ master_doc = "index"
 
 # -- Options for HTML output -------------------------------------------------
 
-pygments_style = "sphinx"
-html_theme = "sphinx_rtd_theme" if environ.get("READTHEDOCS") != "True" else None
+html_theme = "furo"
 
 # Add "Edit Source" links into the template
 html_context = {
