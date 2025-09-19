@@ -31,9 +31,9 @@ def get_configdict(args, func):
     with ctx:
         runner = CliRunner()
         result = runner.invoke(func, args)
-    click.echo(f'RESULT = {result.output}')
+    click.echo(f'RESULT.stdout = {result.stdout}')
     try:
-        configdict = ast.literal_eval(result.output.splitlines()[-1])
+        configdict = ast.literal_eval(result.stdout.splitlines()[-1])
     except (ValueError, IndexError):
         configdict = {}
     return configdict, result
