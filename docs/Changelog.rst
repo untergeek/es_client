@@ -3,7 +3,14 @@
 Changelog
 =========
 
-[8.19.0] - 2025-09-19
+[8.19.1] - 2025-09-25
+---------------------
+
+**Changes**
+
+To fix the ReadTheDocs builds, I had to remove outdated references to the ``sphinx_rtd_theme`` since I switched to using ``furo``.
+
+[8.19.0] - 2025-09-25
 ---------------------
 
 **Announcement**
