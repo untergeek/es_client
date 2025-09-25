@@ -87,12 +87,12 @@ autodoc_typehints = "description"
 # -- Intersphinx configuration -----------------------------------------------
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.12", None),
-    "elasticsearch8": ("https://elasticsearch-py.readthedocs.io/en/v8.19.0", None),
+    "python": ("https://docs.python.org/3.13", None),
+    "elasticsearch9": ("https://elasticsearch-py.readthedocs.io/en/v9.1.1", None),
     "elastic-transport": (
         "https://elastic-transport-python.readthedocs.io/en/stable",
         None,
     ),
     "voluptuous": ("http://alecthomas.github.io/voluptuous/docs/_build/html", None),
-    "click": ("https://click.palletsprojects.com/en/8.3.x", None),
+    "click": ("https://click.palletsprojects.com/en/stable", None),
 }

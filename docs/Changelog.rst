@@ -3,6 +3,26 @@
 Changelog
 =========
 
+[9.0.0] - 2025-09-25
+--------------------
+
+**Announcement**
+
+Initial release of the 9.x series. This is a major version bump because the
+``elasticsearch8`` dependency has been replaced with ``elasticsearch9``.
+
+**Changes**
+
+- Release version bumped to ``9.0.0``.
+- Updated Elasticsearch dependency to ``elasticsearch9==9.1.1`` to support the latest Elasticsearch client features and fixes.
+- Removed ``helpers`` submodule as it was deprecated in 8.18.0 and told users it would be removed in 9.0.0.
+  - Replaced ``helpers`` page with ``submodules`` in documentation.
+- Because Click 8.2+ requires Python 3.10+, support for Python 3.8 and 3.9 has been dropped. The minimum acceptable version is now Python 3.10.
+- Changed all references of ``elasticsearch8`` to ``elasticsearch9`` in documentation and code comments.
+- Updated ``MIN_VERSION`` to ``(9, 0, 0)`` and ``MAX_VERSION`` to ``(9, 99, 99)`` in ``defaults.py``. Where these are referenced in code and docstrings, example values have been updated accordingly.
+
+
+
 [8.19.1] - 2025-09-25
 ---------------------
 

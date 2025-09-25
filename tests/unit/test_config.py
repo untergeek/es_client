@@ -1,4 +1,4 @@
-"""Test helpers.config"""
+"""Test config module"""
 
 import ast
 from unittest import TestCase

@@ -29,7 +29,7 @@ import binascii
 from pathlib import Path
 import yaml  # type: ignore
 import click
-from elasticsearch8 import Elasticsearch
+from elasticsearch9 import Elasticsearch
 from .debug import debug, begin_end
 from .defaults import ES_DEFAULT, config_schema
 from .exceptions import ConfigurationError
@@ -153,7 +153,7 @@ def get_version(client: Elasticsearch) -> t.Tuple:
     Retrieve the Elasticsearch version as a tuple.
 
     Args:
-        client (:class:`elasticsearch8.Elasticsearch`): Elasticsearch client instance.
+        client (:class:`elasticsearch9.Elasticsearch`): Elasticsearch client instance.
 
     Returns:
         tuple: Version as (major, minor, patch).
@@ -164,9 +164,9 @@ def get_version(client: Elasticsearch) -> t.Tuple:
     Example:
         >>> from unittest.mock import Mock
         >>> client = Mock()
-        >>> client.info.return_value = {'version': {'number': '8.0.0'}}
+        >>> client.info.return_value = {'version': {'number': '9.0.0'}}
         >>> get_version(client)
-        (8, 0, 0)
+        (9, 0, 0)
     """
     version = client.info()["version"]["number"]
     version = version.split("-")[0]

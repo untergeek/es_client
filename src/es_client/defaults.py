@@ -6,10 +6,10 @@ from copy import deepcopy
 from click import Choice, Path
 from voluptuous import All, Any, Boolean, Coerce, Optional, Range, Schema
 
-VERSION_MIN: t.Tuple = (8, 0, 0)
+VERSION_MIN: t.Tuple = (9, 0, 0)
 """Minimum compatible Elasticsearch version"""
 
-VERSION_MAX: t.Tuple = (8, 99, 99)
+VERSION_MAX: t.Tuple = (9, 99, 99)
 """Maximum compatible Elasticsearch version"""
 
 KEYS_TO_REDACT: t.List[str] = [
@@ -70,7 +70,7 @@ CLIENT_SETTINGS: t.List[str] = [
     "_transport",
 ]
 """
-Valid argument/option names for :py:class:`~.elasticsearch8.Elasticsearch`. Too large
+Valid argument/option names for :py:class:`~.elasticsearch9.Elasticsearch`. Too large
 to show
 """
 
@@ -291,7 +291,7 @@ def config_schema() -> Schema:
         names and values with defaults for unset parameters.
     :rtype: :py:class:`~.voluptuous.schema_builder.Schema`
 
-    The validation schema for an :py:class:`~.elasticsearch8.Elasticsearch` client
+    The validation schema for an :py:class:`~.elasticsearch9.Elasticsearch` client
     object with defaults
     """
     # pylint: disable=no-value-for-parameter
@@ -450,7 +450,7 @@ def config_settings() -> t.List[str]:
     command-line.
 
     This means ignoring some that are valid in
-    :py:class:`~.elasticsearch8.Elasticsearch` but are handled different locally.
+    :py:class:`~.elasticsearch9.Elasticsearch` but are handled different locally.
     Namely, ``api_key`` is handled by :py:class:`~.es_client.builder.OtherArgs`.
     """
     ignore = ["api_key"]

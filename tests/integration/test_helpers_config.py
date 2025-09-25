@@ -1,9 +1,9 @@
-"""Test helpers.config"""
+"""Test config module"""
 
 from unittest import TestCase
 import pytest
 from dotmap import DotMap  # type: ignore
-from elasticsearch8 import Elasticsearch
+from elasticsearch9 import Elasticsearch
 from es_client.defaults import ES_DEFAULT
 from es_client.exceptions import ESClientException
 from es_client import config

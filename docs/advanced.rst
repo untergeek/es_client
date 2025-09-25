@@ -138,11 +138,11 @@ functions and constants. This pattern is visible in the example script at the to
 
 .. code-block:: python
 
-   from es_client.helpers.config import (
+   from es_client.config import (
       context_settings, generate_configdict, get_client, get_config,
       options_from_dict)
    from es_client.defaults import OPTION_DEFAULTS, SHOW_EVERYTHING
-   from es_client.helpers.logging import configure_logging
+   from es_client.logging import configure_logging
 
 
 ==================
@@ -165,11 +165,11 @@ import the dependencies:
 .. code-block:: python
 
    import click
-   from es_client.helpers.config import (
+   from es_client.config import (
       context_settings, generate_configdict, get_client, get_config,
       options_from_dict)
    from es_client.defaults import OPTION_DEFAULTS, SHOW_EVERYTHING
-   from es_client.helpers.logging import configure_logging
+   from es_client.logging import configure_logging
 
 Then, create a Click command that will allow you to collect all of the settings needed to create a
 client connection:

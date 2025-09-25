@@ -16,7 +16,7 @@ from dotmap import DotMap  # type: ignore
 from cryptography.fernet import Fernet
 import tiered_debug as debug
 from elastic_transport import ObjectApiResponse
-import elasticsearch8
+import elasticsearch9
 from .debug import debug, begin_end
 from .defaults import (
     VERSION_MIN,
@@ -101,7 +101,7 @@ class Builder:
     Constructs an Elasticsearch client connection from configuration.
 
     The `Builder` class processes configuration from a dictionary or YAML file,
-    validates it, and creates an :class:`~elasticsearch8.Elasticsearch` client.
+    validates it, and creates an :class:`~elasticsearch9.Elasticsearch` client.
     It supports automatic connection and version checking, with options for
     master-only connections. Sensitive fields are stored securely in a
     :class:`SecretStore`.
@@ -120,10 +120,8 @@ class Builder:
 
     Attributes:
         attributes (DotMap): Storage for configuration and settings.
-        client (:class:`~elasticsearch8.Elasticsearch`): The Elasticsearch client
+        client (:class:`~elasticsearch9.Elasticsearch`): The Elasticsearch client
             connection.
-        version_min (tuple): Minimum acceptable Elasticsearch version.
-        version_max (tuple): Maximum acceptable Elasticsearch version.
         _secrets (:class:`SecretStore`): Secure storage for sensitive fields.
 
     Raises:
@@ -162,7 +160,7 @@ class Builder:
         self._secrets = SecretStore()
         self.set_client_defaults()
         self.set_other_defaults()
-        self.client = elasticsearch8.Elasticsearch(hosts="http://127.0.0.1:9200")
+        self.client = elasticsearch9.Elasticsearch(hosts="http://127.0.0.1:9200")
         self.process_config_opts(configdict, configfile)
         # Validate host schemas immediately
         if self.config.client.get("hosts"):
@@ -207,7 +205,7 @@ class Builder:
             >>> builder = Builder(configdict=config)
             >>> repr(builder)  # doctest: +ELLIPSIS
             "Builder(hosts=['http://localhost:9200'], master_only=False,
-            version_min=(8, 0, 0), cloud_id='my_cloud_id', ...)"
+            version_min=(9, 0, 0), cloud_id='my_cloud_id', ...)"
             >>> config = {
                 'elasticsearch': {
                     'client': {'hosts': ['http://localhost:9200']}
@@ -216,7 +214,7 @@ class Builder:
             >>> builder = Builder(configdict=config)
             >>> repr(builder)  # doctest: +ELLIPSIS
             "Builder(hosts=['http://localhost:9200'], master_only=False,
-            version_min=(8, 0, 0), ...)"
+            version_min=(9, 0, 0), ...)"
         """
         hosts = self.client_args.hosts or ['None']
         base = (
@@ -363,7 +361,7 @@ class Builder:
         Example:
             >>> builder = Builder()
             >>> builder.version_min
-            (8, 0, 0)
+            (9, 0, 0)
         """
         return self.attributes.version_min
 
@@ -382,7 +380,7 @@ class Builder:
         Example:
             >>> builder = Builder()
             >>> builder.version_max
-            (8, 99, 99)
+            (9, 99, 99)
         """
         return self.attributes.version_max
 
@@ -664,7 +662,7 @@ class Builder:
         Check if the connected node is the elected master.
 
         Sets is_master based on node ID comparison using
-        :meth:`~elasticsearch8.Elasticsearch.nodes.info`.
+        :meth:`~elasticsearch9.Elasticsearch.nodes.info`.
         """
         my_node_id = list(self.client.nodes.info(node_id="_local")["nodes"])[0]
         master_node_id = self.client.cluster.state(metric="master_node")["master_node"]
@@ -726,7 +724,7 @@ class Builder:
     @begin_end()
     def _get_client(self) -> None:
         """
-        Instantiate the :class:`~elasticsearch8.Elasticsearch` client.
+        Instantiate the :class:`~elasticsearch9.Elasticsearch` client.
 
         Creates client with pruned configuration arguments using
         :func:`~es_client.utils.prune_nones`, including sensitive fields from
@@ -740,14 +738,14 @@ class Builder:
                 client_args[field] = tuple(secret)
             elif secret is not None:
                 client_args[field] = secret
-        self.client = elasticsearch8.Elasticsearch(**client_args)
+        self.client = elasticsearch9.Elasticsearch(**client_args)
 
     @begin_end()
     def test_connection(self) -> ObjectApiResponse[t.Any]:
         """
         Test the Elasticsearch connection.
 
-        Executes :meth:`~elasticsearch8.Elasticsearch.info` to verify connectivity.
+        Executes :meth:`~elasticsearch9.Elasticsearch.info` to verify connectivity.
 
         Returns:
             :class:`~elastic_transport.ObjectApiResponse`: Response from Elasticsearch
