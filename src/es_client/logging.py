@@ -415,7 +415,7 @@ def set_logging(options: t.Dict) -> None:
     Configure global logging options.
 
     Applies settings from `options` to the root logger, attaching handlers and filters.
-    Adds a :class:`logging.NullHandler` for the 'elasticsearch8.trace' logger
+    Adds a :class:`logging.NullHandler` for the 'elasticsearch9.trace' logger
     to suppress trace logs.
 
     Args:
@@ -439,7 +439,7 @@ def set_logging(options: t.Dict) -> None:
     """
     log_opts = check_log_opts(options)
     get_logger(log_opts)
-    logging.getLogger("elasticsearch8.trace").addHandler(logging.NullHandler())
+    logging.getLogger("elasticsearch9.trace").addHandler(logging.NullHandler())
     if log_opts["blacklist"]:
         for entry in ensure_list(log_opts["blacklist"]):
             for handler in logging.root.handlers:
@@ -518,9 +518,6 @@ class JSONFormatter(logging.Formatter):
 
     Formats log records as JSON objects with timestamp, log level, logger name,
     function, line number, and message.
-
-    Attributes:
-        WANTED_ATTRS (dict): Mapping of LogRecord attributes to JSON keys.
 
     Example:
         >>> import logging

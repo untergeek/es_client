@@ -1,4 +1,4 @@
-"""Test helpers.schemacheck"""
+"""Test schemacheck module"""
 
 from unittest import TestCase
 import pytest

@@ -40,7 +40,7 @@ from .defaults import SHOW_EVERYTHING
 # These options require the following other includes:
 #
 # from es_client.defaults import LOGGING_SETTINGS, ONOFF, OVERRIDE
-# from es_client.helpers.utils import option_wrapper
+# from es_client.utils import option_wrapper
 # click_opt_wrap = option_wrapper()
 #
 # @click_opt_wrap(*cli_opts('config', override=OVERRIDE))
@@ -169,7 +169,7 @@ def test_connection(ctx: click.Context) -> None:
 
     Uses :func:`~es_client.config.get_client` to create a client from
     :attr:`ctx.obj['configdict'] <click.Context.obj>` and calls
-    :meth:`client.info() <elasticsearch8.Elasticsearch.info>` to verify connectivity.
+    :meth:`client.info() <elasticsearch9.Elasticsearch.info>` to verify connectivity.
 
     Args:
         ctx (:class:`click.Context`): Click context with configuration.
@@ -187,11 +187,11 @@ def test_connection(ctx: click.Context) -> None:
         {'elasticsearch': {'client': {'hosts': ['http://localhost:9200']},
         'other_settings': {}}}})
         >>> client = Mock()
-        >>> client.info.return_value = {'version': {'number': '8.0.0'}}
+        >>> client.info.return_value = {'version': {'number': '9.0.0'}}
         >>> cfg.get_client = Mock(return_value=client)
         >>> test_connection(ctx)
         Connection result:
-        {'version': {'number': '8.0.0'}}
+        {'version': {'number': '9.0.0'}}
     """
     client = cfg.get_client(configdict=ctx.obj["configdict"])
     click.secho("\nConnection result: ", bold=True)

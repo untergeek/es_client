@@ -1,4 +1,4 @@
-"""Command-line configuration parsing and client builder helpers
+"""Command-line configuration parsing and client builder helper functions
 
 This module provides functions to manage configuration for es_client, including CLI
 option setup, configuration loading from YAML files, merging CLI and config settings,
@@ -29,7 +29,7 @@ import logging
 from shutil import get_terminal_size
 from dotmap import DotMap  # type: ignore
 from click import Context, secho, option as clickopt
-from elasticsearch8 import Elasticsearch
+from elasticsearch9 import Elasticsearch
 from .debug import debug, begin_end
 from .builder import Builder
 from .defaults import (
@@ -87,7 +87,7 @@ def cli_opts(
 
     In the `cli_example.py` file, the regular
     :py:func:`click.option decorator function <click.option>` is wrapped by
-    :py:func:`option_wrapper() <es_client.helpers.utils.option_wrapper>`, and is
+    :py:func:`option_wrapper() <es_client.utils.option_wrapper>`, and is
     aliased as ``click_opt_wrap``. This wrapped decorator in turn calls this function
     and utilizes ``*`` arg expansion. If `settings` is `None`, default values from
     :py:const:`CLICK_SETTINGS <es_client.defaults.CLICK_SETTINGS>`, are used to
@@ -99,7 +99,7 @@ def cli_opts(
     .. code-block:: python
 
       import click
-      from es_client.helpers.utils import option_wrapper
+      from es_client.utils import option_wrapper
       defaults.ONOFF = {'on': '', 'off': 'no-'}
       click_opt_wrap = option_wrapper()
       # ...
@@ -154,7 +154,7 @@ def cli_opts(
     `value` is not found as a key in `settings`, or if the `onoff` parsing fails.
 
     .. _Click boolean option:
-      https://click.palletsprojects.com/en/8.1.x/options/#boolean-flags
+      https://click.palletsprojects.com/en/stable/options/#boolean-flags
     """
     if override is None:
         override = {}
@@ -356,7 +356,7 @@ def get_arg_objects(ctx: Context) -> None:
     :py:class:`~.dotmap.DotMap` object.
 
     These will be updated with values returned from
-    :func:`check_config(ctx.obj['draftcfg']) <es_client.helpers.utils.check_config>`.
+    :func:`check_config(ctx.obj['draftcfg']) <es_client.utils.check_config>`.
 
     :py:attr:`ctx.obj['draftcfg'] <click.Context.obj>` was populated when
     :func:`get_config()` was called.
@@ -389,7 +389,7 @@ def get_client(
             :data:`~es_client.defaults.VERSION_MAX`.
 
     Returns:
-        :class:`elasticsearch8.Elasticsearch`: Configured Elasticsearch client.
+        :class:`elasticsearch9.Elasticsearch`: Configured Elasticsearch client.
 
     Raises:
         :exc:`~es_client.exceptions.ESClientException`: If client connection fails.
@@ -789,7 +789,7 @@ def override_settings(settings: t.Dict, override: t.Dict) -> t.Dict:
 
     In the `cli_example.py` file, the regular :py:func:`click.option decorator function
     <click.option>` is wrapped by :py:func:`option_wrapper()
-    <es_client.helpers.utils.option_wrapper>`, and is aliased as ``click_opt_wrap``.
+    <es_client.utils.option_wrapper>`, and is aliased as ``click_opt_wrap``.
     This wrapped decorator in turn calls :func:`cli_opts()` and utilizes ``*`` arg
     expansion. :func:`cli_opts()` references defaults, and calls this function to
     override keys in `settings` with values from matching keys in `override`.
@@ -799,7 +799,7 @@ def override_settings(settings: t.Dict, override: t.Dict) -> t.Dict:
     .. code-block:: python
 
       import click
-      from es_client.helpers.utils import option_wrapper
+      from es_client.utils import option_wrapper
       defaults.OVERRIDE = {KEY: NEWVALUE}
       click_opt_wrap = option_wrapper()
 

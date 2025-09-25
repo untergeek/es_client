@@ -4,7 +4,7 @@ Sample CLI script that will get a client using both config file and CLI args/opt
 
 # pylint: disable=E1120,R0917
 import click
-from elasticsearch8.exceptions import BadRequestError, NotFoundError
+from elasticsearch9.exceptions import BadRequestError, NotFoundError
 from es_client import config as cfg
 from es_client.defaults import OPTION_DEFAULTS
 from es_client.logging import configure_logging
@@ -26,7 +26,7 @@ __all__ = ["BadRequestError", "NotFoundError"]
 # These options require the following other includes:
 #
 # from es_client.defaults import LOGGING_SETTINGS, ONOFF
-# from es_client.helpers.utils import option_wrapper
+# from es_client.utils import option_wrapper
 # click_opt_wrap = option_wrapper()
 #
 # @click_opt_wrap(*cli_opts('config'))
@@ -102,7 +102,7 @@ def run(
     """
     # If there's a default file location for client configuration, e.g.
     # $HOME/.curator/curator.yml, then specify it here. ctx.obj is now instantiated in
-    # ``helpers.config.cfg.context_settings()``
+    # ``config.cfg.context_settings()``
     ctx.obj["default_config"] = None
 
     # The ``cfg.get_config`` function will grab the configuration derived from a YAML

@@ -1,9 +1,9 @@
-.. _helpers:
+.. _submodules:
 
-Helpers
-#######
+Submodules
+##########
 
-.. _helpers_config:
+.. _submodules_config:
 
 Config
 ======
@@ -12,7 +12,7 @@ Config
    :private-members:
 
 
-.. _helpers_logging:
+.. _submodules_logging:
 
 Logging
 =======
@@ -21,7 +21,7 @@ Logging
    :private-members:
 
 
-.. _helpers_schemacheck:
+.. _submodules_schemacheck:
 
 SchemaCheck
 ===========
@@ -30,7 +30,7 @@ SchemaCheck
    :private-members:
 
 
-.. _helpers_utils:
+.. _submodules_utils:
 
 Utils
 =====

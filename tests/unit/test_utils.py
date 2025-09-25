@@ -1,4 +1,4 @@
-"""Test helpers.utils"""
+"""Test utils module"""
 
 import os
 import random

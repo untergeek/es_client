@@ -19,7 +19,7 @@ schema validation bits I was employing, namely:
 
 But that's just the tip of the iceberg. That's only the :ref:`builder`!
 
-In addition to a Builder class, there's an entire set of :ref:`helpers` and a :ref:`tutorial` to
+In addition to a Builder class, there's an entire set of :ref:`submodules` and a :ref:`tutorial` to
 show you how to build your own command-line interface like :ref:`this one <example_file>`:
 
 .. code-block:: shell
@@ -156,7 +156,7 @@ Contents
    advanced
    envvars
    defaults
-   helpers
+   submodules
    exceptions
    Changelog
    :maxdepth: 5
