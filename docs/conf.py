@@ -89,11 +89,11 @@ autodoc_typehints = "description"
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3.12", None),
-    "elasticsearch8": ("https://elasticsearch-py.readthedocs.io/en/v8.18.0", None),
+    "elasticsearch8": ("https://elasticsearch-py.readthedocs.io/en/v8.19.0", None),
     "elastic-transport": (
         "https://elastic-transport-python.readthedocs.io/en/stable",
         None,
     ),
     "voluptuous": ("http://alecthomas.github.io/voluptuous/docs/_build/html", None),
-    "click": ("https://click.palletsprojects.com/en/8.1.x", None),
+    "click": ("https://click.palletsprojects.com/en/8.3.x", None),
 }

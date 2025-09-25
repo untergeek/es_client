@@ -3,6 +3,24 @@
 Changelog
 =========
 
+[8.19.0] - 2025-09-19
+---------------------
+
+**Announcement**
+
+This will likely be the last minor release in the 8.x series. Patches will be made for dependencies and other code issues.
+
+**Changes**
+
+- Updated ``elasticsearch8`` dependency to ``==8.19.0`` to stay current with the latest Elasticsearch client features and fixes.
+- Updated ``click`` dependency to ``==8.3.0`` to keep up to date.
+- Updated ``certifi`` dependency to ``>=2025.8.3`` to ensure the latest CA certificates are used.
+- Removed ``mix_stderr=True`` from ``clicktest.CliRunner()`` in integration tests to align with current release of Click 8.2+.
+- Updated unit test output parsing to use ``result.stdout`` instead of ``result.output`` to align with the behavior of Click 8.2+.
+- Updated docs/conf.py to reference Click 8.3.x documentation and elasticsearch8 8.19.x documentation.
+- All tests passing.
+
+
 [8.18.2] - 2025-04-21
 ---------------------
 

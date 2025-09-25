@@ -37,7 +37,7 @@ class TestCLIExample(TestCase):
             "DEBUG",
             "test-connection",
         ]
-        runner = clicktest.CliRunner(mix_stderr=True)
+        runner = clicktest.CliRunner()
         result = runner.invoke(run, args)
         assert result.exit_code == 0
 
