@@ -11,7 +11,7 @@ Attributes:
     author: Author name from es_client.__author__. (str)
     version: Major.minor version (e.g., "1.3"). (str)
     release: Full version (e.g., "1.3.0"). (str)
-    html_theme: Theme for HTML output, defaults to "sphinx_rtd_theme". (str)
+    html_theme: Theme for HTML output, defaults to "furo". (str)
 
 Examples:
     >>> project
@@ -44,7 +44,6 @@ version = ".".join(release.split(".")[:2])
 # -- General configuration ---------------------------------------------------
 
 extensions = [
-    "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
