@@ -94,5 +94,5 @@ intersphinx_mapping = {
         None,
     ),
     "voluptuous": ("http://alecthomas.github.io/voluptuous/docs/_build/html", None),
-    "click": ("https://click.palletsprojects.com/en/8.3.x", None),
+    "click": ("https://click.palletsprojects.com/en/stable", None),
 }
