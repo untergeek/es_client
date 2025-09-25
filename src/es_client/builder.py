@@ -122,8 +122,6 @@ class Builder:
         attributes (DotMap): Storage for configuration and settings.
         client (:class:`~elasticsearch8.Elasticsearch`): The Elasticsearch client
             connection.
-        version_min (tuple): Minimum acceptable Elasticsearch version.
-        version_max (tuple): Maximum acceptable Elasticsearch version.
         _secrets (:class:`SecretStore`): Secure storage for sensitive fields.
 
     Raises:

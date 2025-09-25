@@ -3,6 +3,17 @@
 Changelog
 =========
 
+[8.19.2] - 2025-09-25
+---------------------
+
+**Changes**
+
+- Reverted ``click`` dependency to ``==8.1.8`` to maintain compatibility with Python 3.8 and 3.9. I had inadvertently allowed ``click==8.3.0`` in the last release, which dropped support, which I did not realize until building for es_client v9.0.0. A change was made in 8.2+ that breaks compatibility with 3.8 and 3.9. As many still may be using Python 3.8 and 3.9, I want to maintain compatibility for these users with the 8.x releases.
+- Fixed upstream doc references for Click. Older versions no longer appear to be available, so ``stable`` is what we get now.
+- Removed redundant docstring indices in ``builder.py`` and ``logging.py`` that were generating errors in the document build process.
+
+All tests passing.
+
 [8.19.1] - 2025-09-25
 ---------------------
 

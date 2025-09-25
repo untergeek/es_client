@@ -519,9 +519,6 @@ class JSONFormatter(logging.Formatter):
     Formats log records as JSON objects with timestamp, log level, logger name,
     function, line number, and message.
 
-    Attributes:
-        WANTED_ATTRS (dict): Mapping of LogRecord attributes to JSON keys.
-
     Example:
         >>> import logging
         >>> record = logging.makeLogRecord({
