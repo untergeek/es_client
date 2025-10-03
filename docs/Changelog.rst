@@ -3,6 +3,15 @@
 Changelog
 =========
 
+
+[9.0.1] - 2025-10-03
+--------------------
+
+**Changes**
+
+- ``tiered-debug`` dependency bumped to ``1.3.1``. This is a patch to fix test issues that were causing builds from source to fail for package maintainers.
+
+
 [9.0.0] - 2025-09-25
 --------------------
 

@@ -19,7 +19,7 @@ Example Usage:
     # Outputs debug message at level 1, if logging is configured appropriately.
 
 Version:
-    9.0.0
+    9.0.1
 """
 
 from datetime import datetime
@@ -33,7 +33,7 @@ if now.year == FIRST_YEAR:
 else:
     COPYRIGHT_YEARS = f"2025-{now.year}"
 
-__version__ = "9.0.0"
+__version__ = "9.0.1"
 __author__ = "Aaron Mildenstein"
 __copyright__ = f"{COPYRIGHT_YEARS}, {__author__}"
 __license__ = "Apache 2.0"
