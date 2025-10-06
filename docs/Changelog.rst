@@ -9,7 +9,7 @@ Changelog
 
 **Changes**
 
-- ``tiered-debug`` dependency bumped to ``1.3.1``. This is a patch to fix test issues that were causing builds from source to fail for package maintainers.
+- ``tiered-debug`` dependency bumped to ``1.3.1``. This is a patch to fix test issues that were causing builds from source to fail for package builds.
 
 
 [9.0.0] - 2025-09-25
