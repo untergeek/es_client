@@ -3,6 +3,18 @@
 Changelog
 =========
 
+[8.19.3] - 2025-10-06
+---------------------
+
+**Changes**
+
+- Updated ``elasticsearch8`` dependency to ``==8.19.1`` to stay current with the latest Elasticsearch client release.
+- Updated ``certifi`` dependency to ``>=2025.10.5`` to ensure the latest CA certificates are used.
+- Updated ``tiered-debug`` dependency to ``>=1.3.1`` following latest patch release.
+- Updated ``docs/conf.py`` to reference ``elasticsearch8==8.19.1`` documentation.
+
+All tests passing.
+
 [8.19.2] - 2025-09-25
 ---------------------
 
