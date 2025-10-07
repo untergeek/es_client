@@ -3,6 +3,17 @@
 Changelog
 =========
 
+[9.0.2] - 2025-10-07
+--------------------
+
+**Bugfixes**
+
+- Addressed issue #88 where URL paths were not being respected in the client configuration.
+  - Added tests to verify correct handling of URL paths in hosts.
+- Fixed a few spots where MyPy was complaining about typing and import issues.
+- Bumped ``tiered-debug`` dependency to ``>=1.4.0`` to address regression in 1.3.1.
+
+All tests passing.
 
 [9.0.1] - 2025-10-03
 --------------------
