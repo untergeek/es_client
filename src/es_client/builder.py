@@ -156,11 +156,11 @@ class Builder:
         version_max: t.Tuple = VERSION_MAX,
     ):
         debug.lv2('Initializing Builder object...')
+        self.attributes = DotMap()
         self.config = DotMap()
         self.config.client = DotMap()
         self.config.client.hosts = []
         self.config.other_settings = DotMap()
-        self.attributes = DotMap()
         self._secrets = SecretStore()
         self.set_client_defaults()
         self.set_other_defaults()
