@@ -158,7 +158,7 @@ class SchemaCheck:
             self.badvalue = "(could not determine)"
 
     @begin_end()
-    def result(self) -> Schema:
+    def result(self) -> t.Any:
         """
         Validate the configuration and return the result.
 
@@ -186,7 +186,7 @@ class SchemaCheck:
         except Exception as exc:
             try:
                 debug.lv4('TRY: parsing exception...')
-                self.error = exc.errors[0]
+                self.error = exc.errors[0]  # type: ignore[attr-defined]
             except Exception as err:
                 logger.error(f'Could not parse exception: {err}')
                 self.error = f"{exc}"
