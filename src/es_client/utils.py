@@ -27,7 +27,10 @@ import re
 import base64
 import binascii
 from pathlib import Path
+from urllib.parse import urlparse
 import yaml  # type: ignore
+from yaml.scanner import ScannerError  # type: ignore
+from yaml.parser import ParserError  # type: ignore
 import click
 from elasticsearch9 import Elasticsearch
 from .debug import debug, begin_end
@@ -88,12 +91,13 @@ def check_config(config: dict, quiet: bool = False) -> dict:
             es_settings["elasticsearch"][key] = prune_nones(
                 es_settings["elasticsearch"][key]
             )
-    retval = SchemaCheck(
+    _ = SchemaCheck(
         es_settings["elasticsearch"],
         config_schema(),
         "Elasticsearch Configuration",
         "elasticsearch",
     ).result()
+    retval = dict(_)
     debug.lv5(f'Return value = "{password_filter(retval)}"')
     return retval
 
@@ -211,7 +215,7 @@ def get_yaml(path: str) -> t.Dict:
 
     def single_constructor(loader, node):
         value = loader.construct_scalar(node)
-        proto = single.match(value).group(1)
+        proto = single.match(value).group(1)  # type: ignore[union-attr]
         default = None
         if len(proto.split(":")) > 1:
             envvar, default = proto.split(":")
@@ -223,7 +227,7 @@ def get_yaml(path: str) -> t.Dict:
     try:
         debug.lv4('TRY: yaml.load()')
         retval = yaml.load(read_file(path), Loader=yaml.FullLoader)
-    except (yaml.scanner.ScannerError, yaml.parser.ParserError) as exc:
+    except (ScannerError, ParserError) as exc:
         raise ConfigurationError(f"Unable to parse YAML file. Error: {exc}") from exc
     debug.lv5('Return value = "<REDACTED YAML>"')
     return retval
@@ -400,7 +404,8 @@ def verify_url_schema(url: str) -> str:
     Validate and normalize a URL schema for Elasticsearch hosts.
 
     Args:
-        url (str): URL to validate (e.g., 'http://localhost:9200').
+        url (str): URL to validate (e.g., 'http://localhost:9200',
+            'https://example.com/path').
 
     Returns:
         str: Normalized URL with schema and port (e.g., 'http://localhost:80').
@@ -409,40 +414,49 @@ def verify_url_schema(url: str) -> str:
         :exc:`~es_client.exceptions.ConfigurationError`: If the URL schema is invalid.
 
     Ensures the URL uses 'http' or 'https' and includes a port (defaults to 80 for
-    http, 443 for https if omitted).
+    http, 443 for https if omitted). Accepts optional paths after the domain.
 
     Example:
         >>> verify_url_schema('https://localhost')
         'https://localhost:443'
+        >>> verify_url_schema('http://localhost:9200/path')
+        'http://localhost:9200'
         >>> verify_url_schema('ftp://localhost')
         Traceback (most recent call last):
             ...
         es_client.exceptions.ConfigurationError: URL Schema invalid for ftp://localhost
     """
-    parts = url.lower().split(":")
-    errmsg = f"URL Schema invalid for {url}"
-    if len(parts) < 3:
-        if parts[0] == "https":
-            port = "443"
-        elif parts[0] == "http":
-            port = "80"
-        else:
-            debug.lv3('Exiting function, raising exception')
-            debug.lv5(f'Value = "{errmsg}"')
-            logger.error(f'Invalid URL schema: "{url}". Missing port?')
-            raise ConfigurationError(errmsg)
-    elif len(parts) == 3:
-        if (parts[0] != "http") and (parts[0] != "https"):
-            debug.lv3('Exiting function, raising exception')
-            debug.lv5(f'Value = "{errmsg}"')
-            logger.error(f'Invalid URL schema: "{url}"')
-            raise ConfigurationError(errmsg)
-        port = parts[2]
-    else:
+    try:
+        parsed = urlparse(url)
+    except Exception as exc:
+        errmsg = f"URL Schema invalid for {url}"
         debug.lv3('Exiting function, raising exception')
         debug.lv5(f'Value = "{errmsg}"')
-        logger.error(f'Invalid URL schema: "{url}"')
+        logger.error(f'Invalid URL format: "{url}"')
+        raise ConfigurationError(errmsg) from exc
+
+    if parsed.scheme not in ('http', 'https'):
+        errmsg = f"URL Schema invalid for {url}"
+        debug.lv3('Exiting function, raising exception')
+        debug.lv5(f'Value = "{errmsg}"')
+        logger.error(f'Invalid URL schema: "{url}". Only http and https are supported.')
         raise ConfigurationError(errmsg)
-    retval = parts[0] + ":" + parts[1] + ":" + port
+
+    if not parsed.hostname:
+        errmsg = f"URL Schema invalid for {url}"
+        debug.lv3('Exiting function, raising exception')
+        debug.lv5(f'Value = "{errmsg}"')
+        logger.error(f'Invalid URL: "{url}". Missing hostname.')
+        raise ConfigurationError(errmsg)
+
+    # Use provided port or default based on scheme
+    if parsed.port is not None:
+        port = str(parsed.port)
+    elif parsed.scheme == "https":
+        port = "443"
+    else:  # http
+        port = "80"
+
+    retval = f"{parsed.scheme}://{parsed.hostname}:{port}"
     debug.lv5(f'Return value = "{retval}"')
     return retval
