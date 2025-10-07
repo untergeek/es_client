@@ -18,7 +18,7 @@ Examples:
 """
 
 from functools import wraps
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 from tiered_debug import TieredDebug
 
@@ -34,8 +34,8 @@ debug = TieredDebug(level=1, stacklevel=3)
 
 def begin_end(
     debug_obj: Optional[TieredDebug] = None,
-    begin: int = DEFAULT_BEGIN,
-    end: int = DEFAULT_END,
+    begin: Literal[1, 2, 3, 4, 5] = DEFAULT_BEGIN,
+    end: Literal[1, 2, 3, 4, 5] = DEFAULT_END,
     stacklevel: int = 2,
     extra: Optional[Dict[str, Any]] = None,
 ):
