@@ -3,6 +3,16 @@
 Changelog
 =========
 
+[8.19.5] - 2025-10-07
+---------------------
+
+**Bug Fix**
+
+- Single out of order assignment in ``builder.py`` `__init__` that was causing
+  ``Builder`` instances to not have an ``.attributes`` attribute.
+
+All tests passing.
+
 [8.19.4] - 2025-10-06
 ---------------------
 
