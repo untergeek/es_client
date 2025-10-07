@@ -86,5 +86,6 @@ class TestConnection(TestCase):
         """Proper connection to client makes for a good response"""
         obj = Builder(configdict=config, autoconnect=True)
         client = obj.client
-        expected = dict(client.info())
-        assert expected['cluster_name'] == dict(obj.test_connection())['cluster_name']
+        expected = client.info()
+        response = obj.test_connection()
+        assert expected.body['cluster_name'] == response.body['cluster_name']
