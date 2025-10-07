@@ -167,41 +167,54 @@ class TestVerifyURLSchema:
     """Test the u.verify_url_schema function"""
 
     def test_full_schema(self):
-        """Verify that a proper schema comes back unchanged"""
+        """Verify that a proper schema comes back in normalized format"""
         url = "https://127.0.0.1:9200"
-        assert u.verify_url_schema(url) == url
+        assert u.verify_url_schema(url) == "https://127.0.0.1:9200"
 
     def test_http_schema_no_port(self):
         """
-        Verify that port 80 is tacked on when no port is specified as a port is required
+        Verify that port 80 is added when no port is specified for http
         """
-        http_port = "80"
         url = "http://127.0.0.1"
-        assert u.verify_url_schema(url) == "http://127.0.0.1" + ":" + http_port
+        assert u.verify_url_schema(url) == "http://127.0.0.1:80"
 
     def test_https_schema_no_port(self):
         """
-        Verify that 443 is tacked on when no port is specified but https is the schema
+        Verify that port 443 is added when no port is specified for https
         """
-        https_port = "443"
         url = "https://127.0.0.1"
-        assert u.verify_url_schema(url) == "https://127.0.0.1" + ":" + https_port
+        assert u.verify_url_schema(url) == "https://127.0.0.1:443"
+
+    def test_http_with_path(self):
+        """Verify that URLs with paths are accepted and normalized"""
+        url = "http://localhost:9200/api/v1"
+        assert u.verify_url_schema(url) == "http://localhost:9200"
+
+    def test_https_with_path(self):
+        """Verify that HTTPS URLs with paths are accepted and normalized"""
+        url = "https://example.com/path/to/resource"
+        assert u.verify_url_schema(url) == "https://example.com:443"
+
+    def test_http_no_port_with_path(self):
+        """Verify that HTTP URLs without ports but with paths work"""
+        url = "http://localhost/api/v1/search"
+        assert u.verify_url_schema(url) == "http://localhost:80"
 
     def test_bad_schema_no_port(self):
         """A URL starting with other than http or https raises an exception w/o port"""
-        url = "abcd://127.0.0.1"
+        url = "ftp://127.0.0.1"
         with pytest.raises(ConfigurationError):
             u.verify_url_schema(url)
 
     def test_bad_schema_with_port(self):
         """A URL starting with other than http or https raises an exception w/port"""
-        url = "abcd://127.0.0.1:1234"
+        url = "ftp://127.0.0.1:1234"
         with pytest.raises(ConfigurationError):
             u.verify_url_schema(url)
 
-    def test_bad_schema_too_many_colons(self):
-        """An invalid URL with too many colons raises an exception"""
-        url = "http://127.0.0.1:1234:5678"
+    def test_invalid_hostname(self):
+        """A URL without a valid hostname raises an exception"""
+        url = "http://"
         with pytest.raises(ConfigurationError):
             u.verify_url_schema(url)
 
